@@ -1,8 +1,21 @@
 // Public Domain
 
-#include "framework/framework_api.hpp"
+#include "framework/framework.hpp"
+
+#include <iostream>
+#include <stdexcept>
 
 int main(int argc, char* argv[])
 {
-    return framework::Run();
+    try
+    {
+        Framework framework;
+        framework.Loop();
+        return 0;
+    }
+    catch(std::runtime_error& e)
+    {
+        std::cerr << "Runtime error: " << e.what() << std::endl;
+    }
+    return 1;
 }

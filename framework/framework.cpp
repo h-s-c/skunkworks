@@ -7,136 +7,68 @@
 #include "base/system/library.hpp"
 
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <stdexcept>
+#include <utility>
 
 #include <SDL2/SDL.h>
-
-#define GLEW_MX
-#include <GL/glew.h>
-
-static thread_local GLEWContext* glew_context = nullptr;
-
-GLEWContext* glewGetContext()
+    
+Framework::Framework()
 {
-   if (glew_context == nullptr)
-   {
-        glew_context = new GLEWContext();
-   }
-   return glew_context;
-}
-
-namespace framework
-{
-int Run()
-{
-    try
-    {
-        Framework framework;
-        framework.Run();
-        return 0;
-    }
-    catch(std::runtime_error& sre)
-    {
-        std::cerr << "Runtime error: " << sre.what() << std::endl;
-    }
-    return 1;
-}
-}
+    auto plugin_input = std::move(LoadPlugin("Input"));
+    /*auto context = plugin_input.get()->GetContext();
+    auto window = plugin_input.get()->GetWindow();*/
     
-Framework::Framework() : done(false)
-{
-    InitGL();
-    LoadPlugin("Graphics");
+    auto plugin_graphics = std::move(LoadPlugin("Graphics"));  
+    plugin_graphics.get()->SetParameters(plugin_input.get()->GetParameters());
+    /*plugin_graphics.get()->SetContext(context);
+    plugin_graphics.get()->SetContext(window);*/
+    
+    this->plugins.push_back(std::move(plugin_input));
+    this->plugins.push_back(std::move(plugin_graphics));
 }
-
-void Framework::Run()
-{      
-    struct Parameters
-    {
-        SDL_GLContext context;
-        SDL_Window* window;
-    };
-    Parameters params = {context, window};
-    for ( auto &it : plugins)
-    {
-        it.pointer.get()->Start(&params);
-    }
-    
-    SDL_Event event;
-    while ( !done )
-    {
-        while(SDL_PollEvent(&event))
-        {
-            if(event.type == SDL_QUIT)
-            {
-                done = true;
-            }
-        }
-    }
-    
-    for ( auto& it : plugins)
-    {
-        it.pointer.get()->Stop();        
-        it.pointer.release();
-        base::CloseLibrary(it.handle);
-    }
-    plugins.clear();
-}
-
-void Framework::LoadPlugin(std::string name)
-{  
-    void* handle = base::OpenLibrary(std::string("Plugin"+name), base::GetExecutableFilePath());
-    struct framework::PluginFuncs* funcs = reinterpret_cast<framework::PluginFuncs*>(base::GetSymbol(handle, name ));
-    
-    if (funcs)
-    {
-        plugins.push_back({name, handle, std::move(funcs->GetPluginPtr())});
-    }
-}
-
-void Framework::InitGL()
-{   
-    if(SDL_Init(SDL_INIT_VIDEO) != 0)
-        throw std::runtime_error(SDL_GetError());
-    
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE); 
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); 
-        
-    window = SDL_CheckError(SDL_CreateWindow(
-        "Test",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        800,
-        600,
-        SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN));
-    context = SDL_CheckError(SDL_GL_CreateContext( window ));
-    
-    glewExperimental = true;
-    GLenum res = glewInit();
-    if(res != GLEW_OK)
-    {
-        throw std::runtime_error(
-            (const char*)glewGetErrorString(res)
-        );
-    }
-    glGetError();
-
-    GLint major;
-    GLint minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major); 
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-    std::cout << "OpenGL version: " << major << "." << minor << std::endl;
-    
-    SDL_GL_MakeCurrent( window, nullptr );
-}
-
 
 Framework::~Framework()
 {
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    for ( auto& plugin : this->plugins)
+    {       
+        plugin.release();
+    }
+    plugins.clear();
+    
+    for ( auto& handle : this->handles)
+    {
+        base::CloseLibrary(handle);
+    }
+}
+
+void Framework::Loop()
+{      
+    for(std::uint32_t i=1; i<this->plugins.size(); ++i)
+    {
+        this->threads.push_back(std::thread([this, i](){ this->plugins[i].get()->Loop(); }));
+    }
+    
+    plugins.front().get()->Loop();
+    
+    for ( auto& thread : this->threads)
+    {       
+        thread.join();
+    }
+}
+
+std::unique_ptr<Plugin> Framework::LoadPlugin(std::string name)
+{  
+    auto handle = base::OpenLibrary(std::string("Plugin"+name), base::GetExecutableFilePath());
+    auto funcs = reinterpret_cast<PluginFuncs*>(base::GetSymbol(handle, name ));
+    
+    if (!funcs)
+    {
+        std::runtime_error e(std::string("Could not load plugin ") + name);
+        throw e;
+    }
+    
+    handles.push_back(&handle);
+    return std::move(funcs->InitPlugin());
 }

@@ -3,28 +3,27 @@
 
 #include "framework/plugin_api.hpp"
 
-#include <atomic>
+#include <stdexcept>
 #include <string>
-#include <thread>
 
 #include <SDL2/SDL.h>
 
-class GraphicsPlugin : public framework::Plugin
+class GraphicsPlugin : public Plugin
 {
   public:
-    GraphicsPlugin() : thread(), stop(false) {};
+    GraphicsPlugin() : params() {};
     virtual ~GraphicsPlugin() {};
-    virtual void Start(void* parameters) final;  
-    virtual void Stop() final;  
+    virtual void Loop() final;  
+    virtual void SetParameters(PluginParams* params) final { this->params = *params; };
+    virtual PluginParams* GetParameters() final { std::runtime_error e("Not Supported"); throw e; };   
+    
+    /*virtual void SetContext(SDL_GLContext context) final { this->context = context; };
+    virtual void SetWindow(SDL_Window* window) final { this->window = window; };
+    virtual SDL_GLContext GetContext() final { std::runtime_error e("Not Supported"); throw e; };
+    virtual SDL_Window* GetWindow() final { std::runtime_error e("Not Supported"); throw e; };*/
     
   private: 
-    SDL_Window* window;
-    SDL_GLContext context;
-        
-    void Run();
-    
-    std::thread thread;
-    std::atomic<bool> stop;
+    PluginParams params;
 };
 
 

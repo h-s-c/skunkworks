@@ -25,33 +25,20 @@ GLEWContext* glewGetContext()
    return glew_context;
 }
 
-std::unique_ptr<framework::Plugin> GetPluginPtr()
+std::unique_ptr<Plugin> InitPlugin()
 {
-    std::unique_ptr<framework::Plugin> pointer(new GraphicsPlugin);
+    std::unique_ptr<Plugin> pointer(new GraphicsPlugin);
     return std::move(pointer);
 }
 
 extern "C" 
 {
-    COMPILER_DLLEXPORT struct framework::PluginFuncs Graphics = { &GetPluginPtr};
+    COMPILER_DLLEXPORT struct PluginFuncs Graphics = { &InitPlugin};
 }
 
-void GraphicsPlugin::Start(void* parameters) 
-{
-    struct Parameters
-    {
-        SDL_GLContext context;
-        SDL_Window* window;
-    };
-    Parameters* params = (Parameters*)parameters;
-    window = params->window;
-    context = params->context;
-    thread = std::thread(&GraphicsPlugin::Run, this);
-}
-
-void GraphicsPlugin::Run()
+void GraphicsPlugin::Loop()
 {      
-    SDL_GL_MakeCurrent( window, context );
+    SDL_GL_MakeCurrent( this->params.window, this->params.context );
     SDL_GL_SetSwapInterval(1);
     
     GLenum res = glewInit();
@@ -67,11 +54,12 @@ void GraphicsPlugin::Run()
     {        
         Render render;
     
-        while(!stop)
+        for(;;)
         {
             render.Display();
-            SDL_GL_SwapWindow(window);
+            SDL_GL_SwapWindow(this->params.window);
         }
+        SDL_GL_MakeCurrent( this->params.window, nullptr );
     }
     catch(oglplus::Error& err)
     {
@@ -84,10 +72,4 @@ void GraphicsPlugin::Run()
         std::cerr << std::endl;
         err.Cleanup();
     }
-}
-
-void GraphicsPlugin::Stop() 
-{
-    stop = true;
-    thread.join();
 }

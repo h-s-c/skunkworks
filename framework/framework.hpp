@@ -3,47 +3,20 @@
 
 #include "framework/plugin_api.hpp"
 
-#include <functional>
-#include <iostream>
 #include <memory>
-#include <utility>
+#include <thread>
 #include <vector>
-#include <stdexcept>
-
-#include <SDL2/SDL.h>
 
 class Framework
 {
   public:
     Framework();
     ~Framework();  
-    void Run();
+    void Loop();
     
-  private: 
-    void InitGL();
-    SDL_GLContext context;
-    SDL_Window* window; 
-
-    template <typename F>
-    auto SDL_CheckError(F f) -> F
-    {
-        if (!f) 
-        {
-            std::runtime_error e(SDL_GetError());
-            SDL_Quit();
-            throw e;
-        }
-        return f;
-    }  
-  
-    void LoadPlugin(std::string name);
-    struct Plugin
-    {
-        std::string name;
-        void* handle;
-        std::unique_ptr<framework::Plugin> pointer;
-    };
-    std::vector<Plugin> plugins; 
-    
-    bool done;
+  private:   
+    std::unique_ptr<Plugin> LoadPlugin(std::string name);
+    std::vector<void*> handles; 
+    std::vector<std::unique_ptr<Plugin>> plugins;
+    std::vector<std::thread> threads;
 };

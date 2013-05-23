@@ -67,6 +67,7 @@ project (skunkworks)
     add_subdirectory(base)
     add_subdirectory(framework)
     add_subdirectory(plugins/graphics)
+    add_subdirectory(plugins/input)
     
     set(USE_MEMTRACE FALSE CACHE BOOL "Use tracey?" FORCE)
     if(USE_MEMTRACE)
