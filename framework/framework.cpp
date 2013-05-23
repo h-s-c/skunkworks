@@ -17,13 +17,9 @@
 Framework::Framework()
 {
     auto plugin_input = std::move(LoadPlugin("Input"));
-    /*auto context = plugin_input.get()->GetContext();
-    auto window = plugin_input.get()->GetWindow();*/
     
     auto plugin_graphics = std::move(LoadPlugin("Graphics"));  
     plugin_graphics.get()->SetParameters(plugin_input.get()->GetParameters());
-    /*plugin_graphics.get()->SetContext(context);
-    plugin_graphics.get()->SetContext(window);*/
     
     this->plugins.push_back(std::move(plugin_input));
     this->plugins.push_back(std::move(plugin_graphics));

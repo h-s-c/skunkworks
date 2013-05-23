@@ -11,6 +11,7 @@
 #define GLEW_MX
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include <czmq.h>
 
 static thread_local GLEWContext* glew_context = nullptr;
 
@@ -34,8 +35,16 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Input = { &InitPlugin};
 }
 
-InputPlugin::InputPlugin() : params(), done(false)
+InputPlugin::InputPlugin() : params(), input_socket()
 {
+    this->params.zmq_context = zctx_new();
+    this->input_socket = zsocket_new( this->params.zmq_context, ZMQ_PUB );
+    if (zsocket_bind( this->input_socket, "inproc://input") == -1)
+    {  
+        std::runtime_error e("GraphicsInput could not bind to inproc://input");
+        throw e;
+    }
+    
     if(SDL_Init(SDL_INIT_VIDEO) != 0)
         throw std::runtime_error(SDL_GetError());
     
@@ -51,9 +60,9 @@ InputPlugin::InputPlugin() : params(), done(false)
         800,
         600,
         SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN));
-    this->params.context = SDL_CheckError(SDL_GL_CreateContext(this->params.window ));
+    this->params.gl_context = SDL_CheckError(SDL_GL_CreateContext(this->params.window ));
     
-    SDL_GL_MakeCurrent( this->params.window, this->params.context );    
+    SDL_GL_MakeCurrent( this->params.window, this->params.gl_context );    
     
     GLenum res = glewInit();
     if(res != GLEW_OK)
@@ -75,23 +84,28 @@ InputPlugin::InputPlugin() : params(), done(false)
 
 InputPlugin::~InputPlugin()
 {
-    SDL_GL_MakeCurrent( this->params.window, this->params.context );
-    SDL_GL_DeleteContext(this->params.context);
+    SDL_GL_DeleteContext(this->params.gl_context);
     SDL_DestroyWindow(this->params.window);
     SDL_Quit();
+    
+    zctx_destroy(&this->params.zmq_context);
 }
 
 
 void InputPlugin::Loop()
-{      
+{
     SDL_Event event;
-    while ( !done )
+    bool stop = false;
+    while ( !stop )
     {
         while(SDL_PollEvent(&event))
         {
             if(event.type == SDL_QUIT)
             {
-                done = true;
+                stop = true;
+                std::clog << "InputPlugin has send STOP signal" << std::endl;
+                zstr_send( input_socket, "STOP" );
+                break;
             }
         }
     }

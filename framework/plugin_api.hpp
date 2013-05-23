@@ -5,11 +5,13 @@
 #include <memory>
 
 #include <SDL2/SDL.h>
+#include <czmq.h>
 
 struct PluginParams
 {
     SDL_Window* window;
-    SDL_GLContext context;
+    SDL_GLContext gl_context;
+    zctx_t* zmq_context;
 };
 
 class Plugin
@@ -19,11 +21,6 @@ class Plugin
     virtual void Loop() = 0;
     virtual void SetParameters(PluginParams* params) = 0;
     virtual PluginParams* GetParameters() = 0;
-    
-    /*virtual void SetContext(SDL_GLContext context) = 0;
-    virtual void SetWindow(SDL_Window* window) = 0;
-    virtual SDL_GLContext GetContext() = 0;
-    virtual SDL_Window* GetWindow() = 0;*/
 };
 
 extern "C"

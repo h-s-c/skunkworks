@@ -17,14 +17,9 @@ class InputPlugin : public Plugin
     virtual void SetParameters(PluginParams* params) final { std::runtime_error e("Not Supported"); throw e; };
     virtual PluginParams* GetParameters() final { return &this->params; };
     
-    /*virtual void SetContext(SDL_GLContext context) final { std::runtime_error e("Not Supported"); throw e; };
-    virtual void SetWindow(SDL_Window* window) final { std::runtime_error e("Not Supported"); throw e; };
-    virtual SDL_GLContext GetContext() final { return this->context; };
-    virtual SDL_Window* GetWindow() final { return this->window; };*/
-    
   private: 
     PluginParams params;
-    bool done;
+    void * input_socket;
     
     template <typename F>
     auto SDL_CheckError(F f) -> F

@@ -13,6 +13,7 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <oglplus/error.hpp>
+#include <czmq.h>
 
 static thread_local GLEWContext* glew_context = nullptr;
 
@@ -38,7 +39,22 @@ extern "C"
 
 void GraphicsPlugin::Loop()
 {      
-    SDL_GL_MakeCurrent( this->params.window, this->params.context );
+    void * graphics_socket = zsocket_new( this->params.zmq_context, ZMQ_SUB );
+    if (!graphics_socket)
+    {  
+        std::runtime_error e("GraphicsPlugin could not create socket for inproc://input");
+        throw e;
+    }
+    
+    if (zsocket_connect( graphics_socket, "inproc://input" ) == -1)
+    {  
+        std::runtime_error e("GraphicsPlugin could not connect to inproc://input");
+        throw e;
+    }
+    
+    zsocket_set_subscribe(graphics_socket, (char*)"");
+    
+    SDL_GL_MakeCurrent( this->params.window, this->params.gl_context );
     SDL_GL_SetSwapInterval(1);
     
     GLenum res = glewInit();
@@ -53,13 +69,23 @@ void GraphicsPlugin::Loop()
     try
     {        
         Render render;
-    
         for(;;)
         {
+            char *message = zstr_recv_nowait(graphics_socket);
+            if (message ) 
+            {
+                if (strcmp (message , "STOP") == 0)
+                {
+                    std::clog << "GraphicsPlugin received STOP signal" << std::endl;
+                    free (message);
+                    break;
+                }
+            }
+            free (message);
+            
             render.Display();
             SDL_GL_SwapWindow(this->params.window);
         }
-        SDL_GL_MakeCurrent( this->params.window, nullptr );
     }
     catch(oglplus::Error& err)
     {
