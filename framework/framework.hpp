@@ -1,11 +1,15 @@
 // Public Domain
 #pragma once
 
+#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
 #include <memory>
+#include <string>
 #include <thread>
 #include <vector>
+
+#include <zmq.hpp>
 
 class Framework
 {
@@ -15,7 +19,12 @@ class Framework
     void Loop();
     
   private:   
-    std::unique_ptr<Plugin> LoadPlugin(std::string name);
+    void LoadPlugin(std::string name);
+    void RunPlugin(std::unique_ptr<Plugin> plugin);
+  
+    std::shared_ptr<base::Window> base_window;
+    std::shared_ptr<zmq::context_t> zmq_context;
+    
     std::vector<void*> handles; 
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::thread> threads;

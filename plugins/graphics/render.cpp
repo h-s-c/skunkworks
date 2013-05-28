@@ -2,9 +2,8 @@
 
 #include "plugins/graphics/render.hpp"
 
-#define GLEW_MX
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
+#define GLCOREARB_PROTOTYPES
+#include <GL/glcorearb.h>
 #include <oglplus/all.hpp>
 
 Render::Render()
@@ -67,7 +66,7 @@ Render::Render()
     gl.ClearDepth(1.0f);
 }
 
-void Render::Display()
+void Render::Draw()
 {
     using namespace oglplus;
 

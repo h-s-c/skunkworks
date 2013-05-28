@@ -1,37 +1,24 @@
 // Public Domain
 #pragma once
 
+#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
-#include <stdexcept>
-#include <string>
+#include <memory>
 
-#include <SDL2/SDL.h>
+#include <OIS/OIS.h>
+#include <zmq.hpp>
 
 class InputPlugin : public Plugin
 {
   public:
-    InputPlugin();
-    virtual ~InputPlugin();
-    virtual void Loop() final;  
-    virtual void SetParameters(PluginParams* params) final { std::runtime_error e("Not Supported"); throw e; };
-    virtual PluginParams* GetParameters() final { return &this->params; };
+    InputPlugin(const std::shared_ptr<base::Window> base_window, const std::shared_ptr<zmq::context_t> zmq_context);
+    virtual ~InputPlugin() override;  
+    virtual void Loop() override;  
     
   private: 
-    PluginParams params;
-    void * input_socket;
-    
-    template <typename F>
-    auto SDL_CheckError(F f) -> F
-    {
-        if (!f) 
-        {
-            std::runtime_error e(SDL_GetError());
-            SDL_Quit();
-            throw e;
-        }
-        return f;
-    }  
+    std::shared_ptr<base::Window> base_window;
+    std::shared_ptr<zmq::context_t> zmq_context;
 };
 
 

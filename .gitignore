@@ -1,2 +1,3 @@
-external
-build
+external/autodesk
+external/khronos/x86-64
+

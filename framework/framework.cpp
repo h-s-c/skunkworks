@@ -2,9 +2,9 @@
 
 #include "framework/framework.hpp"
 #include "framework/plugin_api.hpp"
-#include "base/platform.hpp"
 #include "base/system/info.hpp"
 #include "base/system/library.hpp"
+#include "base/system/window.hpp"
 
 #include <iostream>
 #include <memory>
@@ -12,25 +12,24 @@
 #include <stdexcept>
 #include <utility>
 
-#include <SDL2/SDL.h>
+#include <zmq.hpp>
     
 Framework::Framework()
 {
-    auto plugin_input = std::move(LoadPlugin("Input"));
+    /* base::window: Initialization. */
+    this->base_window = std::make_shared<base::Window>(800, 600, false);
     
-    auto plugin_graphics = std::move(LoadPlugin("Graphics"));  
-    plugin_graphics.get()->SetParameters(plugin_input.get()->GetParameters());
+    /* ZMQ: Initialization with 1 worker threads. */
+    this->zmq_context = std::make_shared<zmq::context_t>(1);
     
-    this->plugins.push_back(std::move(plugin_input));
-    this->plugins.push_back(std::move(plugin_graphics));
+    /* Plugins: Initialization.*/
+    LoadPlugin("Graphics");  
+    LoadPlugin("Input");
 }
 
 Framework::~Framework()
-{
-    for ( auto& plugin : this->plugins)
-    {       
-        plugin.release();
-    }
+{   
+    /* Plugins: Cleanup. */
     plugins.clear();
     
     for ( auto& handle : this->handles)
@@ -40,31 +39,61 @@ Framework::~Framework()
 }
 
 void Framework::Loop()
-{      
-    for(std::uint32_t i=1; i<this->plugins.size(); ++i)
+{   
+    /* Plugins: Start in their own thread. */
+    for ( auto& plugin : this->plugins)
     {
-        this->threads.push_back(std::thread([this, i](){ this->plugins[i].get()->Loop(); }));
+        this->threads.push_back(std::thread([&]() {RunPlugin(std::move(plugin));}));
     }
     
-    plugins.front().get()->Loop();
+    /* ZMQ: Wait a bit for other plugins to etablish sockets. */
+    std::chrono::milliseconds dura( 2000 );
+    std::this_thread::sleep_for( dura );
     
+    /* ZMQ: Create input subscription socket on this thread. */
+    zmq::socket_t zmq_input_subscriber(*this->zmq_context.get(), ZMQ_SUB);
+    
+    /* ZMQ: Connect. */
+    zmq_input_subscriber.connect("inproc://input");
+
+    /* ZMQ: Suscribe to all messages. */
+    zmq_input_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    
+    /* Framework: Loop. */
+    for(;;)
+    {
+        /* ZMQ: Listen. */
+        zmq::message_t zmq_message;
+        if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+        {
+            if (std::string("STOP") == std::string(static_cast<char*>(zmq_message.data()), zmq_message.size()))
+            {
+                std::cout<< "ZMQ: Framework received STOP signal." << std::endl;
+                break;
+            }
+        }
+        std::this_thread::yield();
+    }
+    
+    /*  Plugins: Wait for threads to finish. */
     for ( auto& thread : this->threads)
     {       
         thread.join();
     }
 }
 
-std::unique_ptr<Plugin> Framework::LoadPlugin(std::string name)
+void Framework::LoadPlugin(std::string name)
 {  
     auto handle = base::OpenLibrary(std::string("Plugin"+name), base::GetExecutableFilePath());
     auto funcs = reinterpret_cast<PluginFuncs*>(base::GetSymbol(handle, name ));
     
-    if (!funcs)
-    {
-        std::runtime_error e(std::string("Could not load plugin ") + name);
-        throw e;
-    }
-    
     handles.push_back(&handle);
-    return std::move(funcs->InitPlugin());
+    plugins.push_back(std::move(funcs->InitPlugin(base_window, zmq_context)));
 }
+
+void Framework::RunPlugin(std::unique_ptr<Plugin> plugin)
+{  
+    plugin.get()->Loop();
+    plugin.release();
+}
+

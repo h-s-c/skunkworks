@@ -1,15 +1,14 @@
 // Public Domain
 
-#define GLEW_MX
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
+#define GLCOREARB_PROTOTYPES
+#include <GL/glcorearb.h>
 #include <oglplus/all.hpp>
 
 class Render
 {
   public:
     Render();
-    void Display();
+    void Draw();
     
   private:
     oglplus::Context gl;

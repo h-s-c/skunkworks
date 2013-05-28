@@ -20,12 +20,12 @@
 
 namespace base
 {
-  /*! loads a shared library */
+  /* loads a shared library */
   void* OpenLibrary( const std::string& libName, const std::string& libPath);
 
-  /*! returns address of a symbol from the library */
+  /* returns address of a symbol from the library */
   void* GetSymbol(void* lib, const std::string& symName);
 
-  /*! unloads a shared library */
+  /* unloads a shared library */
   void CloseLibrary(void* lib);
 }

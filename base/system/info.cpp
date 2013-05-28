@@ -96,7 +96,7 @@ namespace base
 /// Windows Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef PLATFORM_OS_WINDOWS
+#if defined(PLATFORM_OS_WINDOWS)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -142,7 +142,7 @@ namespace base
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef PLATFORM_OS_LINUX
+#if defined(PLATFORM_OS_LINUX)
 
 #include <stdio.h>
 #include <unistd.h>
@@ -172,7 +172,7 @@ namespace base
 /// MacOS Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef PLATFORM_OS_MACOSX
+#if defined(PLATFORM_OS_MACOSX)
 
 #include <mach-o/dyld.h>
 

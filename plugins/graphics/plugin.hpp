@@ -1,29 +1,28 @@
 // Public Domain
 #pragma once
 
+#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
-#include <stdexcept>
-#include <string>
+#include <memory>
 
-#include <SDL2/SDL.h>
+#include <EGL/egl.h>
+#include <zmq.hpp>
 
 class GraphicsPlugin : public Plugin
 {
   public:
-    GraphicsPlugin() : params() {};
-    virtual ~GraphicsPlugin() {};
-    virtual void Loop() final;  
-    virtual void SetParameters(PluginParams* params) final { this->params = *params; };
-    virtual PluginParams* GetParameters() final { std::runtime_error e("Not Supported"); throw e; };   
-    
-    /*virtual void SetContext(SDL_GLContext context) final { this->context = context; };
-    virtual void SetWindow(SDL_Window* window) final { this->window = window; };
-    virtual SDL_GLContext GetContext() final { std::runtime_error e("Not Supported"); throw e; };
-    virtual SDL_Window* GetWindow() final { std::runtime_error e("Not Supported"); throw e; };*/
+    GraphicsPlugin(const std::shared_ptr<base::Window> base_window, const std::shared_ptr<zmq::context_t> zmq_context);
+    virtual ~GraphicsPlugin() override;   
+    virtual void Loop() override;   
     
   private: 
-    PluginParams params;
+    std::shared_ptr<base::Window> base_window;
+    std::shared_ptr<zmq::context_t> zmq_context;
+    
+    EGLDisplay egl_display;
+    EGLSurface egl_surface;
+    EGLContext egl_context;
 };
 
 

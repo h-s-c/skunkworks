@@ -19,29 +19,29 @@
 
 namespace base
 {
-  enum CPUModel {
+    enum CPUModel {
     CPU_UNKNOWN,
     CPU_CORE1,
     CPU_CORE2,
     CPU_CORE_NEHALEM,
     CPU_CORE_SANDYBRIDGE
-  };
+    };
 
-  /*! get the full path to the running executable */
-  std::string GetExecutableFilePath();
+    /* get the full path to the running executable */
+    std::string GetExecutableFilePath();
 
-  /*! return platform name */
-  std::string GetPlatformName();
+    /* return platform name */
+    std::string GetPlatformName();
 
-  /*! return the name of the CPU */
-  std::string GetCPUVendor();
+    /* return the name of the CPU */
+    std::string GetCPUVendor();
 
-  /*! get microprocessor model */
-  CPUModel GetCPUModel(); 
+    /* get microprocessor model */
+    CPUModel GetCPUModel(); 
 
-  /*! return the number of logical threads of the system */
-  size_t GetNumberOfLogicalThreads();
-  
-  /*! returns the size of the terminal window in characters */
-  int GetTerminalWidth();
+    /* return the number of logical threads of the system */
+    size_t GetNumberOfLogicalThreads();
+
+    /* returns the size of the terminal window in characters */
+    int GetTerminalWidth();
 }
