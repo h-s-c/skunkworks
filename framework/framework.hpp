@@ -5,6 +5,7 @@
 #include "framework/plugin_api.hpp"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -28,4 +29,7 @@ class Framework
     std::vector<void*> handles; 
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::thread> threads;
+    
+    std::vector<std::exception_ptr> propagated_exceptions;
+    std::mutex propagated_exceptions_mutex;
 };

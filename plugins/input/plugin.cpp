@@ -54,21 +54,14 @@ void InputPlugin::Loop()
         ois_manager->enableAddOnFactory(OIS::InputManager::AddOn_All);
 
         /* OIS: Print debugging information. */
-        std::cout << "OIS Version: " << ois_manager->getVersionNumber() << std::endl;
-        std::cout << "Release Name: " << ois_manager->getVersionName() << std::endl;
-        std::cout << "Manager: " << ois_manager->inputSystemName() << std::endl;
-        std::cout << "Total Keyboards: " << ois_manager->getNumberOfDevices(OIS::OISKeyboard) << std::endl;
-        std::cout << "Total Mice: " << ois_manager->getNumberOfDevices(OIS::OISMouse) << std::endl;
-        std::cout << "Total JoySticks: " << ois_manager->getNumberOfDevices(OIS::OISJoyStick) << std::endl;
+        std::cout << "OIS version: " << ois_manager->getVersionNumber() << std::endl;
+        std::cout << "OIS release name: " << ois_manager->getVersionName() << std::endl;
+        std::cout << "OIS manager: " << ois_manager->inputSystemName() << std::endl;
+        std::cout << "OIS total keyboards: " << ois_manager->getNumberOfDevices(OIS::OISKeyboard) << std::endl;
+        std::cout << "OIS total mice: " << ois_manager->getNumberOfDevices(OIS::OISMouse) << std::endl;
+        std::cout << "OIS total joysticks: " << ois_manager->getNumberOfDevices(OIS::OISJoyStick) << std::endl;
 
-        /* OIS: List all devices. */
-        /*const char* ois_device_type[6] = {"OISUnknown", "OISKeyboard", "OISMouse", "OISJoyStick", "OISTablet", "OISOther"};
-        OIS::DeviceList list = ois_manager->listFreeDevices();
-        for( OIS::DeviceList::iterator i = list.begin(); i != list.end(); ++i )
-        {
-            std::cout << "\n\tDevice: " << ois_device_type[i->first] << " Vendor: " << i->second << std::endl;
-        }*/
-
+        /* OIS: Keyboard initialization. */
         auto ois_keyboard = static_cast<OIS::Keyboard*>(ois_manager->createInputObject( OIS::OISKeyboard, false));
         
         /* Plugin: Loop. */
@@ -88,24 +81,9 @@ void InputPlugin::Loop()
             }
         }
     }
-    catch(const std::runtime_error& e)
+    /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/
+    catch(const OIS::Exception& ois_exception )
     {
-        std::cerr << "Runtime error: " << e.what() << std::endl;
-    }
-    catch(const zmq::error_t& ze)
-    {
-        std::cerr << "ZMQ error: " << ze.what() << std::endl;
-    }
-    catch(const OIS::Exception& ex )
-    {
-        std::cerr << "OIS error: " << ex.eText << std::endl;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr  << "General exception: " <<e.what() << std::endl;
-    }
-    catch (...)
-    {
-        std::cerr  << "Unhandled exception!" << std::endl;
+        throw std::runtime_error(std::string(" OIS - ") + ois_exception.eText);
     }
 }

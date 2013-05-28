@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -147,31 +148,19 @@ void GraphicsPlugin::Loop()
         /* EGL: Make context no longer current on this thread. */   
         EGL_CheckError(eglMakeCurrent(this->egl_display, nullptr, nullptr, nullptr));
     }
-    catch(const zmq::error_t& ze)
+    /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/
+    catch(const oglplus::Error& err)
     {
-       std::cerr << "ZMQ error: " << ze.what() << std::endl;
-    }
-    catch(oglplus::Error& err)
-    {
-        std::cerr <<
-            "Error (in " << err.GLSymbol() << ", " <<
+        std::stringstream error_string; 
+        error_string << "Error (in " << 
+            err.GLSymbol() << ", " <<
             err.ClassName() << ": '" <<
             err.ObjectDescription() << "'): " <<
-            err.what() <<
-            " [" << err.File() << ":" << err.Line() << "] ";
-        std::cerr << std::endl;
-        err.Cleanup();
-    }
-    catch(const std::runtime_error& e)
-    {
-        std::cerr << "Runtime error: " << e.what() << std::endl;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr  << "General exception: " <<e.what() << std::endl;
-    }
-    catch (...)
-    {
-        std::cerr  << "Unhandled exception!" << std::endl;
+            err.what() << " [" << 
+            err.File() << ":" << 
+            err.Line() << "] " << 
+            std::endl;
+        err.Cleanup();   
+        throw std::runtime_error(error_string.str());
     }
 }

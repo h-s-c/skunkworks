@@ -13,6 +13,34 @@
 #include <utility>
 
 #include <zmq.hpp>
+
+int RunFramework()
+{
+    try
+    {
+        Framework framework;
+        framework.Loop();
+        return 0;
+    }
+    /* General: Catches exceptions from the mainthread as well as all propagated exceptions from other threads*/
+    catch(const zmq::error_t& zmq_exception)
+    {
+       std::cerr << "ZMQ error: " << zmq_exception.what() << std::endl;
+    }
+    catch(const std::runtime_error& runtime_error)
+    {
+        std::cerr << "Runtime error: " << runtime_error.what() << std::endl;
+    }
+    catch (const std::exception& exception)
+    {
+        std::cerr  << "General exception: " <<exception.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr  << "Unhandled exception!" << std::endl;
+    }
+    return 1;
+}
     
 Framework::Framework()
 {
@@ -80,6 +108,15 @@ void Framework::Loop()
     {       
         thread.join();
     }
+    
+    /* Plugins: Rethrow propagated exceptions */
+    for(const std::exception_ptr& exception : propagated_exceptions)
+    {
+        if(exception)
+        {
+            std::rethrow_exception(exception);
+        }
+    }
 }
 
 void Framework::LoadPlugin(std::string name)
@@ -93,7 +130,17 @@ void Framework::LoadPlugin(std::string name)
 
 void Framework::RunPlugin(std::unique_ptr<Plugin> plugin)
 {  
-    plugin.get()->Loop();
-    plugin.release();
+    try
+    {
+        plugin.get()->Loop();
+        plugin.release();
+    }
+    /* Plugin: Catch plugin exceptions and propagate them to the mainthread*/
+    catch (...)
+    {
+        std::lock_guard<std::mutex> lock(propagated_exceptions_mutex);
+        propagated_exceptions.push_back(std::current_exception());
+        return;
+    }
 }
 
