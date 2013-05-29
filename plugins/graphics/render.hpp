@@ -2,6 +2,9 @@
 
 #define GLCOREARB_PROTOTYPES
 #include <GL/glcorearb.h>
+/* X11 sucks */
+#undef Expose
+#undef None
 #include <oglplus/all.hpp>
 
 class Render

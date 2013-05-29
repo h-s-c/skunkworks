@@ -99,16 +99,13 @@ typedef Display *EGLNativeDisplayType;
 typedef Pixmap   EGLNativePixmapType;
 typedef Window   EGLNativeWindowType;
 
-#undef None
-#undef Expose
-
 #elif defined(ANDROID)
 
 struct egl_native_pixmap_t;
 
-typedef struct ANativeWindow*           EGLNativeWindowType;
-typedef struct egl_native_pixmap_t*     EGLNativePixmapType;
 typedef void*                           EGLNativeDisplayType;
+typedef struct egl_native_pixmap_t*     EGLNativePixmapType;
+typedef struct ANativeWindow*           EGLNativeWindowType;
 
 #else
 #error "Platform not recognized"
