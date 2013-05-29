@@ -20,7 +20,7 @@ namespace base
     {
     #ifdef USE_SDL2
         SDL_Init( SDL_INIT_EVERYTHING );
-        auto window = SDL_CreateWindow("Skunkworks", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0/*SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN*//*|SDL_WINDOW_RESIZABLE*/ );        
+        auto window = SDL_CreateWindow("Skunkworks", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN/*|SDL_WINDOW_RESIZABLE*/ );        
         if (!window) 
         {
             std::runtime_error e(SDL_GetError());
