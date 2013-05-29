@@ -56,7 +56,7 @@ GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<base::Window> base_window, 
     };
 
     /* EGL: Initialization. */
-    this->egl_display = EGL_CheckError(eglGetDisplay( EGL_DEFAULT_DISPLAY ));  
+    this->egl_display = EGL_CheckError(eglGetDisplay( this->base_window.get()->GetNativeDisplay() ));  
     
     EGLint egl_major = 0; 
     EGLint egl_minor = 0;
@@ -74,7 +74,7 @@ GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<base::Window> base_window, 
     EGL_CheckError(eglChooseConfig(this->egl_display, egl_attributes, &egl_config, 1, &egl_num_configs));
 
     /* EGL: Link to base::Window. */
-    this->egl_surface = EGL_CheckError(eglCreateWindowSurface(this->egl_display, egl_config, this->base_window.get()->GetNativePtr(), NULL));  
+    this->egl_surface = EGL_CheckError(eglCreateWindowSurface(this->egl_display, egl_config, this->base_window.get()->GetNativeWindow(), NULL));  
 
     /* EGL: Context creation. */
     this->egl_context = EGL_CheckError(eglCreateContext(this->egl_display, egl_config, EGL_NO_CONTEXT, egl_context_attributes));

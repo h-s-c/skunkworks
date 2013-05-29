@@ -2,7 +2,9 @@
 
 #include "base/system/window.hpp"
 
+#include <array>
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 
 #define USE_SDL2
@@ -55,13 +57,22 @@ namespace base
             throw e;
         }
     #endif
-        
+    
+        std::array<std::string, 6> translation_array {{"Unknown", "Windows", "X11", "DirectFB", "Cocoa", "UIKit"}};
+        std::cout << "SDL windowing system: " << translation_array[syswm_info.subsystem] << std::endl; 
+       
 #if defined(PLATFORM_OS_WINDOWS)
+        native_display = (EGLNativeDisplayType)GetDC(syswm_info.info.windows.window);
         native_window = (EGLNativeWindowType)syswm_info.info.windows.window;
 #elif defined(PLATFORM_OS_LINUX)
+        native_display = (EGLNativeDisplayType)syswm_info.info.x11.display;
         native_window = (EGLNativeWindowType)syswm_info.info.x11.window;
 #elif defined(PLATFORM_OS_MACOSX)
+        native_display = EGL_DEFAULT_DISPLAY;
         native_window = (EGLNativeWindowType)syswm_info.info.cocoa.window;
+#elif defined(PLATFORM_OS_IOS)
+        native_display = EGL_DEFAULT_DISPLAY;
+        native_window = (EGLNativeWindowType)syswm_info.info.uikit.window;
 #endif
     }
 
