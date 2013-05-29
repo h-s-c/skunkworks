@@ -2,7 +2,7 @@
 ##
 ## Khronos loader
 ##
-project (KhronosWrapEGL)
+project (EGL)
     set(KHRONOS_SOURCE    
         ${CMAKE_SOURCE_DIR}/external/khronos/GL/gl.c
         ${CMAKE_SOURCE_DIR}/external/khronos/GLES/gles.c
@@ -28,21 +28,33 @@ project (KhronosWrapEGL)
     list(APPEND KHRONOS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
     include_directories(${KHRONOS_INCLUDE_DIRS} )
-    add_library (KhronosWrapEGL ${KHRONOS_SOURCE})
-    set_target_properties(KhronosWrapEGL PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+    add_library (EGL SHARED ${KHRONOS_SOURCE})
 
-project (KhronosLoadGL)
+    install (TARGETS EGL
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
+        CONFIGURATIONS Release RelWithDebInfo)  
+    install (TARGETS EGL
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
+        CONFIGURATIONS Debug)  
+
+project (GL)
     set(KHRONOS_SOURCE    
         ${CMAKE_SOURCE_DIR}/external/khronos/GL/glstubs.c
-        ${CMAKE_SOURCE_DIR}/external/khronos/GLES/glesstubs.c
-        ${CMAKE_SOURCE_DIR}/external/khronos/GLES2/gles2stubs.c
-        ${CMAKE_SOURCE_DIR}/external/khronos/GLES3/gles3stubs.c
         )
     list(APPEND KHRONOS_SOURCE ${KHRONOS_SOURCE})
 
     list(APPEND KHRONOS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND KHRONOS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
+    list(APPEND KHRONOS_LIBRARIES EGL)   
+    
     include_directories(${KHRONOS_INCLUDE_DIRS} )
-    add_library (KhronosLoadGL ${KHRONOS_SOURCE})
-    set_target_properties(KhronosLoadGL PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+    add_library (GL SHARED ${KHRONOS_SOURCE})
+    target_link_libraries(GL ${PLUGIN_LIBRARIES})
+    
+    install (TARGETS GL
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
+        CONFIGURATIONS Release RelWithDebInfo)  
+    install (TARGETS GL
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
+        CONFIGURATIONS Debug)  

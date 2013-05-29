@@ -84,7 +84,7 @@ namespace base
         #elif defined(PLATFORM_OS_WINDOWS)
         std::string fullName = std::string(libPath + "/" + libName + ".dll");
         #endif
-        void* handle = dlopen(fullName.c_str(),RTLD_NOW);
+        void* handle = dlopen(fullName.c_str(),RTLD_LAZY);
         if (!handle) 
         {
             std::runtime_error e(dlerror());
