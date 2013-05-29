@@ -6,6 +6,7 @@
 #include "plugins/graphics/error.hpp"
 #include "plugins/graphics/render.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -49,33 +50,34 @@ GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<base::Window> base_window, 
     { 
         EGL_CONTEXT_MAJOR_VERSION_KHR, 4,
         EGL_CONTEXT_MINOR_VERSION_KHR, 2,
+        EGL_CONTEXT_FLAGS_KHR, EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR,
         EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR,
         EGL_NONE
     };
 
     /* EGL: Initialization. */
-    EGL_CheckError(eglBindAPI(EGL_OPENGL_API));
     this->egl_display = EGL_CheckError(eglGetDisplay( EGL_DEFAULT_DISPLAY ));  
-   
+    
     EGLint egl_major = 0; 
     EGLint egl_minor = 0;
     EGL_CheckError(eglInitialize(this->egl_display, &egl_major, &egl_minor));
-
-    /* EGL: Configuraion. */
-    EGLint egl_num_configs = 0;
-    EGLConfig egl_config;
-    EGL_CheckError(eglChooseConfig(this->egl_display, egl_attributes, &egl_config, 1, &egl_num_configs));
-    
-    /* EGL: Link to base::Window. */
-    this->egl_surface = EGL_CheckError(eglCreateWindowSurface(this->egl_display, egl_config, this->base_window.get()->GetNativePtr(), NULL));  
-    
-    /* EGL: Context creation. */
-    this->egl_context = EGL_CheckError(eglCreateContext(this->egl_display, egl_config, EGL_NO_CONTEXT, egl_context_attributes));
+    EGL_CheckError(eglBindAPI(EGL_OPENGL_API));
     
     std::cout << "EGL vendor: " << EGL_CheckError(eglQueryString(this->egl_display, EGL_VENDOR)) << std::endl;
     std::cout << "EGL version: " << EGL_CheckError(eglQueryString(this->egl_display, EGL_VERSION)) << std::endl;
     std::cout << "EGL client apis: " << EGL_CheckError(eglQueryString(this->egl_display, EGL_CLIENT_APIS)) << std::endl;   
     std::cout << "EGL extensions: " << EGL_CheckError(eglQueryString(this->egl_display, EGL_EXTENSIONS)) << std::endl;
+    
+    /* EGL: Configuraion. */
+    EGLint egl_num_configs = 0;
+    EGLConfig egl_config;
+    EGL_CheckError(eglChooseConfig(this->egl_display, egl_attributes, &egl_config, 1, &egl_num_configs));
+
+    /* EGL: Link to base::Window. */
+    this->egl_surface = EGL_CheckError(eglCreateWindowSurface(this->egl_display, egl_config, this->base_window.get()->GetNativePtr(), NULL));  
+
+    /* EGL: Context creation. */
+    this->egl_context = EGL_CheckError(eglCreateContext(this->egl_display, egl_config, EGL_NO_CONTEXT, egl_context_attributes));
     
     /* EGL: Make context current on this thread. */
     EGL_CheckError(eglMakeCurrent(this->egl_display, this->egl_surface, this->egl_surface, this->egl_context));

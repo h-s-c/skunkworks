@@ -69,7 +69,7 @@ void InputPlugin::Loop()
         {
             /* OIS: Handle input */
             ois_keyboard->capture();
-            if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE ))
+            if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
             {
                 /* ZMQ: Send. */
                 std::string message = "STOP";

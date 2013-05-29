@@ -6,6 +6,7 @@
 #include "base/system/library.hpp"
 #include "base/system/window.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <thread>
