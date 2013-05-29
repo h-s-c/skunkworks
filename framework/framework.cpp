@@ -76,8 +76,8 @@ void Framework::Loop()
     }
     
     /* ZMQ: Wait a bit for other plugins to etablish sockets. */
-    std::chrono::milliseconds dura( 2000 );
-    std::this_thread::sleep_for( dura );
+    std::chrono::milliseconds duration( 100 );
+    std::this_thread::sleep_for( duration );
     
     /* ZMQ: Create input subscription socket on this thread. */
     zmq::socket_t zmq_input_subscriber(*this->zmq_context.get(), ZMQ_SUB);
@@ -91,6 +91,8 @@ void Framework::Loop()
     /* Framework: Loop. */
     for(;;)
     {
+        std::this_thread::yield();
+        
         /* ZMQ: Listen. */
         zmq::message_t zmq_message;
         if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
@@ -101,7 +103,6 @@ void Framework::Loop()
                 break;
             }
         }
-        std::this_thread::yield();
     }
     
     /*  Plugins: Wait for threads to finish. */

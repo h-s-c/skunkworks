@@ -4,11 +4,13 @@
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 #include <OIS/OIS.h>
 #include <zmq.hpp>
@@ -65,19 +67,39 @@ void InputPlugin::Loop()
         auto ois_keyboard = static_cast<OIS::Keyboard*>(ois_manager->createInputObject( OIS::OISKeyboard, false));
         
         /* Plugin: Loop. */
+        std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point newtime = std::chrono::high_resolution_clock::now();
+        float akkumulator = 0.0f;
+        
         for(;;)
         {
-            /* OIS: Handle input */
-            ois_keyboard->capture();
-            if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
+            /* Plugin: Force 250hz input polling*/
+            newtime = std::chrono::high_resolution_clock::now();
+            auto deltatime = std::chrono::duration<float, std::ratio<1>>(newtime - oldtime).count();
+            oldtime = newtime;  
+            akkumulator += deltatime;
+            
+            if( akkumulator > (1.0f / 250.0f))
             {
-                /* ZMQ: Send. */
-                std::string message = "STOP";
-                zmq::message_t zmq_message(message.size());
-                memcpy(zmq_message.data(), message.data(), message.size()); 
-                zmq_input_publisher.send(zmq_message);
-                std::cout<< "ZMQ: InputPlugin send STOP signal." << std::endl;
-                break;
+                deltatime = akkumulator;
+                akkumulator = 0.0f;
+            
+                /* OIS: Handle input */
+                ois_keyboard->capture();
+                if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
+                {
+                    /* ZMQ: Send. */
+                    std::string message = "STOP";
+                    zmq::message_t zmq_message(message.size());
+                    memcpy(zmq_message.data(), message.data(), message.size()); 
+                    zmq_input_publisher.send(zmq_message);
+                    std::cout<< "ZMQ: InputPlugin send STOP signal." << std::endl;
+                    break;
+                }
+            }
+            else
+            {
+                std::this_thread::yield();
             }
         }
     }

@@ -34,6 +34,8 @@ namespace base
             std::runtime_error e(SDL_GetError());
             throw e;
         }
+        
+        std::cout << "SDL version: " << (int)syswm_info.version.major << "." << (int)syswm_info.version.minor << "." << (int)syswm_info.version.patch << "." << std::endl; 
     
         std::array<std::string, 6> translation_array {{"Unknown", "Windows", "X11", "DirectFB", "Cocoa", "UIKit"}};
         std::cout << "SDL windowing system: " << translation_array[syswm_info.subsystem] << std::endl; 

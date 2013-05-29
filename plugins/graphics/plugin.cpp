@@ -110,8 +110,8 @@ void GraphicsPlugin::Loop()
     try
     {
         /* ZMQ: Wait a bit for other plugins to etablish sockets. */
-        std::chrono::milliseconds dura( 2000 );
-        std::this_thread::sleep_for( dura );
+        std::chrono::milliseconds duration( 100 );
+        std::this_thread::sleep_for( duration );
         
         /* ZMQ: Create input subscription socket on this thread. */
         zmq::socket_t zmq_input_subscriber (*this->zmq_context.get(), ZMQ_SUB);
@@ -129,6 +129,10 @@ void GraphicsPlugin::Loop()
         Render ogl_render;
         
         /* Plugin: Loop. */
+        std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point newtime = std::chrono::high_resolution_clock::now();
+        float akkumulator = 0.0f;
+        
         for(;;)
         {
             /* ZMQ: Listen. */
@@ -142,11 +146,27 @@ void GraphicsPlugin::Loop()
                 }
             }
             
-            /* OGL: Draw. */
-            ogl_render.Draw();
-        
-            /* EGL: Swap buffers. */
-            EGL_CheckError(eglSwapBuffers ( this->egl_display, this->egl_surface ));
+            /* Plugin: Force 120hz rendering*/
+            newtime = std::chrono::high_resolution_clock::now();
+            auto deltatime = std::chrono::duration<float, std::ratio<1>>(newtime - oldtime).count();
+            oldtime = newtime;  
+            akkumulator += deltatime;
+            
+            if( akkumulator > (1.0f / 120.0f))
+            {
+                deltatime = akkumulator;
+                akkumulator = 0.0f;
+            
+                /* OGL: Draw. */
+                ogl_render.Draw( /*deltatime*/);
+            
+                /* EGL: Swap buffers. */
+                EGL_CheckError(eglSwapBuffers ( this->egl_display, this->egl_surface ));
+            }
+            else
+            {
+                std::this_thread::yield();
+            }
         }
         
         /* EGL: Make context no longer current on this thread. */   

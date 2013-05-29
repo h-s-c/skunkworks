@@ -34,6 +34,9 @@ project (KhronosWrapEGL)
 project (KhronosLoadGL)
     set(KHRONOS_SOURCE    
         ${CMAKE_SOURCE_DIR}/external/khronos/GL/glstubs.c
+        ${CMAKE_SOURCE_DIR}/external/khronos/GLES/glesstubs.c
+        ${CMAKE_SOURCE_DIR}/external/khronos/GLES2/gles2stubs.c
+        ${CMAKE_SOURCE_DIR}/external/khronos/GLES3/gles3stubs.c
         )
     list(APPEND KHRONOS_SOURCE ${KHRONOS_SOURCE})
 
