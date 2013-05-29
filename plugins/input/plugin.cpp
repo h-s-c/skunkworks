@@ -47,7 +47,7 @@ void InputPlugin::Loop()
         /* OIS: Initialization.*/
         OIS::ParamList pl;
         std::ostringstream wnd; 
-        wnd << this->base_window.get()->GetNativeWindow();
+        wnd << this->base_window.get()->GetNativeWindow(0);
         pl.insert(std::make_pair(std::string("WINDOW"), wnd.str()));
         
         auto ois_manager = OIS::InputManager::createInputSystem(pl);

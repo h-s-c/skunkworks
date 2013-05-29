@@ -10,9 +10,11 @@ project (Base)
     list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
-    find_package(SDL2 REQUIRED)
-    list(APPEND BASE_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
-    list(APPEND BASE_LIBRARIES ${SDL2_LIBRARY})
+    if(NOT ANDROID) 
+        find_package(SDL2 REQUIRED)
+        list(APPEND BASE_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
+        list(APPEND BASE_LIBRARIES ${SDL2_LIBRARY})
+    endif()
     
     find_package(BFD)
     if (BFD_FOUND)
@@ -20,7 +22,7 @@ project (Base)
         list(APPEND BASE_INCLUDE_DIRS ${BFD_INCLUDE_DIR})
     endif ()
     
-    if (UNIX) 
+    if(UNIX) 
         list(APPEND BASE_LIBRARIES ${CMAKE_DL_LIBS})
     endif() 
     

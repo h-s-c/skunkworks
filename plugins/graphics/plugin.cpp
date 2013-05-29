@@ -74,7 +74,9 @@ GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<base::Window> base_window, 
     EGL_CheckError(eglChooseConfig(this->egl_display, egl_attributes, &egl_config, 1, &egl_num_configs));
 
     /* EGL: Link to base::Window. */
-    this->egl_surface = EGL_CheckError(eglCreateWindowSurface(this->egl_display, egl_config, this->base_window.get()->GetNativeWindow(), NULL));  
+    EGLint egl_format;
+    eglGetConfigAttrib(this->egl_display, egl_config, EGL_NATIVE_VISUAL_ID, &egl_format);
+    this->egl_surface = EGL_CheckError(eglCreateWindowSurface(this->egl_display, egl_config, this->base_window.get()->GetNativeWindow(egl_format), NULL));  
 
     /* EGL: Context creation. */
     this->egl_context = EGL_CheckError(eglCreateContext(this->egl_display, egl_config, EGL_NO_CONTEXT, egl_context_attributes));
