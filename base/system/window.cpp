@@ -1,27 +1,62 @@
 // Public Domain
 
 #include "base/system/window.hpp"
+#include "base/platform.hpp"
 
 #include <array>
 #include <cstdint>
 #include <iostream>
 #include <stdexcept>
 
-#if !defined(PLATFORM_OS_ANDROID)
+#include <EGL/egl.h>
+
+#if defined(PLATFORM_OS_LINUX)
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#elif defined(PLATFORM_OS_WINDOWS) 
+#include <Winuser.h>
+#elif defined(PLATFORM_OS_ANDROID)
+#include <android/native_window.h>
+#elif defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#else
-#include <android/native_window.h>
 #endif
 
 namespace base
 {
     Window::Window(std::uint32_t width, std::uint32_t height, bool fullscreen) : width(width), height(height), fullscreen(fullscreen), native_window(0), native_display(0)
     {
-#if !defined(PLATFORM_OS_ANDROID)
-        SDL_Init( SDL_INIT_EVERYTHING );
-        auto window = SDL_CreateWindow("Skunkworks", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN/*|SDL_WINDOW_RESIZABLE*/ );        
-        if (!window) 
+#if defined(PLATFORM_OS_LINUX)
+        if( !(this->native_display = XOpenDisplay(0)) )
+        {
+            std::runtime_error e("X11: Could not open display.");
+            throw e;
+        }
+
+        this->native_window = XCreateSimpleWindow(this->native_display, DefaultRootWindow(this->native_display), 0, 0, this->width, this->height, 0, 0, 0);
+        XMapWindow(this->native_display, this->native_window);
+        XSelectInput(this->native_display, this->native_window, StructureNotifyMask | SubstructureNotifyMask);
+        Atom wmProto = XInternAtom(this->native_display, "WM_PROTOCOLS", False);
+        Atom wmDelete = XInternAtom(this->native_display, "WM_DELETE_WINDOW", False);
+        XChangeProperty(this->native_display, this->native_window, wmProto, XA_ATOM, 32, 0, (const unsigned char*)&wmDelete, 1);
+        XEvent evtent;
+        do
+        {
+            XNextEvent(this->native_display, &evtent);
+        } while(evtent.type != MapNotify);
+        
+#elif defined(PLATFORM_OS_WINDOWS)
+        this->native_window = (EGLNativeWindowType)CreateWindowEx(0, TEXT("Skunkworks"), NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, this->width, this->height, NULL, NULL, GetModuleHandle(NULL), NULL);
+        this->native_display = (EGLNativeDisplayType)GetDC(this->native_window);
+        
+#elif defined(PLATFORM_OS_ANDROID)
+        this->native_display = EGL_DEFAULT_DISPLAY;
+        this->native_window = 0;
+        
+#elif defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS)  
+        SDL_Init( SDL_INIT_VIDEO );
+        this->sdl_window = (void*)SDL_CreateWindow("Skunkworks", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN/*|SDL_WINDOW_RESIZABLE*/ );        
+        if (!this->window) 
         {
             std::runtime_error e(SDL_GetError());
             throw e;
@@ -29,7 +64,7 @@ namespace base
 
         SDL_SysWMinfo syswm_info;
         SDL_VERSION( &syswm_info.version );
-        if (!SDL_GetWindowWMInfo( window, &syswm_info )) 
+        if (!SDL_GetWindowWMInfo( (SDL_Window*)this->sdl_window, &syswm_info )) 
         {
             std::runtime_error e(SDL_GetError());
             throw e;
@@ -39,13 +74,9 @@ namespace base
     
         std::array<std::string, 6> translation_array {{"Unknown", "Windows", "X11", "DirectFB", "Cocoa", "UIKit"}};
         std::cout << "SDL windowing system: " << translation_array[syswm_info.subsystem] << std::endl; 
-       
     #if defined(PLATFORM_OS_WINDOWS)
-        this->native_display = (EGLNativeDisplayType)GetDC(syswm_info.info.windows.window);
-        this->native_window = (EGLNativeWindowType)syswm_info.info.windows.window;
-    #elif defined(PLATFORM_OS_LINUX)
-        this->native_display = (EGLNativeDisplayType)syswm_info.info.x11.display;
-        this->native_window = (EGLNativeWindowType)syswm_info.info.x11.window;
+        this->native_display = EGL_DEFAULT_DISPLAY;
+        this->native_window = (EGLNativeWindowType)syswm_info.info.win.window;       
     #elif defined(PLATFORM_OS_MACOSX)
         this->native_display = EGL_DEFAULT_DISPLAY;
         this->native_window = (EGLNativeWindowType)syswm_info.info.cocoa.window;
@@ -53,15 +84,19 @@ namespace base
         this->native_display = EGL_DEFAULT_DISPLAY;
         this->native_window = (EGLNativeWindowType)syswm_info.info.uikit.window;
     #endif
-#else    
-        this->native_display = EGL_DEFAULT_DISPLAY;
-        this->native_window = 0;
 #endif
     }
 
     Window::~Window()
     {
-#if !defined(PLATFORM_OS_ANDROID)
+#if defined(PLATFORM_OS_LINUX)
+        XDestroyWindow(this->native_display, this->native_window);
+        XCloseDisplay(this->native_display);
+#elif defined(PLATFORM_OS_WINDOWS) 
+        ReleaseDC(this->native_window, this->native_display);
+        DestroyWindow(this->native_window);
+#elif defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS)
+        SDL_DestroyWindow((SDL_Window*)this->sdl_window); 
         SDL_Quit();
 #endif
     }

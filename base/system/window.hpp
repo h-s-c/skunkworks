@@ -14,6 +14,7 @@ namespace base
         Window(std::uint32_t width, std::uint32_t height, bool fullscreen);
         ~Window();
         
+        EGLNativeWindowType GetNativeWindow() {return native_window;}
         EGLNativeWindowType GetNativeWindow(EGLint format);
         EGLNativeDisplayType GetNativeDisplay() {return native_display;}
         std::uint32_t GetWidth() { return width;}
@@ -26,5 +27,6 @@ namespace base
         
         EGLNativeWindowType native_window;
         EGLNativeDisplayType native_display;
+        void* sdl_window;
     };
 }

@@ -12,7 +12,7 @@
 template <typename F>
 auto EGL_CheckError(F f) -> F
 {
-    if (!f) 
+    /*if (!f) 
     {
         std::string error = "";
         EGLint egl_error = eglGetError();
@@ -53,7 +53,7 @@ auto EGL_CheckError(F f) -> F
         }
         std::runtime_error e(error);
         throw e;
-    }
+    }*/
     return f;
 }
 

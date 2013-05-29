@@ -12,20 +12,27 @@ project (PluginGraphics)
     list(APPEND PLUGIN_LIBRARIES Base)
     
     if (UNIX)
-        if (APPLE)
-
+        find_package(X11 REQUIRED)
+        list(APPEND PLUGIN_LIBRARIES ${X11_LIBRARY})   
+        list(APPEND PLUGIN_INCLUDE_DIRS ${X11_INCLUDE_DIR})
+        find_package(EGL)
+        if(EGL_FOUND)
+            list(APPEND PLUGIN_LIBRARIES ${EGL_LIBRARY})   
+            list(APPEND PLUGIN_INCLUDE_DIRS ${EGL_INCLUDE_DIR})
         else()
-            find_package(X11 REQUIRED)
-            list(APPEND PLUGIN_LIBRARIES ${X11_LIBRARY})   
-            list(APPEND PLUGIN_INCLUDE_DIRS ${X11_INCLUDE_DIR})
+            list(APPEND PLUGIN_LIBRARIES KhronosWrapEGL)
         endif()
+    endif()
+    
+    if (WIN32)
+        list(APPEND PLUGIN_LIBRARIES KhronosWrapEGL)
     endif() 
 
     find_package(GL REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${GL_LIBRARY})   
     list(APPEND PLUGIN_INCLUDE_DIRS ${GL_INCLUDE_DIR})
     
-    list(APPEND PLUGIN_LIBRARIES KhronosWrapEGL)
+    ##list(APPEND PLUGIN_LIBRARIES KhronosWrapEGL)
     list(APPEND PLUGIN_LIBRARIES KhronosLoadGL)
     
     find_package(OGLPLUS REQUIRED)

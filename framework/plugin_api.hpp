@@ -19,6 +19,6 @@ extern "C"
 {    
     struct PluginFuncs 
     {
-        std::function<std::unique_ptr<Plugin>(const std::shared_ptr<base::Window>, const std::shared_ptr<zmq::context_t>)> InitPlugin;
+        std::function<std::unique_ptr<Plugin>(const std::shared_ptr<base::Window>&, const std::shared_ptr<zmq::context_t>&)> InitPlugin;
     };
 }
