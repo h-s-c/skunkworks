@@ -56,8 +56,7 @@ void InputPlugin::Loop()
         ois_manager->enableAddOnFactory(OIS::InputManager::AddOn_All);
 
         /* OIS: Print debugging information. */
-        std::cout << "OIS version: " << ois_manager->getVersionNumber() << std::endl;
-        std::cout << "OIS release name: " << ois_manager->getVersionName() << std::endl;
+        std::cout << "OIS verion: " << ois_manager->getVersionName() << std::endl;
         std::cout << "OIS manager: " << ois_manager->inputSystemName() << std::endl;
         std::cout << "OIS total keyboards: " << ois_manager->getNumberOfDevices(OIS::OISKeyboard) << std::endl;
         std::cout << "OIS total mice: " << ois_manager->getNumberOfDevices(OIS::OISMouse) << std::endl;
