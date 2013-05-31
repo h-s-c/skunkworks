@@ -1,6 +1,7 @@
 // Public Domain
 #include "plugins/graphics/plugin.hpp"
 #include "base/platform.hpp"
+#include "base/hash/stringhash.hpp"
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 #include "plugins/graphics/error.hpp"
@@ -129,7 +130,7 @@ void GraphicsPlugin::Loop()
             zmq::message_t zmq_message;
             if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (std::string("STOP") == std::string(static_cast<char*>(zmq_message.data()), zmq_message.size()))
+                if (base::StringHash("STOP") == base::StringHash(zmq_message.data()))
                 {
                     std::cout<< "ZMQ: GraphicsPlugin received STOP signal." << std::endl;
                     break;

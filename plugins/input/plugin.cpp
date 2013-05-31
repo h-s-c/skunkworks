@@ -1,6 +1,7 @@
 // Public Domain
 #include "plugins/input/plugin.hpp"
 #include "base/platform.hpp"
+#include "base/hash/stringhash.hpp"
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
@@ -73,9 +74,9 @@ void InputPlugin::Loop()
             if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
             {
                 /* ZMQ: Send. */
-                std::string message = "STOP";
-                zmq::message_t zmq_message(message.size());
-                memcpy(zmq_message.data(), message.data(), message.size()); 
+                base::StringHash message("STOP");
+                zmq::message_t zmq_message(message.Size());
+                memcpy(zmq_message.data(), message.Get(), message.Size()); 
                 zmq_input_publisher.send(zmq_message);
                 std::cout<< "ZMQ: InputPlugin send STOP signal." << std::endl;
                 break;

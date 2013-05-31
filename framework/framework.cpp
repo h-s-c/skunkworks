@@ -2,6 +2,7 @@
 
 #include "framework/framework.hpp"
 #include "framework/plugin_api.hpp"
+#include "base/hash/stringhash.hpp"
 #include "base/system/info.hpp"
 #include "base/system/library.hpp"
 #include "base/system/window.hpp"
@@ -97,7 +98,7 @@ void Framework::Loop()
         zmq::message_t zmq_message;
         if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
         {
-            if (std::string("STOP") == std::string(static_cast<char*>(zmq_message.data()), zmq_message.size()))
+            if (base::StringHash("STOP") == base::StringHash(zmq_message.data()))
             {
                 std::cout<< "ZMQ: Framework received STOP signal." << std::endl;
                 break;
