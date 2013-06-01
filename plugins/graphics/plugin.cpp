@@ -121,7 +121,6 @@ void GraphicsPlugin::Loop()
         
         /* Plugin: Loop. */
         std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
-        std::chrono::high_resolution_clock::time_point newtime = std::chrono::high_resolution_clock::now();
         float akkumulator = 0.0f;
         
         for(;;)
@@ -138,14 +137,13 @@ void GraphicsPlugin::Loop()
             }
             
             /* Plugin: Force 120hz rendering*/
-            newtime = std::chrono::high_resolution_clock::now();
-            auto deltatime = std::chrono::duration<float, std::ratio<1>>(newtime - oldtime).count();
+            auto newtime = std::chrono::high_resolution_clock::now();          
+            auto deltatime = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1000000>>>(newtime - oldtime).count();
             oldtime = newtime;  
             akkumulator += deltatime;
             
-            if( akkumulator > (1.0f / 120.0f))
+            if( akkumulator > (1.0f / 120000.0f))
             {
-                deltatime = akkumulator;
                 akkumulator = 0.0f;
             
                 /* OGL: Draw. */
