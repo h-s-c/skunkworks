@@ -21,7 +21,7 @@ int RunFramework()
     try
     {
         Framework framework;
-        framework.Loop();
+        framework();
         return 0;
     }
     /* General: Catches exceptions from the mainthread as well as all propagated exceptions from other threads*/
@@ -68,7 +68,7 @@ Framework::~Framework()
     }
 }
 
-void Framework::Loop()
+void Framework::operator()()
 {   
     /* Plugins: Start in their own thread. */
     for ( auto& plugin : this->plugins)

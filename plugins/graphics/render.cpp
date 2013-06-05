@@ -2,8 +2,10 @@
 
 #include "plugins/graphics/render.hpp"
 
-#define GLCOREARB_PROTOTYPES
-#include <GL/glcorearb.h>
+#include <oglplus/gl.hpp>
+/* X11 sucks */
+#undef Expose
+#undef None
 #include <oglplus/all.hpp>
 
 Render::Render()
@@ -12,7 +14,7 @@ Render::Render()
 
     // Set the vertex shader source
     vs.Source(" \
-        #version 330\n \
+        #version 140\n \
         in vec3 Position; \
         void main(void) \
         { \
@@ -24,7 +26,7 @@ Render::Render()
 
     // set the fragment shader source
     fs.Source(" \
-        #version 330\n \
+        #version 140\n \
         out vec4 fragColor; \
         void main(void) \
         { \
@@ -66,7 +68,7 @@ Render::Render()
     gl.ClearDepth(1.0f);
 }
 
-void Render::Draw()
+void Render::Draw(double deltatime)
 {
     using namespace oglplus;
 

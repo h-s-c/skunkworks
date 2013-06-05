@@ -1,7 +1,6 @@
 // Public Domain
 
-#define GLCOREARB_PROTOTYPES
-#include <GL/glcorearb.h>
+#include <oglplus/gl.hpp>
 /* X11 sucks */
 #undef Expose
 #undef None
@@ -11,7 +10,7 @@ class Render
 {
   public:
     Render();
-    void Draw();
+    void Draw(double deltatime);
     
   private:
     oglplus::Context gl;

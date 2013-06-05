@@ -6,7 +6,6 @@
 
 #include <memory>
 
-#include <EGL/egl.h>
 #include <zmq.hpp>
 
 class GraphicsPlugin : public Plugin

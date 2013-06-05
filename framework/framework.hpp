@@ -17,7 +17,7 @@ class Framework
   public:
     Framework();
     ~Framework();  
-    void Loop();
+    void operator()();
     
   private:   
     void LoadPlugin(std::string name);
