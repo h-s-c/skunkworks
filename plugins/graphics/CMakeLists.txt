@@ -4,6 +4,7 @@ project (PluginGraphics)
     set( PLUGIN_SOURCE
         ${CMAKE_SOURCE_DIR}/plugins/graphics/plugin.cpp
         ${CMAKE_SOURCE_DIR}/plugins/graphics/render.cpp
+        ${CMAKE_SOURCE_DIR}/plugins/graphics/sprite.cpp
     )
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
@@ -31,6 +32,11 @@ project (PluginGraphics)
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
     list(APPEND PLUGIN_INCLUDE_DIRS ${ZMQ_INCLUDE_DIR})
+    
+    
+    find_package(PNG REQUIRED)
+    list(APPEND PLUGIN_LIBRARIES ${PNG_LIBRARY})   
+    list(APPEND PLUGIN_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
     
     include_directories(${PLUGIN_INCLUDE_DIRS})
     add_library(PluginGraphics SHARED ${PLUGIN_SOURCE})

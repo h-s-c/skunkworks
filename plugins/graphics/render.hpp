@@ -1,10 +1,6 @@
 // Public Domain
 
-#include <oglplus/gl.hpp>
-/* X11 sucks */
-#undef Expose
-#undef None
-#include <oglplus/all.hpp>
+#include "plugins/graphics/sprite.hpp"
 
 class Render
 {
@@ -13,10 +9,5 @@ class Render
     void Draw(double deltatime);
     
   private:
-    oglplus::Context gl;
-    oglplus::VertexShader vs;
-    oglplus::FragmentShader fs;
-    oglplus::Program prog;
-    oglplus::VertexArray triangle;
-    oglplus::Buffer verts;
+    std::vector<Sprite> sprites;
 };

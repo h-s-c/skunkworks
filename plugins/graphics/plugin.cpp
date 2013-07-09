@@ -4,7 +4,6 @@
 #include "base/hash/stringhash.hpp"
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
-#include "plugins/graphics/error.hpp"
 #include "plugins/graphics/render.hpp"
 
 #include <chrono>
@@ -74,7 +73,7 @@ void GraphicsPlugin::Loop()
                 .Add(eglplus::ConfigAttrib::StencilSize, 8)
                 .Add(eglplus::ColorBufferType::RGBBuffer)
                 .Add(eglplus::RenderableTypeBit::OpenGL)
-                .Add(eglplus::SurfaceTypeBit::Pbuffer)
+                .Add(eglplus::SurfaceTypeBit::Window)
                 .Finish()
         );
 
@@ -94,10 +93,10 @@ void GraphicsPlugin::Loop()
             display,
             config,
             eglplus::ContextAttribs()
-                .Add(eglplus::ContextAttrib::ClientVersion, 3)
+                /*.Add(eglplus::ContextAttrib::ClientVersion, 3)
                 .Add(eglplus::ContextAttrib::MinorVersion, 1)
                 .Add(eglplus::OpenGLProfileBit::Core)
-                .Add(eglplus::OpenGLResetNotificationStrategy::NoResetNotification)
+                .Add(eglplus::OpenGLResetNotificationStrategy::NoResetNotification)*/
                 .Finish()
         );
 
