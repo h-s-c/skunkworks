@@ -1,4 +1,6 @@
 #pragma once
+#include "base/parser/json.hpp"
+
 #include <cfloat>
 #include <cstdint>
 #include <string>
@@ -14,41 +16,45 @@ enum SpriteState
 {
     IdleRight = 0,
     IdleLeft,
-    IdleUp,
-    IdleDown,
-    MoveRight,
-    MoveLeft,
-    MoveUp,
-    MoveDown,
+    WalkRight,
+    WalkLeft,
 };
 
 
 class Sprite
 {
   public:
-    /* Construct sprite from image*/
-    Sprite(std::string image_path);
+    /* Construct sprite from json desc*/
+    Sprite(std::string sprite_path);
     
-    void SetPosition(std::pair<std::int64_t, std::int64_t> position){};
-    void SetScale(std::int64_t scale){};
-    void SetState(SpriteState sprite_state){};
+    void SetPosition(std::pair<std::int32_t, std::int32_t> position);
+    void SetScale(float scale);
+    void SetState(SpriteState sprite_state);
     void Draw(double deltatime);
 
   private:
-    /* Position x,y of in pixels. */
-    std::pair<std::int64_t, std::int64_t> position;
-    
-    /* Scale in pixels. */
-    std::pair<std::int64_t, std::int64_t> scale;
+    void Animate();
+    float akkumulator;
   
-    /* Bitmap name. */
-    std::string bitmap_name;
+    /* Position x,y of in pixels. */
+    std::pair<std::int32_t, std::int32_t> position;
+    bool position_changed;
+    
+    /* Scale (1.0f = original; 0.5 half;) */
+    float scale;
+    bool scale_changed;
+    
+    /* json object */
+    std::vector<base::json::Object> json_objects;
+    base::json::Object current_json_object;
     
     /* Sprite sheet */
-    oglplus::Texture sprite_sheet;
+    std::vector<oglplus::Texture> sprite_sheets;
     
     /* Sprite state */
     SpriteState sprite_state;
+    
+    std::int32_t frame_number;
     
     /* Wrapper around the current OpenGL context */
     oglplus::Context gl;

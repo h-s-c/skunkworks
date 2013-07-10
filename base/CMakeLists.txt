@@ -5,6 +5,7 @@ project (Base)
         ${CMAKE_SOURCE_DIR}/base/system/library.cpp
         ${CMAKE_SOURCE_DIR}/base/system/stacktrace.cpp
         ${CMAKE_SOURCE_DIR}/base/system/window.cpp
+        ${CMAKE_SOURCE_DIR}/base/parser/json.cpp
         )
     list(APPEND BASE_SOURCE ${BASE_SOURCE})
     list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})

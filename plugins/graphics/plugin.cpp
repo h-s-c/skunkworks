@@ -135,11 +135,13 @@ void GraphicsPlugin::Loop()
             
             /* Plugin: Force 120hz rendering*/
             auto newtime = std::chrono::high_resolution_clock::now();          
-            auto deltatime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 1000000>>>(newtime - oldtime).count();
+            auto deltatime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 120000>>>(newtime - oldtime).count();
             oldtime = newtime;  
             akkumulator += deltatime;
             
-            if( akkumulator > (1.0f / 120000.0f))
+            //std::cout << "FPS:" << 120000/akkumulator << std::endl;
+            
+            if( akkumulator >= 1000)
             {
                 akkumulator = 0.0f;
             
