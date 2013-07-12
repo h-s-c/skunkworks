@@ -1,9 +1,11 @@
 #include "plugins/graphics/sprite.hpp"
+#include "plugins/graphics/render.hpp"
 #include "base/parser/json.hpp"
 
 #include <cfloat>
 #include <cstdint>
 #include <string>
+#include <memory>
 #include <utility>
 
 #include <oglplus/gl.hpp>
@@ -15,12 +17,10 @@
 #include <oglplus/bound/texture.hpp>
 #include <oglplus/opt/resources.hpp>
 
-Sprite::Sprite(std::string sprite_path) : 
-    position_changed(false), scale_changed(false),
+Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path) : 
     frame_number(0),
     vs(oglplus::ShaderType::Vertex), 
-    fs(oglplus::ShaderType::Fragment), 
-    projection_matrix(prog, "ProjectionMatrix")
+    fs(oglplus::ShaderType::Fragment)
 {
     /* parse json descs */
     
@@ -50,14 +50,13 @@ Sprite::Sprite(std::string sprite_path) :
     vs.Source(
         "#version 120\n"
         "uniform mat4 ProjectionMatrix;"
-        "uniform vec2 Transformation;"
         "attribute vec2 Position;"
         "attribute vec2 TexCoord;"
         "varying vec2 vertTexCoord;"
         "void main(void)"
         "{"
         "   vertTexCoord = TexCoord;"
-        "   gl_Position =  ProjectionMatrix *  vec4( Position*Transformation, 0.0, 1.0 );"
+        "   gl_Position =  ProjectionMatrix *  vec4( Position, 0.0, 1.0 );"
         "}"
     );
     // compile it
@@ -85,41 +84,23 @@ Sprite::Sprite(std::string sprite_path) :
     /* bind the VAO for the rectangle */
     this->rectangle.Bind();
     
-    /* initial vertex positions */
-    GLfloat rectangle_verts[] = {
-        1.0f,  1.0f,
-        -1.0f, 1.0f,
-        -1.0f, -1.0f,
-        1.0f,  -1.0f,
-    };
-    /* bind the VBO for the rectangle vertices */
-    this->verts.Bind(oglplus::Buffer::Target::Array);
-    /* upload the data */
-    oglplus::Buffer::Data(oglplus::Buffer::Target::Array, 8, rectangle_verts);
-    
-    // enable vertex attribs array for the vertices
-    {
-        oglplus::VertexAttribArray vert_attr(prog, "Position");
-        vert_attr.Setup<oglplus::Vec2f>().Enable();
-    }
-    
     GLushort rectangle_elements[] = {
         0, 1, 2,
         2, 3, 0,
     };
     
     // bind the VBO for the indices
-    indices.Bind(oglplus::Buffer::Target::ElementArray);
+    this->indices.Bind(oglplus::Buffer::Target::ElementArray);
     // upload them
     oglplus::Buffer::Data(oglplus::Buffer::Target::ElementArray, rectangle_elements);
     
     // setup the textures
-    for( auto i=0; i < this->json_objects.size(); i++)
-    {
-        oglplus::Texture::Active(i);
+    for( std::uint32_t i=0; i < this->json_objects.size(); i++)
+    {        
+        auto texture_slot = texturemanager->GetEmptySlot();
+        oglplus::Texture::Active(texture_slot);
         oglplus::Texture texture;
-        auto bound_tex = oglplus::Bind(texture, oglplus::Texture::Target::_2D);
-        sprite_sheets.push_back(std::move(texture));
+        auto bound_tex = oglplus::Bind(texture, oglplus::Texture::Target::_2D);        
         
         std::ifstream image_stream(sprite_path + "/" + this->json_objects.at(i).get<base::json::Object>("meta").get<base::json::String>("image"));
         
@@ -128,32 +109,28 @@ Sprite::Sprite(std::string sprite_path) :
         bound_tex.MinFilter(oglplus::TextureMinFilter::LinearMipmapLinear);
         bound_tex.MagFilter(oglplus::TextureMagFilter::Linear);
         bound_tex.WrapS(oglplus::TextureWrap::ClampToEdge);
-        bound_tex.WrapT(oglplus::TextureWrap::ClampToEdge);
+        bound_tex.WrapT(oglplus::TextureWrap::ClampToEdge);  
+        
+        textures.push_back(std::move(texture));
+        texture_slots.push_back(texture_slot);
     }
     
-    /* set the projection matrix */
-    projection_matrix.Set(
+    oglplus::LazyUniform<oglplus::Mat4f> (this->prog, "ProjectionMatrix").Set(
         oglplus::CamMatrixf::OrthoX(
             640.0f,
             4.0f/3.0f,
-            1.0f, 0.0f)
+            1, -1)
     );
-    
-    gl.ClearDepth(1.0f);
 }
 
 void Sprite::SetPosition(std::pair<std::int32_t, std::int32_t> position)
 {
-    /* dirty flag */
-    this->position_changed = true;
     /* set position values */
     this->position = position;
 }
 
 void Sprite::SetScale(float scale)
 {
-    /* dirty flag */
-    this->scale_changed = true;
     /* set scale values */
     if(scale >= 0.1f)
     {
@@ -169,38 +146,18 @@ void Sprite::SetState(SpriteState sprite_state)
     
     if( this->sprite_state == IdleRight || this->sprite_state == IdleLeft)
     {
-        (prog/"TexUnit") = 0;
         this->current_json_object = this->json_objects.at(0);
+        this->current_texture_slot = this->texture_slots.at(0);
     }
     else if( this->sprite_state == WalkRight || this->sprite_state == WalkLeft)
     {
-        (prog/"TexUnit") = 1;
         this->current_json_object = this->json_objects.at(1);
+        this->current_texture_slot = this->texture_slots.at(1);
     }
 }
 
-void Sprite::Draw(double deltatime)
-{    
-    /* animate sprite */
-    akkumulator += deltatime;
-    
-    /* 60 frames / second */
-    if( akkumulator >= 2000)
-    {
-        akkumulator = 0.0f;
-    
-       Animate();
-       frame_number++;
-    }
-    
-    gl.Clear().ColorBuffer().DepthBuffer();
-
-    gl.DrawElements(oglplus::PrimitiveType::Triangles, 6, (GLushort*)0);
-}
-
-void Sprite::Animate()
+void Sprite::Update()
 {
-    /* animate sprite */
     if(frame_number == this->current_json_object.get<base::json::Array>("frames").size())
     {
         /* repeat */
@@ -213,20 +170,32 @@ void Sprite::Animate()
     auto frame_height = frame.get<base::json::Number>("h");
     auto frame_x = frame.get<base::json::Number>("x");
     auto frame_y = frame.get<base::json::Number>("y");
+      
+    /* determine vertex positions */
+    GLfloat rectangle_verts[] = {
+        float(((frame_width/2)*this->scale)+this->position.first),   float(((frame_height/2)*this->scale)+this->position.second),
+        float(-(((frame_width/2)*this->scale)-this->position.first)),   float(((frame_height/2)*this->scale)+this->position.second),
+        float(-(((frame_width/2)*this->scale)-this->position.first)),   float(-(((frame_height/2)*this->scale)-this->position.second)),
+        float(((frame_width/2)*this->scale)+this->position.first),   float(-(((frame_height/2)*this->scale)-this->position.second)),
+    };
     
-    if(this->scale_changed || this->position_changed)
-    {        
-        /* set the transformation vector */
-        oglplus::Uniform<oglplus::Vec2f>(this->prog, "Transformation").Set(
-            float(((frame_width/2)*this->scale)+this->position.first),  
-            float(((frame_height/2)*this->scale)+this->position.second)
-        );
-        
-        /* reset dirty flag */
-        this->scale_changed = false;
-        this->position_changed = false;
+    /* disable vertex attribs array for the vertices */
+    {
+        oglplus::VertexAttribArray vert_attr(prog, "Position");
+        vert_attr.Setup<oglplus::Vec2f>().Disable();
     }
     
+    /* bind the VBO for the rectangle vertices */
+    this->verts.Bind(oglplus::Buffer::Target::Array);
+    /* upload the data */
+    oglplus::Buffer::Data(oglplus::Buffer::Target::Array, 8, rectangle_verts);
+    
+    /* enable vertex attribs array for the vertices */
+    {
+        oglplus::VertexAttribArray vert_attr(prog, "Position");
+        vert_attr.Setup<oglplus::Vec2f>().Enable();
+    }
+
     std::vector<GLfloat> rectangle_texcoords;
     if( this->sprite_state == IdleRight || this->sprite_state == WalkRight)
     {
@@ -249,7 +218,7 @@ void Sprite::Animate()
         };
     }
     
-    // disable the vertex attribs array for the texcoords
+    /* disable the vertex attribs array for the texcoords */
     {
         oglplus::VertexAttribArray vert_attr(prog, "TexCoord");
         vert_attr.Setup<oglplus::Vec2f>().Disable();
@@ -260,9 +229,13 @@ void Sprite::Animate()
     /* upload the data */
     oglplus::Buffer::Data(oglplus::Buffer::Target::Array, rectangle_texcoords);
     
-    // enable the vertex attribs array for the texcoords
+    /* enable the vertex attribs array for the texcoords */
     {
         oglplus::VertexAttribArray vert_attr(prog, "TexCoord");
         vert_attr.Setup<oglplus::Vec2f>().Enable();
     }
+    
+    oglplus::UniformSampler(this->prog, "TexUnit").Set(this->current_texture_slot);
+    
+    this->frame_number++;
 }

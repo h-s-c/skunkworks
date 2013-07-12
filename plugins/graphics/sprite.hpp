@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <cstdint>
 #include <string>
+#include <memory>
 #include <utility>
 
 #include <oglplus/gl.hpp>
@@ -11,6 +12,9 @@
 #undef Expose
 #undef None
 #include <oglplus/all.hpp>
+#include <oglplus/bound/texture.hpp>
+
+class TextureManager;
 
 enum SpriteState
 {
@@ -25,36 +29,34 @@ class Sprite
 {
   public:
     /* Construct sprite from json desc*/
-    Sprite(std::string sprite_path);
+    Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path);
     
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
     void SetState(SpriteState sprite_state);
-    void Draw(double deltatime);
+    void Update();
 
   private:
-    void Animate();
-    float akkumulator;
   
     /* Position x,y of in pixels. */
     std::pair<std::int32_t, std::int32_t> position;
-    bool position_changed;
     
     /* Scale (1.0f = original; 0.5 half;) */
     float scale;
-    bool scale_changed;
     
     /* json object */
     std::vector<base::json::Object> json_objects;
     base::json::Object current_json_object;
     
-    /* Sprite sheet */
-    std::vector<oglplus::Texture> sprite_sheets;
+    /* Texture slots */
+    std::vector<oglplus::Texture> textures;
+    std::vector<std::uint32_t> texture_slots;
+    std::uint32_t current_texture_slot;
     
     /* Sprite state */
     SpriteState sprite_state;
-    
-    std::int32_t frame_number;
+
+    std::uint32_t frame_number;
     
     /* Wrapper around the current OpenGL context */
     oglplus::Context gl;
@@ -72,7 +74,4 @@ class Sprite
     oglplus::Buffer verts;
     oglplus::Buffer indices;
     oglplus::Buffer texcoords;
-    
-    /* Uniforms */
-    oglplus::LazyUniform<oglplus::Mat4f> projection_matrix;
 };
