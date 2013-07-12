@@ -74,7 +74,7 @@ void GraphicsPlugin::Loop()
                 .Add(eglplus::ColorBufferType::RGBBuffer)
                 .Add(eglplus::RenderableTypeBit::OpenGL)
                 .Add(eglplus::SurfaceTypeBit::Window)
-                .Finish()
+                .Get()
         );
 
         eglplus::Config config = configs.First();
@@ -84,7 +84,7 @@ void GraphicsPlugin::Loop()
             display,
             config,
             this->base_window.get()->GetNativeWindow(0),
-            eglplus::SurfaceAttribs().Finish()
+            eglplus::SurfaceAttribs().Get()
         );
 
         /* EGL: Context creation. */
@@ -93,11 +93,14 @@ void GraphicsPlugin::Loop()
             display,
             config,
             eglplus::ContextAttribs()
-                /*.Add(eglplus::ContextAttrib::ClientVersion, 3)
+                .Add(eglplus::ContextAttrib::ClientVersion, 3)
                 .Add(eglplus::ContextAttrib::MinorVersion, 1)
+                .Add(eglplus::ContextFlag::OpenGLRobustAccess)
+                .Add(eglplus::ContextFlag::OpenGLDebug)
+                .Add(eglplus::ContextFlag::OpenGLForwardCompatible)
                 .Add(eglplus::OpenGLProfileBit::Core)
-                .Add(eglplus::OpenGLResetNotificationStrategy::NoResetNotification)*/
-                .Finish()
+                .Add(eglplus::OpenGLResetNotificationStrategy::NoResetNotification)
+                .Get()
         );
 
         /* EGL: Make context current on this thread. */

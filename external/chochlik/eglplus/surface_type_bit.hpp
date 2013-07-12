@@ -1,5 +1,5 @@
 /**
- *  @file eglplus/surface_type.hpp
+ *  @file eglplus/surface_type_bit.hpp
  *  @brief EGL surface type enumeration
  *
  *  @author Matus Chochlik
@@ -14,6 +14,7 @@
 #define EGLPLUS_SURFACE_TYPE_1303292057_HPP
 
 #include <eglplus/enumerations.hpp>
+#include <eglplus/bitfield.hpp>
 
 namespace eglplus {
 

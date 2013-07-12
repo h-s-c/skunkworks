@@ -16,6 +16,8 @@
 #include <eglplus/eglfunc.hpp>
 #include <eglplus/error.hpp>
 #include <eglplus/display.hpp>
+#include <eglplus/configs.hpp>
+#include <eglplus/surface.hpp>
 #include <eglplus/friend_of.hpp>
 #include <eglplus/attrib_list.hpp>
 #include <eglplus/context_attrib.hpp>
@@ -29,6 +31,8 @@ namespace eglplus {
 struct ContextValueTypeToContextAttrib
 {
 #ifdef EGL_CONTEXT_FLAGS_KHR
+	static ContextFlag
+	ValueType(std::integral_constant<int, 0>);
 	ContextAttrib operator()(ContextFlag) const
 	{
 		return ContextAttrib::Flags;
@@ -36,6 +40,8 @@ struct ContextValueTypeToContextAttrib
 #endif
 
 #ifdef EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR
+	static OpenGLProfileBit
+	ValueType(std::integral_constant<int, 1>);
 	ContextAttrib operator()(OpenGLProfileBit) const
 	{
 		return ContextAttrib::OpenGLProfileMask;
@@ -43,19 +49,30 @@ struct ContextValueTypeToContextAttrib
 #endif
 
 #ifdef EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_KHR
+	static OpenGLResetNotificationStrategy
+	ValueType(std::integral_constant<int, 2>);
 	ContextAttrib operator()(OpenGLResetNotificationStrategy) const
 	{
 		return ContextAttrib::OpenGLResetNotificationStrategy;
 	}
 #endif
+
+	static std::integral_constant<int, 2> MaxValueType(void);
 };
 
 
 /// Attribute list for context attributes
 typedef AttributeList<
 	ContextAttrib,
-	ContextValueTypeToContextAttrib
+	ContextValueTypeToContextAttrib,
+	AttributeListTraits
 > ContextAttribs;
+
+/// Finished list of context attribute values
+typedef FinishedAttributeList<
+	ContextAttrib,
+	AttributeListTraits
+> FinishedContextAttribs;
 
 /// Wrapper around EGLContext
 class Context
@@ -136,7 +153,7 @@ public:
 	Context(
 		const Display& display,
 		const Config& config,
-		const ContextAttribs& attribs
+		const FinishedContextAttribs& attribs
 	): _display(display)
 	 , _handle(_init(display, config, EGL_NO_CONTEXT, attribs.Get()))
 	{ }
@@ -150,7 +167,7 @@ public:
 		const Display& display,
 		const Config& config,
 		const Context& shared_context,
-		const ContextAttribs& attribs
+		const FinishedContextAttribs& attribs
 	): _display(display)
 	 , _handle(_init(display, config, shared_context._handle, attribs.Get()))
 	{ }

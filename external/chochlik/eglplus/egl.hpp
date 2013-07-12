@@ -14,5 +14,6 @@
 #define EGLPLUS_EGL_1306011141_HPP
 
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 #endif // include guard

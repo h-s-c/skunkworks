@@ -16,6 +16,7 @@
 #include <eglplus/eglfunc.hpp>
 #include <eglplus/error.hpp>
 #include <eglplus/display.hpp>
+#include <eglplus/configs.hpp>
 #include <eglplus/friend_of.hpp>
 #include <eglplus/attrib_list.hpp>
 #include <eglplus/surface_attrib.hpp>
@@ -32,47 +33,70 @@ namespace eglplus {
 
 struct SurfaceValueTypeToSurfaceAttrib
 {
+	static RenderBuffer
+	ValueType(std::integral_constant<int, 0>);
 	SurfaceAttrib operator()(RenderBuffer) const
 	{
 		return SurfaceAttrib::RenderBuffer;
 	}
 
+	static MultisampleResolve
+	ValueType(std::integral_constant<int, 1>);
 	SurfaceAttrib operator()(MultisampleResolve) const
 	{
 		return SurfaceAttrib::MultisampleResolve;
 	}
 
+	static SwapBehavior
+	ValueType(std::integral_constant<int, 2>);
 	SurfaceAttrib operator()(SwapBehavior) const
 	{
 		return SurfaceAttrib::SwapBehavior;
 	}
 
+	static TextureTarget
+	ValueType(std::integral_constant<int, 3>);
 	SurfaceAttrib operator()(TextureTarget) const
 	{
 		return SurfaceAttrib::TextureTarget;
 	}
 
+	static TextureFormat
+	ValueType(std::integral_constant<int, 4>);
 	SurfaceAttrib operator()(TextureFormat) const
 	{
 		return SurfaceAttrib::TextureFormat;
 	}
 
+	static VGColorspace
+	ValueType(std::integral_constant<int, 5>);
 	SurfaceAttrib operator()(VGColorspace) const
 	{
 		return SurfaceAttrib::VGColorspace;
 	}
 
+	static VGAlphaFormat
+	ValueType(std::integral_constant<int, 6>);
 	SurfaceAttrib operator()(VGAlphaFormat) const
 	{
 		return SurfaceAttrib::VGAlphaFormat;
 	}
+
+	static std::integral_constant<int, 6> MaxValueType(void);
 };
 
 /// Attribute list for surface attributes
 typedef AttributeList<
 	SurfaceAttrib,
-	SurfaceValueTypeToSurfaceAttrib
+	SurfaceValueTypeToSurfaceAttrib,
+	AttributeListTraits
 > SurfaceAttribs;
+
+/// Finished list of surface attribute values
+typedef FinishedAttributeList<
+	SurfaceAttrib,
+	AttributeListTraits
+> FinishedSurfaceAttribs;
 
 /// Wrapper for EGLSurfaces
 class Surface
@@ -94,7 +118,7 @@ private:
 		_Pbuffer,
 		const Display& display,
 		const Config& config,
-		const SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	)
 	{
 		::EGLSurface result = EGLPLUS_EGLFUNC(CreatePbufferSurface)(
@@ -110,7 +134,7 @@ private:
 		_Pbuffer sel,
 		const Display& display,
 		const Config& config,
-		const SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	): _display(display)
 	 , _handle(_init(sel, _display, config, attribs))
 	{ }
@@ -122,7 +146,7 @@ private:
 		const Display& display,
 		const Config& config,
 		EGLNativePixmapType pixmap,
-		const SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	)
 	{
 		::EGLSurface result = EGLPLUS_EGLFUNC(CreatePixmapSurface)(
@@ -140,7 +164,7 @@ private:
 		const Display& display,
 		const Config& config,
 		EGLNativePixmapType pixmap,
-		const SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	): _display(display)
 	 , _handle(_init(sel, _display, config, pixmap, attribs))
 	{ }
@@ -152,7 +176,7 @@ private:
 		const Display& display,
 		const Config& config,
 		EGLNativeWindowType window,
-		const SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	)
 	{
 		::EGLSurface result = EGLPLUS_EGLFUNC(CreateWindowSurface)(
@@ -170,7 +194,7 @@ private:
 		const Display& display,
 		const Config& config,
 		EGLNativeWindowType window,
-		const SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	): _display(display)
 	 , _handle(_init(sel, _display, config, window, attribs))
 	{ }
@@ -208,33 +232,14 @@ public:
 	static Surface Pbuffer(
 		const Display& display,
 		const Config& config,
-		SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	)
 	{
 		return Surface(
 			_Pbuffer(),
 			display,
 			config,
-			attribs.Finish()
-		);
-	}
-
-	/// Creates a Pbuffer surface
-	/**
-	 *  @eglsymbols
-	 *  @eglfunref{CreatePbufferSurface}
-	 */
-	static Surface Pbuffer(
-		const Display& display,
-		const Config& config,
-		SurfaceAttribs&& attribs
-	)
-	{
-		return Surface(
-			_Pbuffer(),
-			display,
-			config,
-			attribs.Finish()
+			attribs
 		);
 	}
 
@@ -247,7 +252,7 @@ public:
 		const Display& display,
 		const Config& config,
 		EGLNativePixmapType pixmap,
-		SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	)
 	{
 		return Surface(
@@ -255,28 +260,7 @@ public:
 			display,
 			config,
 			pixmap,
-			attribs.Finish()
-		);
-	}
-
-	/// Creates a Pbuffer surface
-	/**
-	 *  @eglsymbols
-	 *  @eglfunref{CreatePixmapSurface}
-	 */
-	static Surface Pixmap(
-		const Display& display,
-		const Config& config,
-		EGLNativePixmapType pixmap,
-		SurfaceAttribs&& attribs
-	)
-	{
-		return Surface(
-			_Pixmap(),
-			display,
-			config,
-			pixmap,
-			attribs.Finish()
+			attribs
 		);
 	}
 
@@ -289,7 +273,7 @@ public:
 		const Display& display,
 		const Config& config,
 		EGLNativeWindowType window,
-		SurfaceAttribs& attribs
+		const FinishedSurfaceAttribs& attribs
 	)
 	{
 		return Surface(
@@ -297,28 +281,7 @@ public:
 			display,
 			config,
 			window,
-			attribs.Finish()
-		);
-	}
-
-	/// Creates a Pbuffer surface
-	/**
-	 *  @eglsymbols
-	 *  @eglfunref{CreateWindowSurface}
-	 */
-	static Surface Window(
-		const Display& display,
-		const Config& config,
-		EGLNativeWindowType window,
-		SurfaceAttribs&& attribs
-	)
-	{
-		return Surface(
-			_Window(),
-			display,
-			config,
-			window,
-			attribs.Finish()
+			attribs
 		);
 	}
 

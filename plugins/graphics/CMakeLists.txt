@@ -11,13 +11,6 @@ project (PluginGraphics)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
     list(APPEND PLUGIN_LIBRARIES Base)
-    
-    if (UNIX)
-        #optional: mesa egl
-        #find_package(EGL REQUIRED)
-        #list(APPEND PLUGIN_LIBRARIES ${EGL_LIBRARY})   
-        #list(APPEND PLUGIN_INCLUDE_DIRS ${EGL_INCLUDE_DIR})
-    endif()
 
     find_package(GL REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${GL_LIBRARY})   
@@ -26,6 +19,8 @@ project (PluginGraphics)
     list(APPEND PLUGIN_LIBRARIES GL)
     list(APPEND PLUGIN_LIBRARIES EGL)
     
+    find_package(EGLPLUS REQUIRED)
+    list(APPEND PLUGIN_INCLUDE_DIRS ${EGLPLUS_INCLUDE_DIR})
     find_package(OGLPLUS REQUIRED)
     list(APPEND PLUGIN_INCLUDE_DIRS ${OGLPLUS_INCLUDE_DIR})
     

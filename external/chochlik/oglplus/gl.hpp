@@ -43,10 +43,10 @@
 namespace oglplus {
 struct GLAPIInitializer
 {
-	GLAPIInitializer(
-		int /*gl_ver_major*/ = 3,
-		int /*gl_ver_minor*/ = 3
-	){ }
+    GLAPIInitializer(
+        int /*gl_ver_major*/ = 3,
+        int /*gl_ver_minor*/ = 1
+    ){ }
 };
 } // namespace oglplus
 
@@ -63,10 +63,10 @@ struct GLAPIInitializer
 namespace oglplus {
 struct GLAPIInitializer
 {
-	GLAPIInitializer(
-		int /*gl_ver_major*/ = 3,
-		int /*gl_ver_minor*/ = 3
-	){ }
+    GLAPIInitializer(
+        int /*gl_ver_major*/ = 3,
+        int /*gl_ver_minor*/ = 1
+    ){ }
 };
 } // namespace oglplus
 
@@ -79,20 +79,20 @@ namespace oglplus {
 class GLAPIInitializer
 {
 public:
-	GLAPIInitializer(
-		int /*gl_ver_major*/ = 3,
-		int /*gl_ver_minor*/ = 3
-	)
-	{
-		auto init_result = glewInit();
-		glGetError();
-		if(init_result != GLEW_OK)
-		{
-			throw std::runtime_error(
-				"OpenGL/GLEW initialization error."
-			);
-		}
-	}
+    GLAPIInitializer(
+        int /*gl_ver_major*/ = 3,
+        int /*gl_ver_minor*/ = 1
+    )
+    {
+        auto init_result = glewInit();
+        glGetError();
+        if(init_result != GLEW_OK)
+        {
+            throw std::runtime_error(
+                "OpenGL/GLEW initialization error."
+            );
+        }
+    }
 };
 } // namespace oglplus
 
@@ -105,26 +105,26 @@ namespace oglplus {
 class GLAPIInitializer
 {
 public:
-	GLAPIInitializer(
-		int gl_ver_major = 3,
-		int gl_ver_minor = 3
-	)
-	{
-		auto init_failed = gl3wInit();
-		glGetError();
-		if(init_failed)
-		{
-			throw std::runtime_error(
-				"OpenGL/GL3W initialization error."
-			);
-		}
-		if(!gl3wIsSupported(gl_ver_major, gl_ver_minor))
-		{
-			throw std::runtime_error(
-				"Requested OpenGL version not supported"
-			);
-		}
-	}
+    GLAPIInitializer(
+        int gl_ver_major = 3,
+        int gl_ver_minor = 1
+    )
+    {
+        auto init_failed = gl3wInit();
+        glGetError();
+        if(init_failed)
+        {
+            throw std::runtime_error(
+                "OpenGL/GL3W initialization error."
+            );
+        }
+        if(!gl3wIsSupported(gl_ver_major, gl_ver_minor))
+        {
+            throw std::runtime_error(
+                "Requested OpenGL version not supported"
+            );
+        }
+    }
 };
 } // namespace oglplus
 

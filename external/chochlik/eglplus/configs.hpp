@@ -18,9 +18,10 @@
 #include <eglplus/color_buffer_type.hpp>
 #include <eglplus/transparent_type.hpp>
 #include <eglplus/config_caveat.hpp>
-#include <eglplus/renderable_type.hpp>
-#include <eglplus/surface_type.hpp>
+#include <eglplus/renderable_type_bit.hpp>
+#include <eglplus/surface_type_bit.hpp>
 #include <eglplus/attrib_list.hpp>
+#include <eglplus/display.hpp>
 
 #include <cassert>
 
@@ -68,6 +69,18 @@ public:
 	EGLint ConfigId(void) const
 	{
 		return GetAttrib(ConfigAttrib::ConfigId);
+	}
+
+	/// Get the unique configuration identifier
+	/** Synonym for ConfigId()
+	 *
+	 *  @eglsymbols
+	 *  @eglfunref{GetConfigAttrib}
+	 *  @egldefref{CONFIG_ID}
+	 */
+	EGLint Id(void) const
+	{
+		return ConfigId();
 	}
 
 	/// Return the total component bits of the color buffer
@@ -136,7 +149,7 @@ public:
 		return GetAttrib(ConfigAttrib::AlphaSize);
 	}
 
-	/// Returns the number of bits of the depth component
+	/// Returns the number of bits of the depth buffer
 	/**
 	 *  @eglsymbols
 	 *  @eglfunref{GetConfigAttrib}
@@ -145,6 +158,17 @@ public:
 	EGLint DepthSize(void) const
 	{
 		return GetAttrib(ConfigAttrib::DepthSize);
+	}
+
+	/// Returns the number of bits of the stencil buffer
+	/**
+	 *  @eglsymbols
+	 *  @eglfunref{GetConfigAttrib}
+	 *  @egldefref{STENCIL_SIZE}
+	 */
+	EGLint StencilSize(void) const
+	{
+		return GetAttrib(ConfigAttrib::StencilSize);
 	}
 
 	/// Returns the maximum width of Pbuffers in pixels
@@ -180,6 +204,39 @@ public:
 		return GetAttrib(ConfigAttrib::MaxPbufferPixels);
 	}
 
+	/// Returns the minimum swap interval
+	/**
+	 *  @eglsymbols
+	 *  @eglfunref{GetConfigAttrib}
+	 *  @egldefref{MIN_SWAP_INTERVAL}
+	 */
+	EGLint MinSwapInterval(void) const
+	{
+		return GetAttrib(ConfigAttrib::MinSwapInterval);
+	}
+
+	/// Returns the maximum swap interval
+	/**
+	 *  @eglsymbols
+	 *  @eglfunref{GetConfigAttrib}
+	 *  @egldefref{MAX_SWAP_INTERVAL}
+	 */
+	EGLint MaxSwapInterval(void) const
+	{
+		return GetAttrib(ConfigAttrib::MaxSwapInterval);
+	}
+
+	/// Returns true if native rendering API can render to surface
+	/**
+	 *  @eglsymbols
+	 *  @eglfunref{GetConfigAttrib}
+	 *  @egldefref{NATIVE_RENDERABLE}
+	 */
+	EGLint NativeRenderable(void) const
+	{
+		return GetAttrib(ConfigAttrib::NativeRenderable);
+	}
+
 	/// Returns the caveat for this config
 	/**
 	 *  @eglsymbols
@@ -191,6 +248,18 @@ public:
 		return eglplus::ConfigCaveat(
 			EGLenum(GetAttrib(ConfigAttrib::ConfigCaveat))
 		);
+	}
+
+	/// Returns the caveat for this config
+	/** Synonym for ConfigCaveat()
+	 *
+	 *  @eglsymbols
+	 *  @eglfunref{GetConfigAttrib}
+	 *  @egldefref{CONFIG_CAVEAT}
+	 */
+	eglplus::ConfigCaveat Caveat(void) const
+	{
+		return this->ConfigCaveat();
 	}
 
 	/// Returns the color buffer type
@@ -300,37 +369,56 @@ public:
 
 struct ConfigValueTypeToConfigAttrib
 {
+	static ColorBufferType
+	ValueType(std::integral_constant<int, 0>);
 	ConfigAttrib operator()(ColorBufferType) const
 	{
 		return ConfigAttrib::ColorBufferType;
 	}
 
+	static ConfigCaveat
+	ValueType(std::integral_constant<int, 1>);
 	ConfigAttrib operator()(ConfigCaveat) const
 	{
 		return ConfigAttrib::ConfigCaveat;
 	}
 
+	static RenderableTypeBit
+	ValueType(std::integral_constant<int, 2>);
 	ConfigAttrib operator()(RenderableTypeBit) const
 	{
 		return ConfigAttrib::RenderableType;
 	}
 
+	static SurfaceTypeBit
+	ValueType(std::integral_constant<int, 3>);
 	ConfigAttrib operator()(SurfaceTypeBit) const
 	{
 		return ConfigAttrib::SurfaceType;
 	}
 
+	static TransparentType
+	ValueType(std::integral_constant<int, 4>);
 	ConfigAttrib operator()(TransparentType) const
 	{
 		return ConfigAttrib::TransparentType;
 	}
+
+	static std::integral_constant<int, 4> MaxValueType(void);
 };
 
 /// Attribute list for configuration attributes
 typedef AttributeList<
 	ConfigAttrib,
-	ConfigValueTypeToConfigAttrib
+	ConfigValueTypeToConfigAttrib,
+	AttributeListTraits
 > ConfigAttribs;
+
+/// Finished list of configuration attribute values
+typedef FinishedAttributeList<
+	ConfigAttrib,
+	AttributeListTraits
+> FinishedConfigAttribs;
 
 /// A provides access to all configurations of a Display
 class Configs
@@ -377,7 +465,7 @@ private:
 		}
 	}
 
-	void _choose(const ConfigAttribs& attribs)
+	void _choose(const FinishedConfigAttribs& attribs)
 	{
 		EGLint num = 0;
 		EGLPLUS_EGLFUNC(ChooseConfig)(
@@ -410,17 +498,10 @@ public:
 	}
 
 	/// Gets configurations matching the specified attribute values
-	Configs(const Display& display, ConfigAttribs& attribs)
+	Configs(const Display& display, const FinishedConfigAttribs& attribs)
 	 : _display(display)
 	{
-		_choose(attribs.Finish());
-	}
-
-	/// Gets configurations matching the specified attribute values
-	Configs(const Display& display, ConfigAttribs&& attribs)
-	 : _display(display)
-	{
-		_choose(attribs.Finish());
+		_choose(attribs);
 	}
 
 	typedef aux::ConvIterRange<
