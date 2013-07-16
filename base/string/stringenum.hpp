@@ -1,5 +1,13 @@
 #pragma once
 
+/*
+ *  Created on: Mar 20, 2012
+ *      Author: Nicholas Folse
+ *
+ *  Copyright 2012 Nicholas Folse  
+ *  License: Public Domain
+ */
+
 #include <string>
 #include <vector>
 #include <utility>
