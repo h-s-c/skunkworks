@@ -27,7 +27,10 @@ project (PluginGraphics)
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
     list(APPEND PLUGIN_INCLUDE_DIRS ${ZMQ_INCLUDE_DIR})
-    
+
+    find_package(MSGPACK REQUIRED)
+    list(APPEND PLUGIN_LIBRARIES ${MSGPACK_LIBRARY})   
+    list(APPEND PLUGIN_INCLUDE_DIRS ${MSGPACK_INCLUDE_DIR})
     
     find_package(PNG REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${PNG_LIBRARY})   

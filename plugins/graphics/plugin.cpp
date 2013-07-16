@@ -1,7 +1,7 @@
 // Public Domain
 #include "plugins/graphics/plugin.hpp"
 #include "base/platform.hpp"
-#include "base/hash/stringhash.hpp"
+#include "base/string/stringhash.hpp"
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 #include "plugins/graphics/render.hpp"
@@ -49,14 +49,23 @@ void GraphicsPlugin::Loop()
         std::chrono::milliseconds duration( 100 );
         std::this_thread::sleep_for( duration );
         
-        /* ZMQ: Create input subscription socket on this thread. */
-        zmq::socket_t zmq_input_subscriber (*this->zmq_context.get(), ZMQ_SUB);
+        /* ZMQ: Create general subscription socket on this thread. */
+        zmq::socket_t zmq_general_subscriber (*this->zmq_context.get(), ZMQ_SUB);
         
         /* ZMQ: Connect. */
-        zmq_input_subscriber.connect("inproc://input");
+        zmq_general_subscriber.connect("inproc://general");
 
-        /* ZMQ: Suscribe to all messages. */
-        zmq_input_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+        /* ZMQ: Suscribe to stop messages. */
+        zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Stop", 0);
+        
+        /* ZMQ: Create game subscription socket on this thread. */
+        zmq::socket_t zmq_game_subscriber (*this->zmq_context.get(), ZMQ_SUB);
+        
+        /* ZMQ: Connect. */
+        zmq_game_subscriber.connect("inproc://game");
+
+        /* ZMQ: Suscribe to graphics messages. */
+        zmq_game_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Graphics", 0);
         
         /* EGL: Initialization. */
         eglplus::Display display;
@@ -124,17 +133,19 @@ void GraphicsPlugin::Loop()
         double akkumulator = 0.0f;
         
         for(;;)
-        {
-            /* ZMQ: Listen. */
+        {            
+            /* ZMQ: Listen for stop signal. */
             zmq::message_t zmq_message;
-            if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            if (zmq_general_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("STOP") == base::StringHash(zmq_message.data()))
+                if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
                 {
-                    std::cout<< "ZMQ: GraphicsPlugin received STOP signal." << std::endl;
                     break;
                 }
             }
+            
+            /* OGL: Update. */
+            ogl_render.Update(zmq_game_subscriber);
             
             /* Plugin: Force 120hz rendering*/
             auto newtime = std::chrono::high_resolution_clock::now();          
@@ -149,7 +160,7 @@ void GraphicsPlugin::Loop()
                 akkumulator = 0.0f;
             
                 /* OGL: Draw. */
-                ogl_render.Draw( deltatime);
+                ogl_render.Draw(deltatime);
             
                 /* EGL: Swap buffers. */
                 surface.SwapBuffers();

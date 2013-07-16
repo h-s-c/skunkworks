@@ -1,7 +1,7 @@
 // Public Domain
 #include "plugins/input/plugin.hpp"
 #include "base/platform.hpp"
-#include "base/hash/stringhash.hpp"
+#include "base/string/stringhash.hpp"
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
@@ -47,11 +47,26 @@ void InputPlugin::Loop()
         /* ZMQ: Bind. */
         zmq_input_publisher.bind("inproc://input");
         
+        /* ZMQ: Wait a bit for other plugins to etablish sockets. */
+        std::chrono::milliseconds duration( 100 );
+        std::this_thread::sleep_for( duration );
+        
+        /* ZMQ: Create game subscription socket on this thread. */
+        zmq::socket_t zmq_general_subscriber (*this->zmq_context.get(), ZMQ_SUB);
+        
+        /* ZMQ: Connect. */
+        zmq_general_subscriber.connect("inproc://general");
+
+        /* ZMQ: Suscribe to stop messages. */
+        zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Stop", 0);
+        
         /* OIS: Initialization.*/
         OIS::ParamList pl;
         std::ostringstream wnd; 
         wnd << this->base_window.get()->GetNativeWindow();
         pl.insert(std::make_pair(std::string("WINDOW"), wnd.str()));
+        //pl.insert(std::make_pair(std::string("x11_mouse_grab"), std::string("false")));
+        //pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("false")));
         
         auto ois_manager = OIS::InputManager::createInputSystem(pl);
         ois_manager->enableAddOnFactory(OIS::InputManager::AddOn_All);
@@ -68,18 +83,41 @@ void InputPlugin::Loop()
         
         /* Plugin: Loop. */        
         for(;;)
-        {            
+        {          
+            /* ZMQ: Listen for stop signal. */
+            zmq::message_t zmq_message;
+            if (zmq_general_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            {
+                if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                {
+                    break;
+                }
+            }
+            
             /* OIS: Handle input */
             ois_keyboard->capture();
             if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
             {
-                /* ZMQ: Send. */
-                base::StringHash message("STOP");
-                zmq::message_t zmq_message(message.Size());
-                memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                zmq_input_publisher.send(zmq_message);
-                std::cout<< "ZMQ: InputPlugin send STOP signal." << std::endl;
-                break;
+                {
+                    base::StringHash message("Keyboard");
+                    zmq::message_t zmq_message(message.Size());
+                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                    zmq_input_publisher.send(zmq_message, ZMQ_SNDMORE);
+                }
+                
+                {
+                    base::StringHash message("Esc");
+                    zmq::message_t zmq_message(message.Size());
+                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                    zmq_input_publisher.send(zmq_message, ZMQ_SNDMORE);
+                }
+                
+                {
+                    base::StringHash message("Finish");
+                    zmq::message_t zmq_message(message.Size());
+                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                    zmq_input_publisher.send(zmq_message);
+                }
             }
         }
     }

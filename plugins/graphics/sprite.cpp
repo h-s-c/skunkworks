@@ -17,6 +17,14 @@
 #include <oglplus/bound/texture.hpp>
 #include <oglplus/opt/resources.hpp>
 
+const StateStringEnum::vec_t StateStringEnum::en2str_vec = 
+{
+        pair_t(SpriteState::IdleRight, "IdleRight"),
+        pair_t(SpriteState::IdleLeft, "IdleLeft"),
+        pair_t(SpriteState::WalkRight, "WalkRight"),
+        pair_t(SpriteState::WalkLeft, "WalkLeft"),
+};
+
 Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path) : 
     frame_number(0),
     vs(oglplus::ShaderType::Vertex), 
@@ -136,6 +144,10 @@ void Sprite::SetScale(float scale)
     {
         this->scale = scale;
     }
+    else
+    {
+        this->scale = 1.0f;
+    }
 }
 
 void Sprite::SetState(SpriteState sprite_state)
@@ -144,12 +156,12 @@ void Sprite::SetState(SpriteState sprite_state)
     this->sprite_state = sprite_state;
     frame_number = 0;
     
-    if( this->sprite_state == IdleRight || this->sprite_state == IdleLeft)
+    if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::IdleLeft)
     {
         this->current_json_object = this->json_objects.at(0);
         this->current_texture_slot = this->texture_slots.at(0);
     }
-    else if( this->sprite_state == WalkRight || this->sprite_state == WalkLeft)
+    else if( this->sprite_state == SpriteState::WalkRight || this->sprite_state == SpriteState::WalkLeft)
     {
         this->current_json_object = this->json_objects.at(1);
         this->current_texture_slot = this->texture_slots.at(1);
@@ -197,7 +209,7 @@ void Sprite::Update()
     }
 
     std::vector<GLfloat> rectangle_texcoords;
-    if( this->sprite_state == IdleRight || this->sprite_state == WalkRight)
+    if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::WalkRight)
     {
         /* determine texcoords */
         rectangle_texcoords = {
@@ -207,7 +219,7 @@ void Sprite::Update()
             float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
         };
     }
-    else if( this->sprite_state == IdleLeft || this->sprite_state == WalkLeft)
+    else if( this->sprite_state == SpriteState::IdleLeft || this->sprite_state == SpriteState::WalkLeft)
     {
         /* determine texcoords */
         rectangle_texcoords = {

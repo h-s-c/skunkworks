@@ -2,7 +2,7 @@
 
 #include "framework/framework.hpp"
 #include "framework/plugin_api.hpp"
-#include "base/hash/stringhash.hpp"
+#include "base/string/stringhash.hpp"
 #include "base/system/info.hpp"
 #include "base/system/library.hpp"
 #include "base/system/window.hpp"
@@ -55,6 +55,7 @@ Framework::Framework()
     /* Plugins: Initialization.*/
     LoadPlugin("Graphics");  
     LoadPlugin("Input");
+    LoadPlugin("Game");
 }
 
 Framework::~Framework()
@@ -80,27 +81,25 @@ void Framework::operator()()
     std::chrono::milliseconds duration( 100 );
     std::this_thread::sleep_for( duration );
     
-    /* ZMQ: Create input subscription socket on this thread. */
-    zmq::socket_t zmq_input_subscriber(*this->zmq_context.get(), ZMQ_SUB);
+    /* ZMQ: Create general subscription socket on this thread. */
+    zmq::socket_t zmq_general_subscriber(*this->zmq_context.get(), ZMQ_SUB);
     
     /* ZMQ: Connect. */
-    zmq_input_subscriber.connect("inproc://input");
+    zmq_general_subscriber.connect("inproc://general");
 
     /* ZMQ: Suscribe to all messages. */
-    zmq_input_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "stop", 0);
     
     /* Framework: Loop. */
     for(;;)
     {
         std::this_thread::yield();
-        
-        /* ZMQ: Listen. */
+    
         zmq::message_t zmq_message;
-        if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+        if (zmq_general_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
         {
-            if (base::StringHash("STOP") == base::StringHash(zmq_message.data()))
+            if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
             {
-                std::cout<< "ZMQ: Framework received STOP signal." << std::endl;
                 break;
             }
         }

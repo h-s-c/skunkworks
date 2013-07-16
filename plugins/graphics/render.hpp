@@ -12,6 +12,8 @@
 #undef None
 #include <oglplus/all.hpp>
 
+#include <zmq.hpp>
+
 class TextureManager
 {
   public:
@@ -26,6 +28,7 @@ class Render
 {
   public:
     Render();
+    void Update(zmq::socket_t& zmq_game_subscriber);
     void Draw(double deltatime);
     
   private:

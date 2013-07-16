@@ -63,6 +63,7 @@ project (skunkworks)
     add_subdirectory(base)
     add_subdirectory(external/khronos)
     add_subdirectory(framework)
+    add_subdirectory(plugins/game)
     add_subdirectory(plugins/graphics)
     add_subdirectory(plugins/input)
     

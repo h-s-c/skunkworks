@@ -55,7 +55,7 @@ namespace base
         
 #elif defined(BASE_WINDOW_FORCE_SDL) || defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS) 
         SDL_Init( SDL_INIT_VIDEO );
-        this->sdl_window = (void*)SDL_CreateWindow("Skunkworks", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN/*|SDL_WINDOW_RESIZABLE*/ );        
+        this->sdl_window = (void*)SDL_CreateWindow("Skunkworks", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, /*SDL_WINDOW_OPENGL|*/SDL_WINDOW_SHOWN/*|SDL_WINDOW_RESIZABLE*/ );        
         if (!this->sdl_window) 
         {
             std::runtime_error e(SDL_GetError());

@@ -1,4 +1,5 @@
 #pragma once
+#include "base/string/stringenum.hpp"
 #include "base/parser/json.hpp"
 
 #include <cfloat>
@@ -16,14 +17,20 @@
 
 class TextureManager;
 
-enum SpriteState
+enum class SpriteState
 {
-    IdleRight = 0,
+    IdleRight,
     IdleLeft,
     WalkRight,
-    WalkLeft,
+    WalkLeft
 };
 
+class StateStringEnum : public base::StringEnum<StateStringEnum, SpriteState>
+{
+    StateStringEnum();
+public:
+    static const vec_t en2str_vec;
+};
 
 class Sprite
 {
