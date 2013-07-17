@@ -3,6 +3,7 @@
 
 #include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
+#include "plugins/game/entitymanager.hpp"
 
 #include <memory>
 
@@ -19,5 +20,3 @@ class GamePlugin : public Plugin
     std::shared_ptr<base::Window> base_window;
     std::shared_ptr<zmq::context_t> zmq_context;
 };
-
-

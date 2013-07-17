@@ -27,8 +27,8 @@ class TextureManager
 class Render
 {
   public:
-    Render();
-    void Update(zmq::socket_t& zmq_game_subscriber);
+    Render(const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber);
+    void Update();
     void Draw(double deltatime);
     
   private:
@@ -36,4 +36,5 @@ class Render
     float akkumulator;
     std::vector<Sprite> sprites;
     std::shared_ptr<TextureManager> texturemanager;
+    std::shared_ptr<zmq::socket_t> zmq_game_subscriber;
 };

@@ -59,13 +59,13 @@ void GraphicsPlugin::Loop()
         zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Stop", 0);
         
         /* ZMQ: Create game subscription socket on this thread. */
-        zmq::socket_t zmq_game_subscriber (*this->zmq_context.get(), ZMQ_SUB);
+        std::shared_ptr<zmq::socket_t> zmq_game_subscriber = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_SUB);
         
         /* ZMQ: Connect. */
-        zmq_game_subscriber.connect("inproc://game");
-
-        /* ZMQ: Suscribe to graphics messages. */
-        zmq_game_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Graphics", 0);
+        zmq_game_subscriber->connect("inproc://game");
+        
+        /* ZMQ: Suscribe to all messages. */
+       zmq_game_subscriber->setsockopt(ZMQ_SUBSCRIBE, "Graphics", 0);
         
         /* EGL: Initialization. */
         eglplus::Display display;
@@ -126,7 +126,7 @@ void GraphicsPlugin::Loop()
         std::cout << "GL version: " << gl_major << "." << gl_minor << std::endl;
         
         /* OGL: Render initialization. */
-        Render ogl_render;
+        Render ogl_render{zmq_game_subscriber};
         
         /* Plugin: Loop. */
         std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
@@ -145,7 +145,7 @@ void GraphicsPlugin::Loop()
             }
             
             /* OGL: Update. */
-            ogl_render.Update(zmq_game_subscriber);
+            ogl_render.Update();
             
             /* Plugin: Force 120hz rendering*/
             auto newtime = std::chrono::high_resolution_clock::now();          

@@ -36,14 +36,18 @@ class Sprite
 {
   public:
     /* Construct sprite from json desc*/
-    Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path);
+    Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
     
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
     void SetState(SpriteState sprite_state);
-    void Update();
+    void PreDraw();
+    void Draw();
+    std::int32_t GetId() { return this->id; };
 
   private:
+    /* Id of the entity this sprite belongs to. */
+    std::int32_t id;
   
     /* Position x,y of in pixels. */
     std::pair<std::int32_t, std::int32_t> position;

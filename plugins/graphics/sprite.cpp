@@ -25,7 +25,8 @@ const StateStringEnum::vec_t StateStringEnum::en2str_vec =
         pair_t(SpriteState::WalkLeft, "WalkLeft"),
 };
 
-Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path) : 
+Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id) : 
+    id(id),
     frame_number(0),
     vs(oglplus::ShaderType::Vertex), 
     fs(oglplus::ShaderType::Fragment)
@@ -153,22 +154,25 @@ void Sprite::SetScale(float scale)
 void Sprite::SetState(SpriteState sprite_state)
 {
     /* set state values */
-    this->sprite_state = sprite_state;
-    frame_number = 0;
-    
-    if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::IdleLeft)
+    if(sprite_state != this->sprite_state)
     {
-        this->current_json_object = this->json_objects.at(0);
-        this->current_texture_slot = this->texture_slots.at(0);
-    }
-    else if( this->sprite_state == SpriteState::WalkRight || this->sprite_state == SpriteState::WalkLeft)
-    {
-        this->current_json_object = this->json_objects.at(1);
-        this->current_texture_slot = this->texture_slots.at(1);
+        this->sprite_state = sprite_state;
+        frame_number = 0;
+        
+        if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::IdleLeft)
+        {
+            this->current_json_object = this->json_objects.at(0);
+            this->current_texture_slot = this->texture_slots.at(0);
+        }
+        else if( this->sprite_state == SpriteState::WalkRight || this->sprite_state == SpriteState::WalkLeft)
+        {
+            this->current_json_object = this->json_objects.at(1);
+            this->current_texture_slot = this->texture_slots.at(1);
+        }
     }
 }
 
-void Sprite::Update()
+void Sprite::PreDraw()
 {
     if(frame_number == this->current_json_object.get<base::json::Array>("frames").size())
     {
@@ -250,4 +254,9 @@ void Sprite::Update()
     oglplus::UniformSampler(this->prog, "TexUnit").Set(this->current_texture_slot);
     
     this->frame_number++;
+}
+
+void Sprite::Draw()
+{
+    gl.DrawElements(oglplus::PrimitiveType::Triangles, 6, (GLushort*)0);
 }

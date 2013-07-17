@@ -3,6 +3,7 @@
 project (PluginGame)
     set( PLUGIN_SOURCE
         ${CMAKE_SOURCE_DIR}/plugins/game/plugin.cpp
+        ${CMAKE_SOURCE_DIR}/plugins/game/entitymanager.cpp
     )
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})

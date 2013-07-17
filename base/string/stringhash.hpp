@@ -49,6 +49,11 @@ class StringHash
         return this->hash == other.hash;
     }
     
+    inline bool operator!=(const StringHash& other) const
+    {
+        return this->hash != other.hash;
+    }
+    
     /*inline bool operator==(const std::int64_t& other) const
     {
         return this->hash == other;

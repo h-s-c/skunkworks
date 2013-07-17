@@ -98,20 +98,21 @@ void InputPlugin::Loop()
             ois_keyboard->capture();
             if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
             {
+                /* Topic */
                 {
                     base::StringHash message("Keyboard");
                     zmq::message_t zmq_message(message.Size());
                     memcpy(zmq_message.data(), message.Get(), message.Size()); 
                     zmq_input_publisher.send(zmq_message, ZMQ_SNDMORE);
                 }
-                
+                /* Message */
                 {
                     base::StringHash message("Esc");
                     zmq::message_t zmq_message(message.Size());
                     memcpy(zmq_message.data(), message.Get(), message.Size()); 
                     zmq_input_publisher.send(zmq_message, ZMQ_SNDMORE);
                 }
-                
+                /* End of message. */
                 {
                     base::StringHash message("Finish");
                     zmq::message_t zmq_message(message.Size());
