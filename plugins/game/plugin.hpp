@@ -13,8 +13,8 @@ class GamePlugin : public Plugin
 {
   public:
     GamePlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context);
-    virtual ~GamePlugin() override;  
-    virtual void Loop() override;  
+    virtual ~GamePlugin() override;
+    void operator()() override;
     
   private: 
     std::shared_ptr<base::Window> base_window;

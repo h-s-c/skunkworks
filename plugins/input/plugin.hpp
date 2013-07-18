@@ -14,7 +14,7 @@ class InputPlugin : public Plugin
   public:
     InputPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context);
     virtual ~InputPlugin() override;  
-    virtual void Loop() override;  
+    virtual void operator()() override;  
     
   private: 
     std::shared_ptr<base::Window> base_window;

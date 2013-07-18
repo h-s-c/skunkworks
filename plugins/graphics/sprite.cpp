@@ -172,7 +172,7 @@ void Sprite::SetState(SpriteState sprite_state)
     }
 }
 
-void Sprite::PreDraw()
+void Sprite::operator()()
 {
     if(frame_number == this->current_json_object.get<base::json::Array>("frames").size())
     {
@@ -254,9 +254,6 @@ void Sprite::PreDraw()
     oglplus::UniformSampler(this->prog, "TexUnit").Set(this->current_texture_slot);
     
     this->frame_number++;
-}
-
-void Sprite::Draw()
-{
+    
     gl.DrawElements(oglplus::PrimitiveType::Triangles, 6, (GLushort*)0);
 }

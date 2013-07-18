@@ -16,6 +16,11 @@
 
 #include <zmq.hpp>
 
+#ifdef __cplusplus  
+extern "C" 
+{
+#endif
+
 int RunFramework()
 {
     try
@@ -43,6 +48,10 @@ int RunFramework()
     }
     return 1;
 }
+
+#ifdef __cplusplus  
+}
+#endif
     
 Framework::Framework()
 {
@@ -134,7 +143,7 @@ void Framework::RunPlugin(std::unique_ptr<Plugin> plugin)
 {  
     try
     {
-        plugin.get()->Loop();
+        plugin->operator()();
         plugin.release();
     }
     /* Plugin: Catch plugin exceptions and propagate them to the mainthread*/

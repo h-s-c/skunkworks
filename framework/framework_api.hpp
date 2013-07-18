@@ -1,4 +1,4 @@
 // Public Domain
 #pragma once
 
-extern int RunFramework();
+#include "framework/framework_api.h"

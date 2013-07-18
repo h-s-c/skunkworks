@@ -41,9 +41,9 @@ class Sprite
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
     void SetState(SpriteState sprite_state);
-    void PreDraw();
-    void Draw();
     std::int32_t GetId() { return this->id; };
+    
+    void operator()();
 
   private:
     /* Id of the entity this sprite belongs to. */

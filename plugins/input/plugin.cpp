@@ -37,7 +37,7 @@ InputPlugin::~InputPlugin()
 }
 
 /* Plugin: Multithreaded loop. */
-void InputPlugin::Loop()
+void InputPlugin::operator()()
 {
     try
     {

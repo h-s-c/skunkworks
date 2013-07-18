@@ -13,7 +13,7 @@ class GraphicsPlugin : public Plugin
   public:
     GraphicsPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context);
     virtual ~GraphicsPlugin() override;   
-    virtual void Loop() override;   
+    virtual void operator()() override;   
     
   private: 
     std::shared_ptr<base::Window> base_window;

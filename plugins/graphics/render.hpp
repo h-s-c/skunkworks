@@ -28,8 +28,7 @@ class Render
 {
   public:
     Render(const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber);
-    void Update();
-    void Draw(double deltatime);
+    void operator()(double deltatime);
     
   private:
     oglplus::Context gl;

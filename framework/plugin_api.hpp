@@ -12,7 +12,7 @@ class Plugin
 {
   public:
     virtual ~Plugin() {};   
-    virtual void Loop() = 0;
+    virtual void operator()() = 0;
 };
 
 extern "C"

@@ -37,7 +37,7 @@ GamePlugin::~GamePlugin()
 }
 
 /* Plugin: Multithreaded loop. */
-void GamePlugin::Loop()
+void GamePlugin::operator()()
 {
     {
         /* ZMQ: Create general publication socket on this thread. */
@@ -96,7 +96,7 @@ void GamePlugin::Loop()
                 }
             }
             
-            entitymanager.Update();
+            entitymanager();
         }
     }
 }

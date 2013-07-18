@@ -41,7 +41,7 @@ GraphicsPlugin::~GraphicsPlugin()
 }
 
 /* Plugin: Multithreaded loop. */
-void GraphicsPlugin::Loop()
+void GraphicsPlugin::operator()()
 {
     try
     {
@@ -130,7 +130,6 @@ void GraphicsPlugin::Loop()
         
         /* Plugin: Loop. */
         std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
-        double akkumulator = 0.0f;
         
         for(;;)
         {            
@@ -144,31 +143,16 @@ void GraphicsPlugin::Loop()
                 }
             }
             
-            /* OGL: Update. */
-            ogl_render.Update();
-            
-            /* Plugin: Force 120hz rendering*/
+            /* Plugin: Timer*/
             auto newtime = std::chrono::high_resolution_clock::now();          
             auto deltatime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 120000>>>(newtime - oldtime).count();
             oldtime = newtime;  
-            akkumulator += deltatime;
             
-            //std::cout << "FPS:" << 120000/akkumulator << std::endl;
-            
-            if( akkumulator >= 1000)
-            {
-                akkumulator = 0.0f;
-            
-                /* OGL: Draw. */
-                ogl_render.Draw(deltatime);
-            
-                /* EGL: Swap buffers. */
-                surface.SwapBuffers();
-            }
-            else
-            {
-                std::this_thread::yield();
-            }
+            /* OGL: Update & Draw. */
+            ogl_render(deltatime);
+        
+            /* EGL: Swap buffers. */
+            surface.SwapBuffers();
         }
     }
     /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/

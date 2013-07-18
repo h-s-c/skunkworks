@@ -8,7 +8,8 @@ class EntityManager
 {
   public:
     EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publisher);
-    void Update();
+    ~EntityManager();
+    void operator()();
     
   private:
     std::vector<Entity> entities;

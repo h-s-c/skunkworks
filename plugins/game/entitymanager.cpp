@@ -73,7 +73,11 @@ EntityManager::EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publ
     }
 }
 
-void EntityManager::Update()
+EntityManager::~EntityManager()
+{
+}
+
+void EntityManager::operator()()
 {
     test++;
     /* Gamelogic: Update sprites */

@@ -28,7 +28,7 @@ Render::Render(const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : zmq_
     gl.Clear().ColorBuffer();
 }
 
-void Render::Update()
+void Render::operator()(double deltatime)
 {
     zmq::message_t zmq_message;
     zmq_game_subscriber->recv(&zmq_message, ZMQ_NOBLOCK);
@@ -80,10 +80,7 @@ void Render::Update()
             }
         }
     }
-}
-
-void Render::Draw(double deltatime)
-{
+    
     this->akkumulator += deltatime;
     
     /* 60 frames / second due to animations */
@@ -94,8 +91,7 @@ void Render::Draw(double deltatime)
         gl.Clear().ColorBuffer();
         for (auto& sprite : this->sprites)
         {
-            sprite.PreDraw();
-            sprite.Draw();
+            sprite();
         }
     }
 }
