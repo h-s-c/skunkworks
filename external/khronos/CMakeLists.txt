@@ -1,8 +1,8 @@
 ## Public Domain
 ##
-## Khronos loader
+##  dynamic Khronos API loader
 ##
-project (EGL)
+project (DynEGL)
     set(KHRONOS_SOURCE    
         ${CMAKE_SOURCE_DIR}/external/khronos/GL/gl.c
         ${CMAKE_SOURCE_DIR}/external/khronos/GLES/gles.c
@@ -28,16 +28,16 @@ project (EGL)
     list(APPEND KHRONOS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
     include_directories(${KHRONOS_INCLUDE_DIRS} )
-    add_library (EGL SHARED ${KHRONOS_SOURCE})
+    add_library (DynEGL SHARED ${KHRONOS_SOURCE})
 
-    install (TARGETS EGL
+    install (TARGETS DynEGL
         DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
         CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS EGL
+    install (TARGETS DynEGL
         DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
         CONFIGURATIONS Debug)  
 
-project (GL)
+project (DynGL)
     set(KHRONOS_SOURCE    
         ${CMAKE_SOURCE_DIR}/external/khronos/GL/glstubs.c
         )
@@ -46,15 +46,19 @@ project (GL)
     list(APPEND KHRONOS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND KHRONOS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
-    list(APPEND KHRONOS_LIBRARIES EGL)   
+    list(APPEND KHRONOS_LIBRARIES DynEGL)   
+    
+    find_package(GL REQUIRED)
+    list(APPEND KHRONOS_LIBRARIES ${GL_LIBRARY})   
+    list(APPEND KHRONOS_INCLUDE_DIRS ${GL_INCLUDE_DIR})
     
     include_directories(${KHRONOS_INCLUDE_DIRS} )
-    add_library (GL SHARED ${KHRONOS_SOURCE})
-    target_link_libraries(GL ${PLUGIN_LIBRARIES})
+    add_library (DynGL SHARED ${KHRONOS_SOURCE})
+    target_link_libraries(DynGL ${KHRONOS_LIBRARIES})
     
-    install (TARGETS GL
+    install (TARGETS DynGL
         DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
         CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS GL
+    install (TARGETS DynGL
         DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
         CONFIGURATIONS Debug)  

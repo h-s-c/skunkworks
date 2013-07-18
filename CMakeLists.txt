@@ -61,11 +61,9 @@ project (skunkworks)
     endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     
     add_subdirectory(base)
-    add_subdirectory(external/khronos)
+    add_subdirectory(external)
     add_subdirectory(framework)
-    add_subdirectory(plugins/game)
-    add_subdirectory(plugins/graphics)
-    add_subdirectory(plugins/input)
+    add_subdirectory(plugins)
     
     find_package(ZMQ REQUIRED)
     list(APPEND SKUNKWORKS_LIBRARIES ${ZMQ_LIBRARY})   
