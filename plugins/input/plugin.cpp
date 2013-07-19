@@ -64,7 +64,6 @@ void InputPlugin::operator()()
         //pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("false")));
         
         auto ois_manager = OIS::InputManager::createInputSystem(pl);
-        ois_manager->enableAddOnFactory(OIS::InputManager::AddOn_All);
 
         /* OIS: Print debugging information. */
         std::cout << "OIS version: " << ois_manager->getVersionName() << std::endl;

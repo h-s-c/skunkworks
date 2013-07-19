@@ -2,4 +2,4 @@
 
 add_subdirectory(khronos)
 ##add_subdirectory(howlingmoon)
-##add_subdirectory(wreckedgames)
+add_subdirectory(wreckedgames)

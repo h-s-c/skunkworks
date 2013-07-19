@@ -11,12 +11,12 @@ applications, and to alter it and redistribute it freely, subject to the followi
 restrictions:
 
     1. The origin of this software must not be misrepresented; you must not claim that 
-		you wrote the original software. If you use this software in a product, 
-		an acknowledgment in the product documentation would be appreciated but is 
-		not required.
+        you wrote the original software. If you use this software in a product, 
+        an acknowledgment in the product documentation would be appreciated but is 
+        not required.
 
     2. Altered source versions must be plainly marked as such, and must not be 
-		misrepresented as being the original software.
+        misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
 */
@@ -28,52 +28,60 @@ restrictions:
 
 namespace OIS
 {
-	class SDLKeyboard : public Keyboard
-	{
-	public:
-		/**
-		@remarks
-			Constructor
-		@param buffered
-			True for buffered input mode
-		*/
-		SDLKeyboard( bool buffered );
-		virtual ~SDLKeyboard();
+    class SDLKeyboard : public Keyboard
+    {
+    public:
+        /**
+        @remarks
+            Constructor
+        @param buffered
+            True for buffered input mode
+        */
+        SDLKeyboard(InputManager* creator, bool buffered );
+        virtual ~SDLKeyboard();
 
-		/** @copydoc Keyboard::isKeyDown */
-		virtual bool isKeyDown( KeyCode key );
+        /** @copydoc Keyboard::isKeyDown */
+        virtual bool isKeyDown( KeyCode key ) const;
 
-		/** @copydoc Keyboard::getAsString */
-		virtual const std::string& getAsString( KeyCode kc );
+        /** @copydoc Keyboard::getAsString */
+        virtual const std::string& getAsString( KeyCode kc );
 
-		/** @copydoc Keyboard::copyKeyStates */
-		virtual void copyKeyStates( char keys[256] );
+        /** @copydoc Keyboard::copyKeyStates */
+        virtual void copyKeyStates( char keys[256] ) const;
 
-		/** @copydoc Object::setBuffered */
-		virtual void setBuffered(bool buffered);
+        /** @copydoc Object::setBuffered */
+        virtual void setBuffered(bool buffered);
 
-		/** @copydoc Object::capture */
-		virtual void capture();
+        /** @copydoc Object::capture */
+        virtual void capture();
 
-		/** @copydoc Object::queryInterface */
-		virtual Interface* queryInterface(Interface::IType type) {return 0;}
+        /** @copydoc Object::queryInterface */
+        virtual Interface* queryInterface(Interface::IType type) {return 0;}
 
-		/** @copydoc Object::_initialize */
-		virtual void _initialize();
+        /** @copydoc Object::_initialize */
+        virtual void _initialize();
 
-		/** @copydoc Object::setTextTranslation */
-		virtual void setTextTranslation( TextTranslationMode mode );
+        /** @copydoc Object::setTextTranslation */
+        virtual void setTextTranslation( TextTranslationMode mode );
 
-	protected:
-		SDLKeyboard() {}
+    protected:
+#if SDL_VERSION_ATLEAST(2,0,0)
+        bool _injectKeyDown( SDL_Keycode key, int text );
+        bool _injectKeyUp( SDL_Keycode key );
 
-		typedef std::map<SDLKey, KeyCode> KeyMap;
+        typedef std::map<SDL_Keycode, KeyCode> KeyMap;
+#else
+        bool _injectKeyDown( SDLKey key, int text );
+        bool _injectKeyUp( SDLKey key );
+
+        typedef std::map<SDLKey, KeyCode> KeyMap;
+#endif
         KeyMap mKeyMap;
 
-		unsigned char KeyBuffer[256];
-		Uint8* mSDLBuff;
+        unsigned char KeyBuffer[256];
+        Uint8* mSDLBuff;
 
-		std::string mGetString;
-	};
+        std::string mGetString;
+    };
 }
 #endif

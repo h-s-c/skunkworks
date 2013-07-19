@@ -56,6 +56,8 @@ project (skunkworks)
       set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
     endif ()
     
+    set(USE_SDL2 TRUE CACHE BOOL "Use SDL for window creation and ois input subsystem?")
+    
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../binaries" CACHE PATH "install prefix" FORCE)
     endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
