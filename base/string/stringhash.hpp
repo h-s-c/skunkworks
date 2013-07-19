@@ -25,7 +25,7 @@ class StringHash
     }
     
     explicit constexpr StringHash(void* hash):
-    hash(*reinterpret_cast<std::int64_t*>(hash))
+    hash(*(std::int64_t*)(hash))
     {
     }
     
