@@ -79,12 +79,14 @@ void InputPlugin::operator()()
         for(;;)
         {          
             /* ZMQ: Listen for stop signal. */
-            zmq::message_t zmq_message;
-            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                zmq::message_t zmq_message;
+                if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    break;
+                    if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                    {
+                        break;
+                    }
                 }
             }
             

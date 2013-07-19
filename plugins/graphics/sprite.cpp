@@ -101,7 +101,7 @@ Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::strin
     // bind the VBO for the indices
     this->indices.Bind(oglplus::Buffer::Target::ElementArray);
     // upload them
-    oglplus::Buffer::Data(oglplus::Buffer::Target::ElementArray, rectangle_elements);
+    this->indices.Data(oglplus::Buffer::Target::ElementArray, rectangle_elements);
     
     // setup the textures
     for( std::uint32_t i=0; i < this->json_objects.size(); i++)
@@ -204,7 +204,7 @@ void Sprite::operator()()
     /* bind the VBO for the rectangle vertices */
     this->verts.Bind(oglplus::Buffer::Target::Array);
     /* upload the data */
-    oglplus::Buffer::Data(oglplus::Buffer::Target::Array, 8, rectangle_verts);
+    this->verts.Data(oglplus::Buffer::Target::Array, 8, rectangle_verts);
     
     /* enable vertex attribs array for the vertices */
     {
@@ -241,9 +241,9 @@ void Sprite::operator()()
     }
     
     /* bind the VBO for the rectangle texcoords */
-    texcoords.Bind(oglplus::Buffer::Target::Array);
+    this->texcoords.Bind(oglplus::Buffer::Target::Array);
     /* upload the data */
-    oglplus::Buffer::Data(oglplus::Buffer::Target::Array, rectangle_texcoords);
+    this->texcoords.Data(oglplus::Buffer::Target::Array, rectangle_texcoords);
     
     /* enable the vertex attribs array for the texcoords */
     {

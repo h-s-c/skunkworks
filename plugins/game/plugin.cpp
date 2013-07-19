@@ -70,34 +70,41 @@ void GamePlugin::operator()()
         for(;;)
         {
             /* ZMQ: Listen for stop signal. */
-            zmq::message_t zmq_message;
-            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                zmq::message_t zmq_message;
+                if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    break;
+                    if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                    {
+                        break;
+                    }
                 }
             }
             /* ZMQ: Listen. */
-            if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                /* Topic */
-                if (base::StringHash("Keyboard") == base::StringHash(zmq_message.data()))
+                zmq::message_t zmq_message;
+                if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    /* Message */
-                    zmq_input_subscriber.recv(&zmq_message, 0);
-                    if (base::StringHash("Esc") == base::StringHash(zmq_message.data()))
+                    /* Topic */
+                    if (base::StringHash("Keyboard") == base::StringHash(zmq_message.data()))
                     {
-                         /* End of message. */
+                        /* Message */
+                        zmq_message.rebuild();
                         zmq_input_subscriber.recv(&zmq_message, 0);
-                        if (base::StringHash("Finish") == base::StringHash(zmq_message.data()))
+                        if (base::StringHash("Esc") == base::StringHash(zmq_message.data()))
                         {
+                             /* End of message. */
+                            zmq_message.rebuild();
+                            zmq_input_subscriber.recv(&zmq_message, 0);
+                            if (base::StringHash("Finish") == base::StringHash(zmq_message.data()))
+                            {
+                            }
+                            /* ZMQ: Send stop message. */
+                            base::StringHash message("Stop");
+                            zmq_message.rebuild();
+                            memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                            this->zmq_game_publisher->send(zmq_message);
                         }
-                        /* ZMQ: Send stop message. */
-                        base::StringHash message("Stop");
-                        zmq::message_t zmq_message_send(message.Size());
-                        memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
-                        this->zmq_game_publisher->send(zmq_message_send);
                     }
                 }
             }

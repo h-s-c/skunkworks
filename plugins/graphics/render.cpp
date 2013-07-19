@@ -34,9 +34,11 @@ void Render::operator()(double deltatime)
     zmq_game_subscriber->recv(&zmq_message, ZMQ_NOBLOCK);
     if(base::StringHash("Sprite") == base::StringHash(zmq_message.data()))
     {
+        zmq_message.rebuild();
         zmq_game_subscriber->recv(&zmq_message, 0);
         if (base::StringHash("Create") == base::StringHash(zmq_message.data()))
         {
+            zmq_message.rebuild();
             zmq_game_subscriber->recv(&zmq_message, 0);
             while(base::StringHash("Finish") != base::StringHash(zmq_message.data()))
             {
@@ -51,11 +53,13 @@ void Render::operator()(double deltatime)
                 sprite.SetScale(entity.scale);
                 sprite.SetState(StateStringEnum::toEnum(entity.state));
                 this->sprites.push_back(std::move(sprite));
+                zmq_message.rebuild();
                 zmq_game_subscriber->recv(&zmq_message, 0);
             }
         }
         else if(base::StringHash("Update") == base::StringHash(zmq_message.data()))
         {
+            zmq_message.rebuild();
             zmq_game_subscriber->recv(&zmq_message, 0);
             while(base::StringHash("Finish") != base::StringHash(zmq_message.data()))
             {
@@ -67,6 +71,7 @@ void Render::operator()(double deltatime)
                 
                 for (auto& sprite : this->sprites)
                 {
+                    //break;
                     if( sprite.GetId() == entity.id)
                     {
                         sprite.SetPosition(std::make_pair(entity.position_x, entity.position_y));
@@ -75,7 +80,7 @@ void Render::operator()(double deltatime)
                         break;
                     }
                 }
-
+                zmq_message.rebuild();
                 zmq_game_subscriber->recv(&zmq_message, 0);
             }
         }

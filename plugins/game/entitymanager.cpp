@@ -115,8 +115,6 @@ void EntityManager::operator()()
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
             
-            this->entities.push_back(sprite);
-            
             zmq::message_t zmq_message( sbuf.size());
             memcpy(zmq_message.data(), sbuf.data(), sbuf.size());
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
@@ -138,8 +136,6 @@ void EntityManager::operator()()
 
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
-            
-            this->entities.push_back(sprite);
             
             zmq::message_t zmq_message( sbuf.size());
             memcpy(zmq_message.data(), sbuf.data(), sbuf.size());

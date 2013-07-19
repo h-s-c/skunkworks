@@ -94,10 +94,6 @@ void Framework::operator()()
         this->threads.push_back(std::thread([&]() {RunPlugin(std::move(plugin));}));
     }
     
-    /* ZMQ: Wait a bit for other plugins to etablish sockets. */
-    std::chrono::milliseconds duration( 100 );
-    std::this_thread::sleep_for( duration );
-    
     /* Framework: Loop. */
     auto stop = false;
     while(!stop)
@@ -111,9 +107,9 @@ void Framework::operator()()
                 {
                     /* ZMQ: Send stop message. */
                     base::StringHash message("Stop");
-                    zmq::message_t zmq_message_send(message.Size());
-                    memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
-                    zmq_framework_publisher.send(zmq_message_send);
+                    zmq_message.rebuild();
+                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                    zmq_framework_publisher.send(zmq_message);
                     stop = true;
                     break;
                 }
