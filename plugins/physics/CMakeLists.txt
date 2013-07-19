@@ -1,0 +1,35 @@
+## Public Domain
+
+project (PluginPhysics)
+    set( PLUGIN_SOURCE
+        ${CMAKE_SOURCE_DIR}/plugins/physics/plugin.cpp
+        ${CMAKE_SOURCE_DIR}/plugins/physics/step.cpp
+    )
+    list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
+    list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
+    list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/howlingmoon)
+    
+    list(APPEND PLUGIN_LIBRARIES Base)
+    
+    find_package(ZMQ REQUIRED)
+    list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
+    list(APPEND PLUGIN_INCLUDE_DIRS ${ZMQ_INCLUDE_DIR})
+    
+    find_package(MSGPACK REQUIRED)
+    list(APPEND PLUGIN_LIBRARIES ${MSGPACK_LIBRARY})   
+    list(APPEND PLUGIN_INCLUDE_DIRS ${MSGPACK_INCLUDE_DIR})
+    
+    list(APPEND PLUGIN_LIBRARIES Chipmunk)
+    list(APPEND PLUGIN_LIBRARIES Chipmunk++)
+        
+    include_directories(${PLUGIN_INCLUDE_DIRS} )
+    add_library(PluginPhysics SHARED ${PLUGIN_SOURCE})
+    target_link_libraries(PluginPhysics ${PLUGIN_LIBRARIES})
+    set_target_properties(PluginPhysics PROPERTIES PREFIX "")
+
+    install (TARGETS PluginPhysics
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
+        CONFIGURATIONS Release RelWithDebInfo)  
+    install (TARGETS PluginPhysics
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
+        CONFIGURATIONS Debug)  

@@ -3,3 +3,4 @@
 add_subdirectory(game)
 add_subdirectory(graphics)
 add_subdirectory(input)
+add_subdirectory(physics)

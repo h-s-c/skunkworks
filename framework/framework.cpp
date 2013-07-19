@@ -72,6 +72,7 @@ Framework::Framework()
     /* Plugins: Initialization.*/
     LoadPlugin("Graphics");  
     LoadPlugin("Input");
+    LoadPlugin("Physics");
     LoadPlugin("Game");
 }
 
