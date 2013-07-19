@@ -63,6 +63,12 @@ Framework::Framework()
     /* ZMQ: Initialization with 1 worker threads. */
     this->zmq_context = std::make_shared<zmq::context_t>(1);
     
+    /* ZMQ: Create framework publication socket on this thread. */
+    this->zmq_framework_publisher = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_PUB);
+    
+    /* ZMQ: Bind. */
+    this->zmq_framework_publisher->bind("inproc://Framework");
+    
     /* Plugins: Initialization.*/
     LoadPlugin("Graphics");  
     LoadPlugin("Input");
@@ -82,12 +88,6 @@ Framework::~Framework()
 
 void Framework::operator()()
 {   
-    /* ZMQ: Create framework publication socket on this thread. */
-    zmq::socket_t zmq_framework_publisher (*this->zmq_context.get(), ZMQ_PUB);
-    
-    /* ZMQ: Bind. */
-    zmq_framework_publisher.bind("inproc://Framework");
-    
     /* Plugins: Start in their own thread. */
     for ( auto& plugin : this->plugins)
     {
@@ -109,7 +109,7 @@ void Framework::operator()()
                     base::StringHash message("Stop");
                     zmq_message.rebuild();
                     memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_framework_publisher.send(zmq_message);
+                    this->zmq_framework_publisher->send(zmq_message);
                     stop = true;
                     break;
                 }
@@ -141,6 +141,8 @@ void Framework::LoadPlugin(std::string name)
     handles.push_back(&handle);
     plugins.push_back(std::move(funcs->InitPlugin(base_window, zmq_context)));
     
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds( 10 ));
     std::string socket_name = "inproc://" + name;
     
     /* ZMQ: Create plugin specific subscription socket on this thread. */
