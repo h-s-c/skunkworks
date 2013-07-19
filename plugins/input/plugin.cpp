@@ -30,6 +30,11 @@ extern "C"
 InputPlugin::InputPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {
+    /* ZMQ: Create input publication socket on this thread. */
+    this->zmq_input_publisher = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_PUB);
+    
+    /* ZMQ: Bind. */
+    this->zmq_input_publisher->bind("inproc://Input");
 }
 
 InputPlugin::~InputPlugin()
@@ -40,25 +45,15 @@ InputPlugin::~InputPlugin()
 void InputPlugin::operator()()
 {
     try
-    {
-        /* ZMQ: Create input publication socket on this thread. */
-        zmq::socket_t zmq_input_publisher (*this->zmq_context.get(), ZMQ_PUB);
-        
-        /* ZMQ: Bind. */
-        zmq_input_publisher.bind("inproc://input");
-        
-        /* ZMQ: Wait a bit for other plugins to etablish sockets. */
-        std::chrono::milliseconds duration( 100 );
-        std::this_thread::sleep_for( duration );
-        
-        /* ZMQ: Create game subscription socket on this thread. */
-        zmq::socket_t zmq_general_subscriber (*this->zmq_context.get(), ZMQ_SUB);
+    {        
+        /* ZMQ: Create framework subscription socket on this thread. */
+        zmq::socket_t zmq_framework_subscriber (*this->zmq_context.get(), ZMQ_SUB);
         
         /* ZMQ: Connect. */
-        zmq_general_subscriber.connect("inproc://general");
+        zmq_framework_subscriber.connect("inproc://Framework");
 
-        /* ZMQ: Suscribe to stop messages. */
-        zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Stop", 0);
+        /* ZMQ: Suscribe to all messages. */
+        zmq_framework_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
         
         /* OIS: Initialization.*/
         OIS::ParamList pl;
@@ -72,7 +67,7 @@ void InputPlugin::operator()()
         ois_manager->enableAddOnFactory(OIS::InputManager::AddOn_All);
 
         /* OIS: Print debugging information. */
-        std::cout << "OIS verion: " << ois_manager->getVersionName() << std::endl;
+        std::cout << "OIS version: " << ois_manager->getVersionName() << std::endl;
         std::cout << "OIS manager: " << ois_manager->inputSystemName() << std::endl;
         std::cout << "OIS total keyboards: " << ois_manager->getNumberOfDevices(OIS::OISKeyboard) << std::endl;
         std::cout << "OIS total mice: " << ois_manager->getNumberOfDevices(OIS::OISMouse) << std::endl;
@@ -86,7 +81,7 @@ void InputPlugin::operator()()
         {          
             /* ZMQ: Listen for stop signal. */
             zmq::message_t zmq_message;
-            if (zmq_general_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
                 if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
                 {
@@ -103,21 +98,21 @@ void InputPlugin::operator()()
                     base::StringHash message("Keyboard");
                     zmq::message_t zmq_message(message.Size());
                     memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_input_publisher.send(zmq_message, ZMQ_SNDMORE);
+                    zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
                 }
                 /* Message */
                 {
                     base::StringHash message("Esc");
                     zmq::message_t zmq_message(message.Size());
                     memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_input_publisher.send(zmq_message, ZMQ_SNDMORE);
+                    zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
                 }
                 /* End of message. */
                 {
                     base::StringHash message("Finish");
                     zmq::message_t zmq_message(message.Size());
                     memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_input_publisher.send(zmq_message);
+                    zmq_input_publisher->send(zmq_message);
                 }
             }
         }
@@ -125,6 +120,13 @@ void InputPlugin::operator()()
     /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/
     catch(const OIS::Exception& ois_exception )
     {
+        /* ZMQ: Send stop message. */
+        base::StringHash message("Stop");
+        zmq::message_t zmq_message_send(message.Size());
+        memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+        this->zmq_input_publisher->send(zmq_message_send);
+        
         throw std::runtime_error(std::string(" OIS - ") + ois_exception.eText);
+        return;
     }
 }

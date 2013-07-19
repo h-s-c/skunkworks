@@ -19,6 +19,8 @@ class InputPlugin : public Plugin
   private: 
     std::shared_ptr<base::Window> base_window;
     std::shared_ptr<zmq::context_t> zmq_context;
+    
+    std::shared_ptr<zmq::socket_t> zmq_input_publisher;
 };
 
 

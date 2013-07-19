@@ -30,6 +30,8 @@ class Framework
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::thread> threads;
     
+    std::vector<std::shared_ptr<zmq::socket_t>> subscriptions;
+    
     std::vector<std::exception_ptr> propagated_exceptions;
     std::mutex propagated_exceptions_mutex;
 };

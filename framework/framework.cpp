@@ -7,6 +7,8 @@
 #include "base/system/library.hpp"
 #include "base/system/window.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -80,6 +82,12 @@ Framework::~Framework()
 
 void Framework::operator()()
 {   
+    /* ZMQ: Create framework publication socket on this thread. */
+    zmq::socket_t zmq_framework_publisher (*this->zmq_context.get(), ZMQ_PUB);
+    
+    /* ZMQ: Bind. */
+    zmq_framework_publisher.bind("inproc://Framework");
+    
     /* Plugins: Start in their own thread. */
     for ( auto& plugin : this->plugins)
     {
@@ -90,26 +98,25 @@ void Framework::operator()()
     std::chrono::milliseconds duration( 100 );
     std::this_thread::sleep_for( duration );
     
-    /* ZMQ: Create general subscription socket on this thread. */
-    zmq::socket_t zmq_general_subscriber(*this->zmq_context.get(), ZMQ_SUB);
-    
-    /* ZMQ: Connect. */
-    zmq_general_subscriber.connect("inproc://general");
-
-    /* ZMQ: Suscribe to all messages. */
-    zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "stop", 0);
-    
     /* Framework: Loop. */
-    for(;;)
+    auto stop = false;
+    while(!stop)
     {
-        std::this_thread::yield();
-    
-        zmq::message_t zmq_message;
-        if (zmq_general_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+        for( auto& subscriber : subscriptions)
         {
-            if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+            zmq::message_t zmq_message;
+            if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                break;
+                if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                {
+                    /* ZMQ: Send stop message. */
+                    base::StringHash message("Stop");
+                    zmq::message_t zmq_message_send(message.Size());
+                    memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+                    zmq_framework_publisher.send(zmq_message_send);
+                    stop = true;
+                    break;
+                }
             }
         }
     }
@@ -137,6 +144,17 @@ void Framework::LoadPlugin(std::string name)
     
     handles.push_back(&handle);
     plugins.push_back(std::move(funcs->InitPlugin(base_window, zmq_context)));
+    
+    std::string socket_name = "inproc://" + name;
+    
+    /* ZMQ: Create plugin specific subscription socket on this thread. */
+    std::shared_ptr<zmq::socket_t> subscriber = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_SUB);
+    /* ZMQ: Connect. */
+    subscriber->connect(socket_name.c_str());
+    /* ZMQ: Suscribe to stop messages. */
+    subscriber->setsockopt(ZMQ_SUBSCRIBE, "Stop", 0);
+    
+    subscriptions.push_back(std::move(subscriber));
 }
 
 void Framework::RunPlugin(std::unique_ptr<Plugin> plugin)

@@ -33,7 +33,12 @@ extern "C"
 
 GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
-{        
+{      
+    /* ZMQ: Create graphics publication socket on this thread. */
+    this->zmq_graphics_publisher = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_PUB);
+    
+    /* ZMQ: Bind. */
+    this->zmq_graphics_publisher->bind("inproc://Graphics");
 }
 
 GraphicsPlugin::~GraphicsPlugin()
@@ -44,27 +49,23 @@ GraphicsPlugin::~GraphicsPlugin()
 void GraphicsPlugin::operator()()
 {
     try
-    {
-        /* ZMQ: Wait a bit for other plugins to etablish sockets. */
-        std::chrono::milliseconds duration( 100 );
-        std::this_thread::sleep_for( duration );
-        
-        /* ZMQ: Create general subscription socket on this thread. */
-        zmq::socket_t zmq_general_subscriber (*this->zmq_context.get(), ZMQ_SUB);
+    {                
+        /* ZMQ: Create framework subscription socket on this thread. */
+        zmq::socket_t zmq_framework_subscriber (*this->zmq_context.get(), ZMQ_SUB);
         
         /* ZMQ: Connect. */
-        zmq_general_subscriber.connect("inproc://general");
+        zmq_framework_subscriber.connect("inproc://Framework");
 
-        /* ZMQ: Suscribe to stop messages. */
-        zmq_general_subscriber.setsockopt(ZMQ_SUBSCRIBE, "Stop", 0);
+        /* ZMQ: Suscribe to all messages. */
+        zmq_framework_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
         
         /* ZMQ: Create game subscription socket on this thread. */
         std::shared_ptr<zmq::socket_t> zmq_game_subscriber = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_SUB);
         
         /* ZMQ: Connect. */
-        zmq_game_subscriber->connect("inproc://game");
+        zmq_game_subscriber->connect("inproc://Game");
         
-        /* ZMQ: Suscribe to all messages. */
+        /* ZMQ: Suscribe to graphics messages. */
        zmq_game_subscriber->setsockopt(ZMQ_SUBSCRIBE, "Graphics", 0);
         
         /* EGL: Initialization. */
@@ -135,7 +136,7 @@ void GraphicsPlugin::operator()()
         {            
             /* ZMQ: Listen for stop signal. */
             zmq::message_t zmq_message;
-            if (zmq_general_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
                 if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
                 {
@@ -158,6 +159,12 @@ void GraphicsPlugin::operator()()
     /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/
     catch(const oglplus::Error& err)
     {
+        /* ZMQ: Send stop message. */
+        base::StringHash message("Stop");
+        zmq::message_t zmq_message_send(message.Size());
+        memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+        this->zmq_graphics_publisher->send(zmq_message_send);
+        
         std::stringstream error_string; 
         error_string << "OGLPlus error (in " << 
             err.GLSymbol() << ", " <<
@@ -169,9 +176,16 @@ void GraphicsPlugin::operator()()
             std::endl;
         err.Cleanup();   
         throw std::runtime_error(error_string.str());
+        return;
     }
     catch(const eglplus::Error& err)
     {
+        /* ZMQ: Send stop message. */
+        base::StringHash message("Stop");
+        zmq::message_t zmq_message_send(message.Size());
+        memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+        this->zmq_graphics_publisher->send(zmq_message_send);
+        
         std::stringstream error_string; 
         error_string << "EGLPlus error (in " << 
             err.EGLSymbol() << ", " <<
@@ -182,5 +196,6 @@ void GraphicsPlugin::operator()()
             std::endl;
         err.Cleanup();   
         throw std::runtime_error(error_string.str());
+        return;
     }
 }
