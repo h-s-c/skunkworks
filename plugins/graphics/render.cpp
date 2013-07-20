@@ -1,6 +1,7 @@
 // Public Domain
 
 #include "plugins/graphics/render.hpp"
+#include "base/system/window.hpp"
 #include "plugins/common/entity.hpp"
 #include "plugins/graphics/sprite.hpp"
 #include "base/string/stringhash.hpp"
@@ -22,7 +23,7 @@ std::uint32_t TextureManager::GetEmptySlot()
     return slots;
 }
 
-Render::Render(const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : zmq_game_subscriber(zmq_game_subscriber)
+Render::Render(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
     this->texturemanager = std::make_shared<TextureManager>();
     gl.Clear().ColorBuffer();
@@ -48,7 +49,7 @@ void Render::operator()(double deltatime)
                 msgpack::object obj = unpacked.get();
                 obj.convert(&entity);
                 
-                Sprite sprite = {this->texturemanager, entity.json_desc, entity.id};
+                Sprite sprite = {this->base_window, this->texturemanager, entity.json_desc, entity.id};
                 sprite.SetPosition(std::make_pair(entity.position_x, entity.position_y));
                 sprite.SetScale(entity.scale);
                 sprite.SetState(StateStringEnum::toEnum(entity.state));

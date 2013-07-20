@@ -55,13 +55,17 @@ void InputPlugin::operator()()
         /* ZMQ: Suscribe to all messages. */
         zmq_framework_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
         
+        std::this_thread::sleep_for(std::chrono::milliseconds( 10 ));
+        
         /* OIS: Initialization.*/
         OIS::ParamList pl;
         std::ostringstream wnd; 
         wnd << this->base_window.get()->GetNativeWindow();
         pl.insert(std::make_pair(std::string("WINDOW"), wnd.str()));
-        //pl.insert(std::make_pair(std::string("x11_mouse_grab"), std::string("false")));
-        //pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("false")));
+        pl.insert(std::make_pair(std::string("x11_mouse_grab"), std::string("false")));
+        pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("false")));
+        pl.insert(std::make_pair(std::string("x11_keyboard_grab"), std::string("false")));
+
         
         auto ois_manager = OIS::InputManager::createInputSystem(pl);
 
@@ -75,10 +79,31 @@ void InputPlugin::operator()()
         /* OIS: Keyboard initialization. */
         auto ois_keyboard = static_cast<OIS::Keyboard*>(ois_manager->createInputObject( OIS::OISKeyboard, false));
         
+        /* ZMQ: Send ready message. */
+        {
+            base::StringHash message("Ready");
+            zmq::message_t zmq_message_send(message.Size());
+            memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+            this->zmq_input_publisher->send(zmq_message_send);
+        }
+        
+        /* ZMQ: Listen for start message. */
+        for(;;)
+        {
+            zmq::message_t zmq_message;
+            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            {
+                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                {
+                    break;
+                }
+            }
+        }
+        
         /* Plugin: Loop. */        
         for(;;)
         {          
-            /* ZMQ: Listen for stop signal. */
+            /* ZMQ: Listen for stop message. */
             {
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
@@ -90,30 +115,33 @@ void InputPlugin::operator()()
                 }
             }
             
-            /* OIS: Handle input */
-            ois_keyboard->capture();
-            if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
+            if (!this->base_window->Closed())
             {
-                /* Topic */
+                /* OIS: Handle input */
+                ois_keyboard->capture();
+                if( ois_keyboard->isKeyDown( OIS::KC_ESCAPE )) 
                 {
-                    base::StringHash message("Keyboard");
-                    zmq::message_t zmq_message(message.Size());
-                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
-                }
-                /* Message */
-                {
-                    base::StringHash message("Esc");
-                    zmq::message_t zmq_message(message.Size());
-                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
-                }
-                /* End of message. */
-                {
-                    base::StringHash message("Finish");
-                    zmq::message_t zmq_message(message.Size());
-                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    zmq_input_publisher->send(zmq_message);
+                    /* Topic */
+                    {
+                        base::StringHash message("Keyboard");
+                        zmq::message_t zmq_message(message.Size());
+                        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                        zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
+                    }
+                    /* Message */
+                    {
+                        base::StringHash message("Esc");
+                        zmq::message_t zmq_message(message.Size());
+                        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                        zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
+                    }
+                    /* End of message. */
+                    {
+                        base::StringHash message("Finish");
+                        zmq::message_t zmq_message(message.Size());
+                        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                        zmq_input_publisher->send(zmq_message);
+                    }
                 }
             }
         }

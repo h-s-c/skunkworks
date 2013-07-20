@@ -20,6 +20,8 @@ namespace base
         std::uint32_t GetWidth() { return width;}
         std::uint32_t GetHeight() { return height;}
         
+        bool Closed();
+        
       private:
         std::uint32_t width;
         std::uint32_t height;

@@ -127,14 +127,34 @@ void GraphicsPlugin::operator()()
         std::cout << "GL version: " << gl_major << "." << gl_minor << std::endl;
         
         /* OGL: Render initialization. */
-        Render ogl_render{zmq_game_subscriber};
+        Render ogl_render{this->base_window, zmq_game_subscriber};
+        
+        /* ZMQ: Send ready message. */
+        {
+            base::StringHash message("Ready");
+            zmq::message_t zmq_message_send(message.Size());
+            memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+            this->zmq_graphics_publisher->send(zmq_message_send);
+        }
+            
+        /* ZMQ: Listen for start message. */
+        for(;;)
+        {
+            zmq::message_t zmq_message;
+            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            {
+                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                {
+                    break;
+                }
+            }
+        }
         
         /* Plugin: Loop. */
         std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
-        
         for(;;)
         {            
-            /* ZMQ: Listen for stop signal. */
+            /* ZMQ: Listen for stop message. */
             {
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
@@ -151,11 +171,14 @@ void GraphicsPlugin::operator()()
             auto deltatime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 120000>>>(newtime - oldtime).count();
             oldtime = newtime;  
             
-            /* OGL: Update & Draw. */
-            ogl_render(deltatime);
-        
-            /* EGL: Swap buffers. */
-            surface.SwapBuffers();
+            if (!this->base_window->Closed())
+            {
+                /* OGL: Update & Draw. */
+                ogl_render(deltatime);
+            
+                /* EGL: Swap buffers. */
+                surface.SwapBuffers();
+            }
         }
     }
     /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/

@@ -6,12 +6,23 @@
 #include <zmq.hpp>
 #include <msgpack.hpp>
 
+#include <mutex>
+
 int test = 0;
+std::once_flag flag;
 
 EntityManager::EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publisher) : zmq_game_publisher(zmq_game_publisher)
 {
+}
+
+EntityManager::~EntityManager()
+{
+}
+
+void EntityManager::operator()()
+{
     /* Gamelogic: Create 3 sprites */
-    { 
+    std::call_once(flag, [&](){ 
         /* Topic. */
         {
             base::StringHash message("Sprite");
@@ -70,15 +81,8 @@ EntityManager::EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publ
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message);
         }
-    }
-}
-
-EntityManager::~EntityManager()
-{
-}
-
-void EntityManager::operator()()
-{
+    });
+    
     test++;
     /* Gamelogic: Update sprites */
     { 

@@ -1,4 +1,5 @@
 #include "plugins/graphics/sprite.hpp"
+#include "base/system/window.hpp"
 #include "plugins/graphics/render.hpp"
 #include "base/parser/json.hpp"
 
@@ -25,7 +26,8 @@ const StateStringEnum::vec_t StateStringEnum::en2str_vec =
         pair_t(SpriteState::WalkLeft, "WalkLeft"),
 };
 
-Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id) : 
+Sprite::Sprite(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id) :
+    base_window(base_window), 
     id(id),
     frame_number(0),
     vs(oglplus::ShaderType::Vertex), 
@@ -123,13 +125,6 @@ Sprite::Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::strin
         textures.push_back(std::move(texture));
         texture_slots.push_back(texture_slot);
     }
-    
-    oglplus::LazyUniform<oglplus::Mat4f> (this->prog, "ProjectionMatrix").Set(
-        oglplus::CamMatrixf::OrthoX(
-            640.0f,
-            4.0f/3.0f,
-            1, -1)
-    );
 }
 
 void Sprite::SetPosition(std::pair<std::int32_t, std::int32_t> position)
@@ -253,7 +248,14 @@ void Sprite::operator()()
     
     oglplus::UniformSampler(this->prog, "TexUnit").Set(this->current_texture_slot);
     
-    this->frame_number++;
-    
+    oglplus::LazyUniform<oglplus::Mat4f> (this->prog, "ProjectionMatrix").Set(
+    oglplus::CamMatrixf::OrthoX(
+        base_window->GetWidth(),
+        double(base_window->GetWidth()/base_window->GetHeight()),
+        1, -1)
+    );
+
     gl.DrawElements(oglplus::PrimitiveType::Triangles, 6, (GLushort*)0);
+    
+    this->frame_number++;
 }

@@ -63,13 +63,34 @@ void GamePlugin::operator()()
 
         /* ZMQ: Suscribe to all messages. */
         zmq_input_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
- 
+        
         EntityManager entitymanager{zmq_game_publisher};
+        
+        /* ZMQ: Send ready message. */
+        {
+            base::StringHash message("Ready");
+            zmq::message_t zmq_message_send(message.Size());
+            memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+            this->zmq_game_publisher->send(zmq_message_send);
+        }
+        
+        /* ZMQ: Listen for start message. */
+        for(;;)
+        {
+            zmq::message_t zmq_message;
+            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            {
+                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                {
+                    break;
+                }
+            }
+        }
     
         /* Plugin: Loop. */        
         for(;;)
         {
-            /* ZMQ: Listen for stop signal. */
+            /* ZMQ: Listen for stop message. */
             {
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 

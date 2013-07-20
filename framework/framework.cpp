@@ -70,10 +70,10 @@ Framework::Framework()
     this->zmq_framework_publisher->bind("inproc://Framework");
     
     /* Plugins: Initialization.*/
+    LoadPlugin("Game");
     LoadPlugin("Graphics");  
     LoadPlugin("Input");
     LoadPlugin("Physics");
-    LoadPlugin("Game");
 }
 
 Framework::~Framework()
@@ -95,10 +95,38 @@ void Framework::operator()()
         this->threads.push_back(std::thread([&]() {RunPlugin(std::move(plugin));}));
     }
     
+    /* ZMQ: Wait for ready messages. */
+    for( auto& subscriber : subscriptions)
+    {
+        while(!this->base_window->Closed())
+        {
+            zmq::message_t zmq_message;
+            if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
+            {
+                if (base::StringHash("Ready") == base::StringHash(zmq_message.data()))
+                {
+                    break;
+                }
+            }
+        }
+    }
+    
+    /* ZMQ: Send start message. */
+    {
+        base::StringHash message("Start");
+        zmq::message_t zmq_message;
+        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+        this->zmq_framework_publisher->send(zmq_message);
+    }
+    
     /* Framework: Loop. */
     auto stop = false;
     while(!stop)
     {
+        if (this->base_window->Closed())
+        {
+            stop = true;
+        }
         for( auto& subscriber : subscriptions)
         {
             zmq::message_t zmq_message;
@@ -106,11 +134,6 @@ void Framework::operator()()
             {
                 if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
                 {
-                    /* ZMQ: Send stop message. */
-                    base::StringHash message("Stop");
-                    zmq_message.rebuild();
-                    memcpy(zmq_message.data(), message.Get(), message.Size()); 
-                    this->zmq_framework_publisher->send(zmq_message);
                     stop = true;
                     break;
                 }
@@ -118,6 +141,14 @@ void Framework::operator()()
         }
     }
     
+    /* ZMQ: Send stop message. */
+    {
+        base::StringHash message("Stop");
+        zmq::message_t zmq_message;
+        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+        this->zmq_framework_publisher->send(zmq_message);
+    }
+
     /*  Plugins: Wait for threads to finish. */
     for ( auto& thread : this->threads)
     {       

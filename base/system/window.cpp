@@ -12,6 +12,8 @@
 
 #if !defined(USE_SDL2) && defined(PLATFORM_OS_LINUX)
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
 #include <X11/Xatom.h>
 #elif !defined(USE_SDL2) && defined(PLATFORM_OS_WINDOWS)
 #include <Winuser.h>
@@ -27,23 +29,51 @@ namespace base
     Window::Window(std::uint32_t width, std::uint32_t height, bool fullscreen) : width(width), height(height), fullscreen(fullscreen), native_window(0), native_display(0)
     {
 #if !defined(USE_SDL2) && defined(PLATFORM_OS_LINUX)
-        if( !(this->native_display = XOpenDisplay(0)) )
-        {
+        int ciScreenNum;
+        Screen *cscrScreenPtr;
+        XWMHints *xwmhHints;
+        XClassHint  *xchClass;
+        XTextProperty xtpWinName;
+        XSizeHints *xshSize;
+        XEvent xeEvent;
+         
+        this->native_display = XOpenDisplay(NULL);
+        if (this->native_display == NULL)
+        {//Failed to connect to an X Server
             std::runtime_error e("X11: Could not open display.");
             throw e;
         }
-
-        this->native_window = XCreateSimpleWindow(this->native_display, DefaultRootWindow(this->native_display), 0, 0, this->width, this->height, 0, 0, 0);
-        XMapWindow(this->native_display, this->native_window);
-        XSelectInput(this->native_display, this->native_window, StructureNotifyMask | SubstructureNotifyMask);
-        Atom wmProto = XInternAtom(this->native_display, "WM_PROTOCOLS", False);
-        Atom wmDelete = XInternAtom(this->native_display, "WM_DELETE_WINDOW", False);
-        XChangeProperty(this->native_display, this->native_window, wmProto, XA_ATOM, 32, 0, (const unsigned char*)&wmDelete, 1);
-        XEvent evtent;
-        do
+        else
         {
-            XNextEvent(this->native_display, &evtent);
-        } while(evtent.type != MapNotify);
+            ciScreenNum = DefaultScreen(this->native_display);
+            cscrScreenPtr = DefaultScreenOfDisplay(this->native_display);
+        }
+         
+        this->native_window = XCreateSimpleWindow(this->native_display, RootWindow(this->native_display, ciScreenNum), 0, 0, this->width, this->height, 0, BlackPixel(this->native_display, ciScreenNum), WhitePixel(this->native_display, ciScreenNum));
+         
+        //Allocate space for the hints
+        xshSize = XAllocSizeHints();
+        xwmhHints = XAllocWMHints();
+        xchClass = XAllocClassHint();
+         
+        xshSize->flags = PPosition | PSize;
+         
+        xwmhHints->initial_state = NormalState;
+        xwmhHints->input = True;
+        xwmhHints->flags = StateHint | InputHint;
+        
+        char* name = "Skunkworks";
+        
+        XStringListToTextProperty(&name, 1, &xtpWinName);
+         
+        xchClass->res_name = name;
+        xchClass->res_class = "Base Win";
+         
+        XSetWMProperties(this->native_display, this->native_window, &xtpWinName, NULL, 0, 0, xshSize, xwmhHints, xchClass);
+     
+        XSelectInput(this->native_display, this->native_window, ExposureMask | StructureNotifyMask);
+        XMapWindow(this->native_display, this->native_window); //Show the window
+
         
 #elif !defined(USE_SDL2) && defined(PLATFORM_OS_WINDOWS)
         this->native_window = (EGLNativeWindowType)CreateWindowEx(0, TEXT("Skunkworks"), NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, this->width, this->height, NULL, NULL, GetModuleHandle(NULL), NULL);
@@ -115,6 +145,38 @@ namespace base
         }
 #endif
         return this->native_window;
+    }
+    
+    bool Window::Closed()
+    {
+#if defined(PLATFORM_OS_LINUX) && !defined(USE_SDL2)
+        while(XPending(this->native_display) > 0)
+        {
+            XEvent event;
+            XNextEvent(this->native_display,&event);
+            switch (event.type)
+            {
+                case  (ConfigureNotify) :
+                {
+                    XConfigureEvent* cfg=(XConfigureEvent*) &event;
+                    this->width = cfg->width;
+                    this->height = cfg->height; 
+                    break;
+                }
+                case (DestroyNotify) :
+                {
+                    return true;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+        }
+        return false;
+#elif defined(PLATFORM_OS_WINDOWS) && !defined(USE_SDL2) 
+#elif defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS) || defined(USE_SDL2)
+#endif
     }
 }
 

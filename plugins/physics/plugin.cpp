@@ -52,7 +52,7 @@ void PhysicsPlugin::operator()()
         /* ZMQ: Connect. */
         zmq_framework_subscriber.connect("inproc://Framework");
 
-        /* ZMQ: Suscribe to stop messages. */
+        /* ZMQ: Suscribe to all messages. */
         zmq_framework_subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     
         /* ZMQ: Create game subscription socket on this thread. */
@@ -64,15 +64,38 @@ void PhysicsPlugin::operator()()
         /* ZMQ: Suscribe to physics messages. */
         zmq_game_subscriber->setsockopt(ZMQ_SUBSCRIBE, "Physics", 0);
         
+        std::this_thread::sleep_for(std::chrono::milliseconds( 10 ));
+        
         /* Physics: Initialization. */
         Step step{this->zmq_physics_publisher, zmq_game_subscriber};
+        
+        /* ZMQ: Send ready message. */
+        {
+            base::StringHash message("Ready");
+            zmq::message_t zmq_message_send(message.Size());
+            memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
+            this->zmq_physics_publisher->send(zmq_message_send);
+        }
+        
+        /* ZMQ: Listen for start message. */
+        for(;;)
+        {
+            zmq::message_t zmq_message;
+            if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
+            {
+                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                {
+                    break;
+                }
+            }
+        }
         
         /* Plugin: Loop. */
         std::chrono::high_resolution_clock::time_point oldtime = std::chrono::high_resolution_clock::now();
         
         for(;;)
         {            
-            /* ZMQ: Listen for stop signal. */
+            /* ZMQ: Listen for stop message. */
             {
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 

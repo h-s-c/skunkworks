@@ -1,4 +1,5 @@
 #pragma once
+#include "base/system/window.hpp"
 #include "base/string/stringenum.hpp"
 #include "base/parser/json.hpp"
 
@@ -36,7 +37,7 @@ class Sprite
 {
   public:
     /* Construct sprite from json desc*/
-    Sprite(const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
+    Sprite(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
     
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
@@ -46,6 +47,8 @@ class Sprite
     void operator()();
 
   private:
+    std::shared_ptr<base::Window> base_window;
+  
     /* Id of the entity this sprite belongs to. */
     std::int32_t id;
   
