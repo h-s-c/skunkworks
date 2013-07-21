@@ -48,9 +48,11 @@ project (DynGL)
     
     list(APPEND KHRONOS_LIBRARIES DynEGL)   
     
-    find_package(GL REQUIRED)
-    list(APPEND KHRONOS_LIBRARIES ${GL_LIBRARY})   
-    list(APPEND KHRONOS_INCLUDE_DIRS ${GL_INCLUDE_DIR})
+    if(NOT WIN32)
+		find_package(GL REQUIRED)
+		list(APPEND KHRONOS_LIBRARIES ${GL_LIBRARY})   
+		list(APPEND KHRONOS_INCLUDE_DIRS ${GL_INCLUDE_DIR})
+    endif()
     
     include_directories(${KHRONOS_INCLUDE_DIRS} )
     add_library (DynGL SHARED ${KHRONOS_SOURCE})

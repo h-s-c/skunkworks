@@ -3,6 +3,7 @@
 project (Chipmunk)
     set(CHIPMUNK_SOURCE  
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/chipmunk.c
+            ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpArray.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpArbiter.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpBB.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpBBTree.c
