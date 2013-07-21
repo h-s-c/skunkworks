@@ -3,12 +3,21 @@ project (Base)
     set(BASE_SOURCE    
         ${CMAKE_SOURCE_DIR}/base/system/info.cpp
         ${CMAKE_SOURCE_DIR}/base/system/library.cpp
-        ${CMAKE_SOURCE_DIR}/base/system/stacktrace.cpp
         ${CMAKE_SOURCE_DIR}/base/system/window.cpp
         ${CMAKE_SOURCE_DIR}/base/parser/json.cpp
         )
     list(APPEND BASE_SOURCE ${BASE_SOURCE})
+    
+    if(UNIX)
+		set(UNIX_SOURCE    
+			${CMAKE_SOURCE_DIR}/base/system/stacktrace.cpp
+			)
+		list(APPEND BASE_SOURCE ${UNIX_SOURCE})
+    endif()
+    
     list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
+    list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
+    list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
 
     if (UNIX)
         find_package(X11 REQUIRED)

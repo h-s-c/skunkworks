@@ -5,7 +5,7 @@
 ##  ZMQ_LIBRARIES
 ##
 
-find_path(ZMQ_INCLUDE_DIR NAMES zmq.hpp HINTS ${CMAKE_SOURCE_DIR}/external)
+find_path(ZMQ_INCLUDE_DIR NAMES zmq.h)
 find_library(ZMQ_LIBRARY NAMES zmq)
 
 include(FindPackageHandleStandardArgs)

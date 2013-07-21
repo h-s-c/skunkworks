@@ -38,7 +38,7 @@ namespace base
         HMODULE handle = LoadLibraryA(fullName.c_str());
         if (!handle) 
         {
-            std::runtime_error e(GetLastError());
+            std::runtime_error e(std::string(GetLastError()));
             throw e;
         }
         return handle;
@@ -50,7 +50,7 @@ namespace base
         void* sym = GetProcAddress(HMODULE(lib),symName.c_str());
         if (!sym) 
         {
-            std::runtime_error e(GetLastError());
+            std::runtime_error e(std::string(GetLastError()));
             throw e;
         }
         return sym;

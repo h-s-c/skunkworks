@@ -8,6 +8,7 @@ project (PluginGraphics)
     )
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
+    list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
     list(APPEND PLUGIN_LIBRARIES Base)

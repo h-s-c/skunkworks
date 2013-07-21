@@ -175,7 +175,9 @@ namespace base
         }
         return false;
 #elif defined(PLATFORM_OS_WINDOWS) && !defined(USE_SDL2) 
+		return false;
 #elif defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS) || defined(USE_SDL2)
+		return false;
 #endif
     }
 }
