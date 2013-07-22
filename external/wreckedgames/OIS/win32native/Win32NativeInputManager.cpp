@@ -63,7 +63,11 @@ Win32NativeInputManager::~Win32NativeInputManager()
 	if (mHandle)
 	{
 		if (mOldProc != 0) //restore old
+#if defined(OIS_ARCH_64)
+			::SetWindowLongPtr(mHandle, GWLP_WNDPROC, (LONG_PTR)mOldProc);
+#elif defined(OIS_ARCH_32)
 			::SetWindowLongPtr(mHandle, GWL_WNDPROC, (LONG_PTR)mOldProc);
+#endif
 
 		gMgr.erase(mHandle);
 	}
@@ -82,7 +86,11 @@ void Win32NativeInputManager::_initialize(ParamList &paramList)
 		OIS_EXCEPT(E_General, "Win32NativeInputManager::Win32NativeInputManager >> The sent HWND is not valid!");
 
 	// save old
+#if defined(OIS_ARCH_64)
+	mOldProc= (WNDPROC)::GetWindowLongPtr(mHandle, GWLP_WNDPROC);
+#elif defined(OIS_ARCH_32)
 	mOldProc= (WNDPROC)::GetWindowLongPtr(mHandle, GWL_WNDPROC);
+#endif
 	if (!mOldProc)
 		OIS_EXCEPT(E_General, "Win32NativeInputManager::Win32NativeInputManager >> Window has no existing procedure");
 
@@ -106,7 +114,11 @@ void Win32NativeInputManager::_initialize(ParamList &paramList)
 	if (mOldProc != 0)
 	{
 		// add subclass
+#if defined(OIS_ARCH_64)
+		::SetWindowLongPtr(mHandle, GWLP_WNDPROC, (LONG_PTR)OIS_SystemProc);
+#elif defined(OIS_ARCH_32)
 		::SetWindowLongPtr(mHandle, GWL_WNDPROC, (LONG_PTR)OIS_SystemProc);
+#endif
 	}
 }
 

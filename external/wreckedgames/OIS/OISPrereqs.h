@@ -96,7 +96,7 @@ restrictions:
 #endif
 
 //Is Processor 32 or 64 bits...
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 #   define OIS_ARCH_64
 #else
 #   define OIS_ARCH_32

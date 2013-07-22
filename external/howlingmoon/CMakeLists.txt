@@ -14,6 +14,7 @@ project (Chipmunk)
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpShape.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpSpace.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpSpaceComponent.c
+            ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpSpaceHash.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpSpaceQuery.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpSpaceStep.c
             ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk/cpSpatialIndex.c
@@ -45,7 +46,7 @@ if (${CMAKE_C_COMPILER_ID} EQUAL "MSVC")
 	set_source_files_properties(${CHIPMUNK_SOURCE} PROPERTIES LANGUAGE CXX)
 	set_target_properties(Chipmunk PROPERTIES LINKER_LANGUAGE CXX)
 endif()
-
+    
     install (TARGETS Chipmunk
         DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
         CONFIGURATIONS Release RelWithDebInfo)  
@@ -73,7 +74,7 @@ project (Chipmunk++)
     list(APPEND CHIPMUNK_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/howlingmoon)
     list(APPEND CHIPMUNK_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk)
     list(APPEND CHIPMUNK_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunkpp)
-    
+   
     list(APPEND CHIPMUNK_LIBRARIES Chipmunk)   
     
     include_directories(${CHIPMUNK_INCLUDE_DIRS} )
