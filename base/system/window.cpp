@@ -62,12 +62,11 @@ namespace base
         xwmhHints->input = True;
         xwmhHints->flags = StateHint | InputHint;
         
-        char* name = "Skunkworks";
+        const char* name = "Skunkworks";
         
-        XStringListToTextProperty(&name, 1, &xtpWinName);
+        XStringListToTextProperty((char **)&name, 1, &xtpWinName);
          
-        xchClass->res_name = name;
-        xchClass->res_class = "Base Win";
+        xchClass->res_name = (char*)name;
          
         XSetWMProperties(this->native_display, this->native_window, &xtpWinName, NULL, 0, 0, xshSize, xwmhHints, xchClass);
      
@@ -175,9 +174,9 @@ namespace base
         }
         return false;
 #elif defined(PLATFORM_OS_WINDOWS) && !defined(USE_SDL2) 
-		return false;
+        return false;
 #elif defined(PLATFORM_OS_MACOSX) || defined(PLATFORM_OS_IOS) || defined(USE_SDL2)
-		return false;
+        return false;
 #endif
     }
 }
