@@ -45,8 +45,12 @@ class Sprite
     std::int32_t GetId() { return this->id; };
     
     void operator()();
+    
+    /* Clang fix: explicit move constructor */
+    Sprite(Sprite&&) = default; 
 
   private:
+  
     std::shared_ptr<base::Window> base_window;
   
     /* Id of the entity this sprite belongs to. */
