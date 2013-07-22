@@ -41,6 +41,11 @@ project (Chipmunk)
     include_directories(${CHIPMUNK_INCLUDE_DIRS} )
     add_library (Chipmunk SHARED ${CHIPMUNK_SOURCE})
     
+if (${CMAKE_C_COMPILER_ID} EQUAL "MSVC")
+	set_source_files_properties(${CHIPMUNK_SOURCE} PROPERTIES LANGUAGE CXX)
+	set_target_properties(Chipmunk PROPERTIES LINKER_LANGUAGE CXX)
+endif()
+
     install (TARGETS Chipmunk
         DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
         CONFIGURATIONS Release RelWithDebInfo)  

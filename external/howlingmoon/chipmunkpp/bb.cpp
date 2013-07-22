@@ -2,10 +2,11 @@
 
 namespace cp {
 	BB BB::forCircle(Vect p, Float r) {
-		return BB{p.x - r,
+		auto bb = BB(p.x - r,
 		          p.y - r,
 		          p.x + r,
-		          p.y + r};
+		          p.y + r);
+		return bb;
 	}
 
 	bool BB::contains(Vect v) const {
