@@ -29,11 +29,6 @@ project (DynEGL)
     
     include_directories(${KHRONOS_INCLUDE_DIRS} )
     add_library (DynEGL SHARED ${KHRONOS_SOURCE})
-    
-if (${CMAKE_C_COMPILER_ID} EQUAL "MSVC")
-	set_source_files_properties(${KHRONOS_SOURCE} PROPERTIES LANGUAGE CXX)
-	set_target_properties(DynEGL PROPERTIES LINKER_LANGUAGE CXX)
-endif()
 
     install (TARGETS DynEGL
         DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
@@ -62,11 +57,6 @@ project (DynGL)
     include_directories(${KHRONOS_INCLUDE_DIRS} )
     add_library (DynGL SHARED ${KHRONOS_SOURCE})
     target_link_libraries(DynGL ${KHRONOS_LIBRARIES})
-    
-if (${CMAKE_C_COMPILER_ID} EQUAL "MSVC")
-	set_source_files_properties(${KHRONOS_SOURCE} PROPERTIES LANGUAGE CXX)
-	set_target_properties(DynGL PROPERTIES LINKER_LANGUAGE CXX)
-endif()
     
     install (TARGETS DynGL
         DESTINATION ${CMAKE_INSTALL_PREFIX}/release 

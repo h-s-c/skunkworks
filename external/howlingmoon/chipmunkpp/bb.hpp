@@ -9,7 +9,6 @@ namespace cp {
 	/// Axis-aligned 2D bounding box type
 	class BB {
 	public:
-		BB(Float l, Float b, Float r, Float t) : l(l), b(b), r(r), t(t) {};
 		/// left
 		Float l;
 		/// bottom

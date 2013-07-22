@@ -1,7 +1,5 @@
 // http://nguillemot.blogspot.de/2012/06/side-story-compile-time-string-hashing.html
 
-#include "base/platform.hpp"
-
 #include <cstdint>
 #include <iostream>
 #include <sstream>
@@ -15,26 +13,18 @@ namespace base
 class StringHash
 { 
   public:
-	#if !defined (COMPILER_MSVC)
-    explicit constexpr
-	#endif
-	StringHash(const char* str):
+
+    explicit constexpr StringHash(const char* str):
     hash(hashString(str))
     {
     }
-
-	#if !defined (COMPILER_MSVC)
-    explicit constexpr
-	#endif
-	StringHash(const std::int64_t hash):
+    
+    explicit constexpr StringHash(const std::int64_t hash):
     hash(hash)
     {
     }
     
-	#if !defined (COMPILER_MSVC)
-    explicit constexpr
-	#endif
-    StringHash(void* hash):
+    explicit constexpr StringHash(void* hash):
     hash(*(std::int64_t*)(hash))
     {
     }
@@ -76,18 +66,12 @@ class StringHash
     
   private:        
     /* Performs a compile time recursive string hash using the djb2 algorithm explained here: http://www.cse.yorku.ca/~oz/hash.html*/
-	#if !defined (COMPILER_MSVC)
-	static inline constexpr
-	#endif
-    std::int64_t hashString(const char* str)
+    static inline constexpr std::int64_t hashString(const char* str)
     {
         return ( !str ? 0 :
         hashStringRecursive(5381, str));
     }
-	#if !defined (COMPILER_MSVC)
-	static inline constexpr
-	#endif
-	std::int64_t hashStringRecursive(std::int64_t hash, const char* str)
+    static inline constexpr std::int64_t hashStringRecursive(std::int64_t hash, const char* str)
     {
         return ( !*str ? hash :
         hashStringRecursive(((hash << 5) + hash) + *str, str + 1));
