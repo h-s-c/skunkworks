@@ -31,6 +31,38 @@
 
 namespace base
 {
+	namespace detail
+	{
+		/* Create a string with last error message */
+		std::string GetLastErrorStdStr()
+		{
+		  DWORD error = GetLastError();
+		  if (error)
+		  {
+			LPVOID lpMsgBuf;
+			DWORD bufLen = FormatMessage(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL,
+				error,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) &lpMsgBuf,
+				0, NULL );
+			if (bufLen)
+			{
+			  LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+			  std::string result(lpMsgStr, lpMsgStr+bufLen);
+			  
+			  LocalFree(lpMsgBuf);
+
+			  return result;
+			}
+		  }
+		  return std::string();
+		}
+	}
+	
     /* opens a shared library */
     void* OpenLibrary( const std::string& libName, const std::string& libPath)
     {
@@ -38,7 +70,7 @@ namespace base
         HMODULE handle = LoadLibraryA(fullName.c_str());
         if (!handle) 
         {
-            std::runtime_error e(std::string(GetLastError()));
+            std::runtime_error e(detail::GetLastErrorStdStr());
             throw e;
         }
         return handle;
@@ -50,7 +82,7 @@ namespace base
         void* sym = GetProcAddress(HMODULE(lib),symName.c_str());
         if (!sym) 
         {
-            std::runtime_error e(std::string(GetLastError()));
+            std::runtime_error e(detail::GetLastErrorStdStr());
             throw e;
         }
         return sym;
