@@ -22,7 +22,7 @@
 
 std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
-    std::unique_ptr<Plugin> pointer(new GraphicsPlugin(base_window, zmq_context));
+    std::unique_ptr<Plugin> pointer = std::make_unique<GraphicsPlugin>(base_window, zmq_context);
     return std::move(pointer);
 }
 

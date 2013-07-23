@@ -175,9 +175,43 @@
 
 /* C++11 workarounds */
 #if !defined(thread_local)
-#   if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || (defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC))
+#   if defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC)
 #       define thread_local __thread
 #   elif defined(COMPILER_MSVC) || (defined(COMPILER_ICC) && defined(COMPILER_HOST_MSVC))
 #       define thread_local __declspec(thread)
 #   endif
 #endif
+
+/* C++14 workarounds */
+#include <memory>
+#include <type_traits>
+#include <utility>
+
+namespace std
+{
+#if !defined(make_unique)
+#   if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || (defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC)) || (defined(COMPILER_ICC) && defined(COMPILER_HOST_MSVC))
+    namespace detail
+    {
+        template <typename T, typename... Args>
+        std::unique_ptr<T> make_unique_helper(std::false_type, Args&&... args) {
+          return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+        }
+
+        template <typename T, typename... Args>
+        std::unique_ptr<T> make_unique_helper(std::true_type, Args&&... args) {
+           static_assert(std::extent<T>::value == 0,
+               "make_unique<T[N]>() is forbidden, please use make_unique<T[]>().");
+
+           typedef typename std::remove_extent<T>::type U;
+           return std::unique_ptr<T>(new U[sizeof...(Args)]{std::forward<Args>(args)...});
+        }
+    }
+
+    template <typename T, typename... Args>
+    std::unique_ptr<T> make_unique(Args&&... args) {
+       return detail::make_unique_helper<T>(std::is_array<T>(), std::forward<Args>(args)...);
+    }
+#   endif
+#endif
+}
