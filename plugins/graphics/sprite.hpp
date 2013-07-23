@@ -50,6 +50,22 @@ class Sprite
     /* Clang fix: explicit move constructor */
 #if defined(COMPILER_CLANG)
     Sprite(Sprite&&) = default; 
+#elif defined(COMPILER_MSVC)
+	Sprite(Sprite && other)
+	{
+		*this = other;
+		other.~Sprite();
+	}
+	Sprite& operator=(Sprite && other)
+	{
+		if (this != &other)
+		{
+			this->~Sprite();
+			*this = other;
+			other.~Sprite();
+		}
+		return *this;
+	}
 #endif
 
   private:
