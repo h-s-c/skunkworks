@@ -51,7 +51,7 @@ GL_API struct
 #undef GL_API
 #define GL_API KHRONOS_APICALL
 
-#define GL_IMPL(f, r)       (gles.f = gles.f ? : r)
+#define GL_IMPL(f, r)       (gles.f = gles.f ? gles.f : r)
 #define GL_IMPL_EXT(f, p)   GL_IMPL(f, (f##_proc)eglGetProcAddress(#f#p))
 #define GL_IMPL_FALLBACK(f) GL_IMPL(f, f##_fallback)
 
