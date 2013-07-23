@@ -40,7 +40,7 @@ project (Chipmunk)
     list(APPEND CHIPMUNK_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/howlingmoon/chipmunk)
     
     include_directories(${CHIPMUNK_INCLUDE_DIRS} )
-    add_library (Chipmunk SHARED ${CHIPMUNK_SOURCE})
+    add_library (Chipmunk STATIC ${CHIPMUNK_SOURCE})
     
 if (${CMAKE_C_COMPILER_ID} EQUAL "MSVC")
 	set_source_files_properties(${CHIPMUNK_SOURCE} PROPERTIES LANGUAGE CXX)
@@ -78,7 +78,7 @@ project (Chipmunk++)
     list(APPEND CHIPMUNK_LIBRARIES Chipmunk)   
     
     include_directories(${CHIPMUNK_INCLUDE_DIRS} )
-    add_library (Chipmunk++ SHARED ${CHIPMUNK_SOURCE})
+    add_library (Chipmunk++ STATIC ${CHIPMUNK_SOURCE})
     target_link_libraries(Chipmunk++ ${CHIPMUNK_LIBRARIES})
     
     install (TARGETS Chipmunk++

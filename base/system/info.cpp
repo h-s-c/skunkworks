@@ -100,17 +100,13 @@ namespace base
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <Shlwapi.h>
+#include <filesystem>
 
 namespace base
 {
-  std::string GetExecutableFilePath() {
-    char filename[1024];
-    if (GetModuleFileName(NULL, filename, sizeof(filename))) 
-    {
-        PathRemoveFileSpec(filename);
-    }
-    return std::string(filename);
+  std::string GetExecutableFilePath() 
+  {
+	return std::tr2::sys::current_path<std::tr2::sys::path>().string();
   }
 
   size_t GetNumberOfLogicalThreads() 

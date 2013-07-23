@@ -1,4 +1,5 @@
 #pragma once
+#include "base/platform.hpp"
 #include "base/system/window.hpp"
 #include "base/string/stringenum.hpp"
 #include "base/parser/json.hpp"
@@ -47,7 +48,9 @@ class Sprite
     void operator()();
     
     /* Clang fix: explicit move constructor */
+#if defined(COMPILER_CLANG)
     Sprite(Sprite&&) = default; 
+#endif
 
   private:
   

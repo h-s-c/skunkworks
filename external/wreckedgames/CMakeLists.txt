@@ -95,9 +95,9 @@ endif()
     list(APPEND OIS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND OIS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/wreckedgames/OIS)
     
-    add_definitions(-DOIS_DYNAMIC_LIB -DOIS_NONCLIENT_BUILD)
+    #add_definitions(-DOIS_DYNAMIC_LIB -DOIS_NONCLIENT_BUILD)
     include_directories(${OIS_INCLUDE_DIRS} )
-    add_library (OIS SHARED ${OIS_SOURCE})
+    add_library (OIS STATIC ${OIS_SOURCE})
     target_link_libraries(OIS ${OIS_LIBRARIES})
     
     install (TARGETS OIS
