@@ -41,18 +41,12 @@ project (Chipmunk)
     
     include_directories(${CHIPMUNK_INCLUDE_DIRS} )
     add_library (Chipmunk STATIC ${CHIPMUNK_SOURCE})
+    set_target_properties(Chipmunk PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
     
 if (${CMAKE_C_COMPILER_ID} EQUAL "MSVC")
-	set_source_files_properties(${CHIPMUNK_SOURCE} PROPERTIES LANGUAGE CXX)
-	set_target_properties(Chipmunk PROPERTIES LINKER_LANGUAGE CXX)
+    set_source_files_properties(${CHIPMUNK_SOURCE} PROPERTIES LANGUAGE CXX)
+    set_target_properties(Chipmunk PROPERTIES LINKER_LANGUAGE CXX)
 endif()
-    
-    install (TARGETS Chipmunk
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
-        CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS Chipmunk
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
-        CONFIGURATIONS Debug)  
 
 
 project (Chipmunk++)
@@ -80,10 +74,4 @@ project (Chipmunk++)
     include_directories(${CHIPMUNK_INCLUDE_DIRS} )
     add_library (Chipmunk++ STATIC ${CHIPMUNK_SOURCE})
     target_link_libraries(Chipmunk++ ${CHIPMUNK_LIBRARIES})
-    
-    install (TARGETS Chipmunk++
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
-        CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS Chipmunk++
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
-        CONFIGURATIONS Debug)  
+    set_target_properties(Chipmunk++ PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
