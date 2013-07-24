@@ -63,44 +63,14 @@ namespace json {
 //static_assert( sizeof(unsigned long long) < sizeof(long double), "'long double' cannot hold 64bit values in this compiler :(");
 
 bool match(const char* pattern, std::istream& input);
-bool parse_string(std::istream& input, String* value);
-bool parse_number(std::istream& input, Number* value);
-
-// Try to consume C++ comments from the input stream
-bool comment(std::istream &input) {
-    if( !Settings::Strict )
-    if( !input.eof() )
-    {
-        char ch0(0);
-        input.get(ch0);
-
-        if( !input.eof() )
-        {
-            char ch1(0);
-            input.get(ch1);
-
-            if( ch0 == '/' && ch1 == '/' )
-            {
-                // trim chars till \r or \n
-                for( char ch(0); !input.eof() && (input.peek() != '\r' && input.peek() != '\n'); )
-                    input.get(ch);
-
-                // consume spaces, tabs, \r or \n, in case no eof is found
-                if( !input.eof() )
-                    input >> std::ws;
-                return true;
-            }
-
-            input.unget();
-            input.clear();
-        }
-
-        input.unget();
-        input.clear();
-    }
-
-    return false;
-}
+bool parse_array(std::istream& input, Array& array);
+bool parse_bool(std::istream& input, Boolean& value);
+bool parse_comment(std::istream &input);
+bool parse_null(std::istream& input);
+bool parse_number(std::istream& input, Number& value);
+bool parse_object(std::istream& input, Object& object);
+bool parse_string(std::istream& input, String& value);
+bool parse_value(std::istream& input, Value& value);
 
 // Try to consume characters from the input stream and match the
 // pattern string.
@@ -112,7 +82,7 @@ bool match(const char* pattern, std::istream& input) {
         input.get(ch);
         if (ch != *cur) {
             input.putback(ch);
-            if( comment(input) )
+            if( parse_comment(input) )
                 continue;
             while (cur > pattern) {
                 cur--;
@@ -126,10 +96,10 @@ bool match(const char* pattern, std::istream& input) {
     return *cur == 0;
 }
 
-bool parse_string(std::istream& input, String* value) {
-    char ch, delimiter = '"';
+bool parse_string(std::istream& input, String& value) {
+    char ch = '\0', delimiter = '"';
     if (!match("\"", input))  {
-        if (Settings::Strict) {
+        if (Parser == Strict) {
             return false;
         }
         delimiter = '\'';
@@ -148,22 +118,22 @@ bool parse_string(std::istream& input, String* value) {
             switch(ch) {
                 case '\\':
                 case '/':
-                    value->push_back(ch);
+                    value.push_back(ch);
                     break;
                 case 'b':
-                    value->push_back('\b');
+                    value.push_back('\b');
                     break;
                 case 'f':
-                    value->push_back('\f');
+                    value.push_back('\f');
                     break;
                 case 'n':
-                    value->push_back('\n');
+                    value.push_back('\n');
                     break;
                 case 'r':
-                    value->push_back('\r');
+                    value.push_back('\r');
                     break;
                 case 't':
-                    value->push_back('\t');
+                    value.push_back('\t');
                     break;
                 case 'u': {
                         int i;
@@ -173,18 +143,18 @@ bool parse_string(std::istream& input, String* value) {
                             ss << ch;
                         }
                         if( input.good() && (ss >> i) )
-                            value->push_back(i);
+                            value.push_back(i);
                     }
                     break;
                 default:
                     if (ch != delimiter) {
-                        value->push_back('\\');
-                        value->push_back(ch);
-                    } else value->push_back(ch);
+                        value.push_back('\\');
+                        value.push_back(ch);
+                    } else value.push_back(ch);
                     break;
             }
         } else {
-            value->push_back(ch);
+            value.push_back(ch);
         }
     }
     if (input && ch == delimiter) {
@@ -194,36 +164,81 @@ bool parse_string(std::istream& input, String* value) {
     }
 }
 
-static bool parse_bool(std::istream& input, Boolean* value) {
-    if (match("true", input))  {
-        *value = true;
-        return true;
-    }
-    if (match("false", input)) {
-        *value = false;
-        return true;
-    }
-    return false;
-}
-
-static bool parse_null(std::istream& input) {
-    if (match("null", input))  {
-        return true;
-    }
-    if (Settings::Strict) {
-        return false;
-    }
-    return (input.peek()==',');
-}
-
-bool parse_number(std::istream& input, Number* value) {
+bool parse_number(std::istream& input, Number& value) {
     input >> std::ws;
-    input >> *value;
+    input >> value;
     if (input.fail()) {
         input.clear();
         return false;
     }
     return true;
+}
+
+bool parse_bool(std::istream& input, Boolean& value) {
+    if (match("true", input))  {
+        value = true;
+        return true;
+    }
+    if (match("false", input)) {
+        value = false;
+        return true;
+    }
+    return false;
+}
+
+bool parse_null(std::istream& input) {
+    if (match("null", input))  {
+        return true;
+    }
+    if (Parser == Strict) {
+        return false;
+    }
+    return (input.peek()==',');
+}
+
+bool parse_array(std::istream& input, Array& array) {
+    return array.parse(input);
+}
+
+bool parse_object(std::istream& input, Object& object) {
+    return object.parse(input);
+}
+
+bool parse_comment(std::istream &input) {
+    if( Parser == Permissive )
+    if( !input.eof() )
+    {
+        char ch0(0);
+        input.get(ch0);
+
+        if( !input.eof() )
+        {
+            char ch1(0);
+            input.get(ch1);
+
+            if( ch0 == '/' && ch1 == '/' )
+            {
+                // trim chars till \r or \n
+                for( char ch(0); !input.eof() && (input.peek() != '\r' && input.peek() != '\n'); )
+                    input.get(ch);
+
+                // consume spaces, tabs, \r or \n, in case no eof is found
+                if( !input.eof() )
+    input >> std::ws;
+                return true;
+            }
+
+            input.unget();
+        input.clear();
+        }
+
+        input.unget();
+        input.clear();
+    }
+        return false;
+    }
+bool parse_value(std::istream& input, Value& value) {
+    return value.parse(input);
 }
 
 Object::Object() : value_map_() {}
@@ -244,8 +259,8 @@ bool Object::parse(std::istream& input, Object& object) {
 
     do {
         std::string key;
-        if (!parse_string(input, &key)) {
-            if (!Settings::Strict) {
+        if (!parse_string(input, key)) {
+            if (Parser == Permissive) {
                 if (input.peek() == '}')
                     break;
             }
@@ -255,7 +270,7 @@ bool Object::parse(std::istream& input, Object& object) {
             return false;
         }
         Value* v = new Value();
-        if (!Value::parse(input, *v)) {
+        if (!parse_value(input, *v)) {
             delete v;
             break;
         }
@@ -291,18 +306,18 @@ bool Value::parse(std::istream& input, Value& value) {
     value.reset();
 
     std::string string_value;
-    if (parse_string(input, &string_value)) {
+    if (parse_string(input, string_value)) {
         value.string_value_ = new std::string();
         value.string_value_->swap(string_value);
         value.type_ = STRING_;
         return true;
     }
-    if (parse_number(input, &value.number_value_)) {
+    if (parse_number(input, value.number_value_)) {
         value.type_ = NUMBER_;
         return true;
     }
 
-    if (parse_bool(input, &value.bool_value_)) {
+    if (parse_bool(input, value.bool_value_)) {
         value.type_ = BOOL_;
         return true;
     }
@@ -312,14 +327,14 @@ bool Value::parse(std::istream& input, Value& value) {
     }
     if (input.peek() == '[') {
         value.array_value_ = new Array();
-        if (Array::parse(input, *value.array_value_)) {
+        if (parse_array(input, *value.array_value_)) {
             value.type_ = ARRAY_;
             return true;
         }
         delete value.array_value_;
     }
     value.object_value_ = new Object();
-    if (Object::parse(input, *value.object_value_)) {
+    if (parse_object(input, *value.object_value_)) {
         value.type_ = OBJECT_;
         return true;
     }
@@ -342,7 +357,7 @@ bool Array::parse(std::istream& input, Array& array) {
 
     do {
         Value* v = new Value();
-        if (!Value::parse(input, *v)) {
+        if (!parse_value(input, *v)) {
             delete v;
             break;
         }
@@ -578,13 +593,25 @@ std::string escape_attrib( const std::string &input ) {
     return output;
 }
 
-std::string escape_tag( const std::string &input ) {
+std::string escape_tag( const std::string &input, unsigned format ) {
     static std::string map[256], *once = 0;
     if( !once ) {
         for( int i = 0; i < 256; ++i )
             map[ i ] = std::string() + char(i);
         map[ byte('<') ] = "&lt;";
         map[ byte('>') ] = "&gt;";
+        switch( format )
+        {
+            default:
+                break;
+
+            case base::json::JXML:
+            case base::json::JXMLex:
+            case base::json::JSONx:
+            case base::json::TaggedXML:
+                map[ byte('&') ] = "&amp;";
+                break;
+        }
         once = map;
     }
     std::string output;
@@ -628,12 +655,31 @@ std::string open_tag( unsigned format, char type, const std::string &name, const
                 case 'n': tagname = "json:number" + tagname; break;
             }
             break;
+        case base::json::TaggedXML: // @TheMadButcher
+            if( !name.empty() )
+                tagname = escape_attrib(name);
+            else
+                tagname = "JsonItem";
+            switch( type ) {
+                default:
+                case '0': tagname += " type=\"json:null\""; break;
+                case 'b': tagname += " type=\"json:boolean\""; break;
+                case 'a': tagname += " type=\"json:array\""; break;
+                case 's': tagname += " type=\"json:string\""; break;
+                case 'o': tagname += " type=\"json:object\""; break;
+                case 'n': tagname += " type=\"json:number\""; break;
+            }
+
+            if( !name.empty() )
+                tagname += std::string(" name=\"") + escape_string(name) + "\"";
+
+            break;
     }
 
     return std::string("<") + tagname + attr + ">";
 }
 
-std::string close_tag( unsigned format, char type ) {
+std::string close_tag( unsigned format, char type, const std::string &name ) {
     switch( format )
     {
         default:
@@ -653,6 +699,13 @@ std::string close_tag( unsigned format, char type ) {
                 case 's': return "</json:string>";
                 case 'n': return "</json:number>";
             }
+            break;
+
+        case base::json::TaggedXML: // @TheMadButcher
+            if( !name.empty() )
+                return "</"+escape_attrib(name)+">";
+            else
+                return "</JsonItem>";
     }
 }
 
@@ -670,7 +723,7 @@ std::string tag( unsigned format, unsigned depth, const std::string &name, const
             ss << ( t.bool_value_ ? "true" : "false" );
             return tab + open_tag( format, 'b', name, std::string(), format == base::json::JXMLex ? ss.str() : std::string() )
                        + ss.str()
-                       + close_tag( format, 'b' ) + '\n';
+                       + close_tag( format, 'b', name ) + '\n';
 
         case base::json::Value::ARRAY_:
             for(Array::container::const_iterator it = t.array_value_->values().begin(),
@@ -678,13 +731,13 @@ std::string tag( unsigned format, unsigned depth, const std::string &name, const
               ss << tag( format, depth+1, std::string(), **it );
             return tab + open_tag( format, 'a', name, attr ) + '\n'
                        + ss.str()
-                 + tab + close_tag( format, 'a' ) + '\n';
+                 + tab + close_tag( format, 'a', name ) + '\n';
 
         case base::json::Value::STRING_:
-            ss << escape_tag( *t.string_value_ );
+            ss << escape_tag( *t.string_value_, format );
             return tab + open_tag( format, 's', name, std::string(), format == base::json::JXMLex ? ss.str() : std::string() )
                        + ss.str()
-                       + close_tag( format, 's' ) + '\n';
+                       + close_tag( format, 's', name ) + '\n';
 
         case base::json::Value::OBJECT_:
             for(Object::container::const_iterator it=t.object_value_->kv_map().begin(),
@@ -692,7 +745,7 @@ std::string tag( unsigned format, unsigned depth, const std::string &name, const
               ss << tag( format, depth+1, it->first, *it->second );
             return tab + open_tag( format, 'o', name, attr ) + '\n'
                        + ss.str()
-                 + tab + close_tag( format, 'o' ) + '\n';
+                 + tab + close_tag( format, 'o', name ) + '\n';
 
         case base::json::Value::NUMBER_:
             // max precision
@@ -700,13 +753,16 @@ std::string tag( unsigned format, unsigned depth, const std::string &name, const
             ss << t.number_value_;
             return tab + open_tag( format, 'n', name, std::string(), format == base::json::JXMLex ? ss.str() : std::string() )
                        + ss.str()
-                       + close_tag( format, 'n' ) + '\n';
+                       + close_tag( format, 'n', name ) + '\n';
     }
 }
 
 // order here matches base::json::Format enum
 const char *defheader[] = {
     "",
+
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+         JSONXX_XML_TAG "\n",
 
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
          JSONXX_XML_TAG "\n",
@@ -728,6 +784,7 @@ const char *defrootattrib[] = {
 
     "",
 
+    "",
     ""
 };
 
@@ -777,7 +834,7 @@ std::string Array::json() const {
 
 std::string Array::xml( unsigned format, const std::string &header, const std::string &attrib ) const {
     using namespace xml;
-    JSONXX_ASSERT( format == base::json::JSONx || format == base::json::JXML || format == base::json::JXMLex );
+    JSONXX_ASSERT( format == base::json::JSONx || format == base::json::JXML || format == base::json::JXMLex || format == base::json::TaggedXML );
 
     base::json::Value v;
     v.array_value_ = const_cast<base::json::Array*>(this);
@@ -799,14 +856,14 @@ bool validate( std::istream &input ) {
     if( input.peek() == '{' )
     {
         base::json::Object o;
-        if( o.parse( input, o ) )
+        if( parse_object( input, o ) )
             return true;
     }
     else
     if( input.peek() == '[' )
     {
         base::json::Array a;
-        if( a.parse( input, a ) )
+        if( parse_array( input, a ) )
             return true;
     }
 
@@ -821,7 +878,7 @@ bool validate( const std::string &input ) {
 
 std::string xml( std::istream &input, unsigned format ) {
     using namespace xml;
-    JSONXX_ASSERT( format == base::json::JSONx || format == base::json::JXML || format == base::json::JXMLex );
+    JSONXX_ASSERT( format == base::json::JSONx || format == base::json::JXML || format == base::json::JXMLex || format == base::json::TaggedXML );
 
     // trim non-printable chars
     for( char ch(0); !input.eof() && input.peek() <= 32; )
@@ -831,14 +888,14 @@ std::string xml( std::istream &input, unsigned format ) {
     if( input.peek() == '{' )
     {
         base::json::Object o;
-        if( o.parse( input, o ) )
+        if( parse_object( input, o ) )
             return o.xml(format);
     }
     else
     if( input.peek() == '[' )
     {
         base::json::Array a;
-        if( a.parse( input, a ) )
+        if( parse_array( input, a ) )
             return a.xml(format);
     }
 
@@ -926,9 +983,6 @@ void Object::reset() {
   }
   value_map_.clear();
 }
-bool Object::operator<<(std::istream &input) {
-  return parse(input,*this);
-}
 bool Object::parse(std::istream &input) {
   return parse(input,*this);
 }
@@ -973,9 +1027,6 @@ void Array::reset() {
   }
   values_.clear();
 }
-bool Array::operator<<(std::istream &input) {
-  return parse(input,*this);
-}
 bool Array::parse(std::istream &input) {
   return parse(input,*this);
 }
@@ -1013,6 +1064,13 @@ bool Value::empty() const {
   if( type_ == ARRAY_ && array_value_ == 0 ) return true;
   if( type_ == OBJECT_ && object_value_ == 0 ) return true;
   return false;
+}
+bool Value::parse(std::istream &input) {
+  return parse(input,*this);
+}
+bool Value::parse(const std::string &input) {
+  std::istringstream is( input );
+  return parse(is,*this);
 }
 
 }  // namespace json
