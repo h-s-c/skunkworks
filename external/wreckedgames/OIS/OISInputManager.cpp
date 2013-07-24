@@ -204,7 +204,12 @@ Object* InputManager::createInputObject( Type iType, bool bufferMode, const std:
             if( vendor == "" || (*i)->vendorExist(iType, vendor) )
             {
                 obj = (*i)->createObject(this, iType, bufferMode, vendor);
-                mFactoryObjects[obj] = (*i);
+                #if defined(__GNUC__) && defined(__INTEL_COMPILER)
+                    if ( mFactoryObjects.find(obj) !=  mFactoryObjects.end())  {mFactoryObjects.erase(obj);}
+                    mFactoryObjects.insert(std::pair<Object*, FactoryCreator*>(obj, (*i)));
+                #else
+                    mFactoryObjects[obj] = (*i);
+                #endif
                 break;
             }
         }

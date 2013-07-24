@@ -383,7 +383,11 @@ void LinuxKeyboard::setBuffered(bool buffered)
 //-------------------------------------------------------------------//
 bool LinuxKeyboard::_injectKeyDown( KeySym key, int text )
 {
+    #if defined(__GNUC__) && defined(__INTEL_COMPILER)    
+    KeyCode kc = keyConversion.find(key)->second;
+    #else
     KeyCode kc = keyConversion[key];
+    #endif
     KeyBuffer[kc] = 1;
 
     //Turn on modifier flags
@@ -403,7 +407,11 @@ bool LinuxKeyboard::_injectKeyDown( KeySym key, int text )
 //-------------------------------------------------------------------//
 bool LinuxKeyboard::_injectKeyUp( KeySym key )
 {
+    #if defined(__GNUC__) && defined(__INTEL_COMPILER)    
+    KeyCode kc = keyConversion.find(key)->second;
+    #else
     KeyCode kc = keyConversion[key];
+    #endif
     KeyBuffer[kc] = 0;
 
     //Turn off modifier flags

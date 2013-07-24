@@ -180,8 +180,9 @@
 
 /* C++11 workarounds */
 #if !defined(thread_local)
-#   if defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC)
+#   if defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC) && (COMPILER_VERSION_MAJOR<14)
 #       define thread_local __thread
+#       define override
 #   elif defined(COMPILER_MSVC) || (defined(COMPILER_ICC) && defined(COMPILER_HOST_MSVC))
 #       define thread_local __declspec(thread)
 #   endif

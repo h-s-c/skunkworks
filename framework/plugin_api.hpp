@@ -1,6 +1,7 @@
 // Public Domain
 #pragma once
 
+#include "base/platform.hpp"
 #include "base/system/window.hpp"
 
 #include <functional>
