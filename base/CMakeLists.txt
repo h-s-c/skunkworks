@@ -8,11 +8,13 @@ project (Base)
         )
     list(APPEND BASE_SOURCE ${BASE_SOURCE})
     
-    if(UNIX)
-		set(UNIX_SOURCE    
-			${CMAKE_SOURCE_DIR}/base/system/stacktrace.cpp
-			)
-		list(APPEND BASE_SOURCE ${UNIX_SOURCE})
+    if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
+        if(UNIX)
+            set(UNIX_SOURCE    
+                ${CMAKE_SOURCE_DIR}/base/system/stacktrace.cpp
+                )
+            list(APPEND BASE_SOURCE ${UNIX_SOURCE})
+        endif()
     endif()
     
     list(APPEND BASE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})

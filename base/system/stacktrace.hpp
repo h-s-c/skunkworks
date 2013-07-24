@@ -395,7 +395,7 @@ public:
 
 struct Trace {
     void*    addr;
-    unsigned idx;
+	size_t idx;
 
     Trace():
         addr(0), idx(0) {}
@@ -1609,13 +1609,13 @@ class TraceResolver:
 
 class SourceFile {
 public:
-    typedef std::vector<std::pair<size_t, std::string> > lines_t;
+	typedef std::vector<std::pair<unsigned, std::string> > lines_t;
 
     SourceFile() {}
     SourceFile(const std::string& path): _file(new std::ifstream(path.c_str())) {}
     bool is_open() const { return _file->is_open(); }
 
-    lines_t& get_lines(size_t line_start, size_t line_count, lines_t& lines) {
+	lines_t& get_lines(unsigned line_start, unsigned line_count, lines_t& lines) {
         using namespace std;
         // This function make uses of the dumbest algo ever:
         //  1) seek(0)
@@ -1629,7 +1629,7 @@ public:
         _file->clear();
         _file->seekg(0);
         string line;
-        size_t line_idx;
+		unsigned line_idx;
 
         for (line_idx = 1; line_idx < line_start; ++line_idx) {
             getline(*_file, line);
@@ -1669,7 +1669,7 @@ public:
         return lines;
     }
 
-    lines_t get_lines(size_t line_start, size_t line_count) {
+	lines_t get_lines(unsigned line_start, unsigned line_count) {
         lines_t lines;
         return get_lines(line_start, line_count, lines);
     }
@@ -1728,17 +1728,17 @@ public:
     typedef SourceFile::lines_t lines_t;
 
     lines_t get_snippet(const std::string& filename,
-            size_t line_start, size_t context_size) {
+			unsigned line_start, unsigned context_size) {
 
         SourceFile& src_file = get_src_file(filename);
-        size_t start = line_start - context_size / 2;
+		unsigned start = line_start - context_size / 2;
         return src_file.get_lines(start, context_size);
     }
 
     lines_t get_combined_snippet(
-            const std::string& filename_a, size_t line_a,
-            const std::string& filename_b, size_t line_b,
-            size_t context_size) {
+			const std::string& filename_a, unsigned line_a,
+			const std::string& filename_b, unsigned line_b,
+			unsigned context_size) {
         SourceFile& src_file_a = get_src_file(filename_a);
         SourceFile& src_file_b = get_src_file(filename_b);
 
@@ -1750,12 +1750,12 @@ public:
     }
 
     lines_t get_coalesced_snippet(const std::string& filename,
-            size_t line_a, size_t line_b, size_t context_size) {
+			unsigned line_a, unsigned line_b, unsigned context_size) {
         SourceFile& src_file = get_src_file(filename);
 
         using std::min; using std::max;
-        size_t a = min(line_a, line_b);
-        size_t b = max(line_a, line_b);
+		unsigned a = min(line_a, line_b);
+		unsigned b = max(line_a, line_b);
 
         if ((b - a) < (context_size / 3)) {
             return src_file.get_lines((a + b - context_size + 1) / 2,
@@ -1944,7 +1944,7 @@ private:
             } else {
                 fprintf(os, "%s ", indent);
             }
-            fprintf(os, "%4li: %s\n", it->first, it->second.c_str());
+			fprintf(os, "%4u: %s\n", it->first, it->second.c_str());
             if (it-> first == source_loc.line) {
                 colorize.set_color(Color::reset);
             }
@@ -2013,25 +2013,7 @@ private:
 
 class SignalHandling {
 public:
-    SignalHandling(): _loaded(false) {
-        bool success = true;
-
-        const size_t stack_size = 1024 * 1024 * 8;
-        _stack_content.reset((char*)malloc(stack_size));
-        if (_stack_content) {
-            stack_t ss;
-            ss.ss_sp = _stack_content.get();
-            ss.ss_size = stack_size;
-            ss.ss_flags = 0;
-            std::cout << "stack "
-                << ss.ss_sp << " - " << (void*)(((char*)ss.ss_sp) + ss.ss_size)
-                << std::endl;
-            if (sigaltstack(&ss, 0) < 0) {
-                success = false;
-            }
-        } else {
-            success = false;
-        }
+   static std::vector<int> make_default_signals() {
 
         const int signals[] = {
             // default action: Core
@@ -2065,15 +2047,33 @@ public:
             SIGXCPU,
             SIGXFSZ
         };
-        for (const int* sig = signals;
-                sig != signals + sizeof signals / sizeof *signals; ++sig) {
+        return std::vector<int>(signals, signals + sizeof signals);
+   }
 
+  SignalHandling(const std::vector<int>& signals = make_default_signals()) : _loaded(false) { 
+		bool success = true;
+
+		const size_t stack_size = 1024 * 1024 * 8;
+		_stack_content.reset((char*)malloc(stack_size));
+		if (_stack_content) {
+			stack_t ss;
+			ss.ss_sp = _stack_content.get();
+			ss.ss_size = stack_size;
+			ss.ss_flags = 0;
+			if (sigaltstack(&ss, 0) < 0) {
+				success = false;
+			}
+		} else {
+			success = false;
+		}
+
+		for (size_t i = 0; i < signals.size(); ++i) {
             struct sigaction action;
             action.sa_flags = SA_SIGINFO | SA_ONSTACK;
             sigemptyset(&action.sa_mask);
             action.sa_sigaction = &sig_handler;
 
-            int r = sigaction(*sig, &action, 0);
+			int r = sigaction(signals[i], &action, 0);
             if (r < 0) success = false;
         }
         _loaded = success;
@@ -2119,7 +2119,7 @@ private:
 
 class SignalHandling {
 public:
-    SignalHandling() {}
+	SignalHandling(const std::vector<int>& = std::vector<int>()) {}
     bool init() { return false; }
 };
 

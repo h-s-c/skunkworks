@@ -66,6 +66,11 @@
 #   if defined(_MSC_VER)
 #       define COMPILER_HOST_MSVC
 #   endif
+#   if __INTEL_COMPILER_BUILD_DATE == 20130607
+#       define COMPILER_VERSION_MAJOR 13
+#       define COMPILER_VERSION_MINOR 1
+#       define COMPILER_VERSION_PATCH 3
+#   endif
 #   if __INTEL_COMPILER_BUILD_DATE == 20130118
 #       define COMPILER_VERSION_MAJOR 13
 #       define COMPILER_VERSION_MINOR 1

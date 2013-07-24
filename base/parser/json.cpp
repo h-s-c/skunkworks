@@ -27,7 +27,8 @@
 //   Sean Middleditch <sean@middleditch.us>
 //   rlyeh <https://github.com/r-lyeh>
 
-#include "json.hpp"
+#include "base/parser/json.hpp"
+#include "base/platform.hpp"
 
 #include <cctype>
 #include <iostream>
@@ -274,7 +275,12 @@ bool Object::parse(std::istream& input, Object& object) {
             delete v;
             break;
         }
+#if defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC)
+        if (object.value_map_.find(key) != object.value_map_.end()) {object.value_map_.erase(key);}
+        object.value_map_.insert(std::pair<std::string, Value*>(key, v));
+#else
         object.value_map_[key] = v;
+#endif
     } while (match(",", input));
 
 
@@ -927,7 +933,12 @@ void Object::import( const Object &other ) {
       if( found != value_map_.end() ) {
         delete found->second;
       }
+#if defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC)
+      if (value_map_.find(it->first) != value_map_.end()) {value_map_.erase(it->first);}
+      value_map_.insert(std::pair<std::string, Value*>(it->first, new Value( *it->second )));
+#else
       value_map_[ it->first ] = new Value( *it->second );
+#endif
     }
   } else {
     // recursion is supported here
@@ -940,7 +951,12 @@ void Object::import( const std::string &key, const Value &value ) {
   if( found != value_map_.end() ) {
     delete found->second;
   }
+#if defined(COMPILER_ICC) && defined(COMPILER_HOST_GCC)
+      if (value_map_.find(key) != value_map_.end()) {value_map_.erase(key);}
+      value_map_.insert(std::pair<std::string, Value*>(key, new Value( value )));
+#else
   value_map_[ key ] = new Value( value );
+#endif
 }
 Object &Object::operator=(const Object &other) {
   odd.clear();
