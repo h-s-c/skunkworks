@@ -399,7 +399,7 @@ void EventUtils::enumerateForceFeedback( int deviceID, LinuxForceFeedback** ff )
             #if defined(__GNUC__) && defined(__INTEL_COMPILER)
                 (*ff)->_addEffectTypes( forceMap.find(effect)->second, typeMap.find(effect)->second );
             #else
-                (*ff)->_addEffectTypes( forceMap.insert[effect], typeMap[effect] );
+                (*ff)->_addEffectTypes( forceMap[effect], typeMap[effect] );
             #endif
         }
     }
