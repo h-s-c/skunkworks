@@ -3,9 +3,6 @@
 #include "framework/framework.hpp"
 #include "framework/plugin_api.hpp"
 #include "base/string/stringhash.hpp"
-#include "base/system/info.hpp"
-#include "base/system/library.hpp"
-#include "base/system/window.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -15,6 +12,9 @@
 #include <thread>
 #include <stdexcept>
 #include <utility>
+
+#include <platt/shared_lib.hpp>
+#include <platt/window.hpp>
 
 #include <zmq.hpp>
 
@@ -57,8 +57,8 @@ int RunFramework()
     
 Framework::Framework()
 {
-    /* base::window: Initialization. */
-    this->base_window = std::make_shared<base::Window>(800, 600, false);
+    /* platt::window: Initialization. */
+    this->base_window = std::make_shared<platt::window>();
     
     /* ZMQ: Initialization with 1 worker threads. */
     this->zmq_context = std::make_shared<zmq::context_t>(1);
@@ -80,11 +80,7 @@ Framework::~Framework()
 {   
     /* Plugins: Cleanup. */
     plugins.clear();
-    
-    for ( auto& handle : this->handles)
-    {
-        base::CloseLibrary(handle);
-    }
+    handles.clear();
 }
 
 void Framework::operator()()
@@ -98,7 +94,7 @@ void Framework::operator()()
     /* ZMQ: Wait for ready messages. */
     for( auto& subscriber : subscriptions)
     {
-        while(!this->base_window->Closed())
+        while(this->base_window->poll())
         {
             zmq::message_t zmq_message;
             if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
@@ -123,7 +119,7 @@ void Framework::operator()()
     auto stop = false;
     while(!stop)
     {
-        if (this->base_window->Closed())
+        if(!this->base_window->poll())
         {
             stop = true;
         }
@@ -167,12 +163,11 @@ void Framework::operator()()
 
 void Framework::LoadPlugin(std::string name)
 {  
-    auto handle = base::OpenLibrary(std::string("Plugin"+name), base::GetExecutableFilePath());
-    auto funcs = reinterpret_cast<PluginFuncs*>(base::GetSymbol(handle, name ));
+    auto handle = std::make_unique<platt::shared_lib>(std::string("Plugin"+name));
+    auto funcs = reinterpret_cast<PluginFuncs*>(handle.get()->symbol(name));
     
-    handles.push_back(&handle);
+    handles.push_back(std::move(handle));
     plugins.push_back(std::move(funcs->InitPlugin(base_window, zmq_context)));
-    
     
     std::this_thread::sleep_for(std::chrono::milliseconds( 10 ));
     std::string socket_name = "inproc://" + name;

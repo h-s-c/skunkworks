@@ -28,7 +28,6 @@
 //   rlyeh <https://github.com/r-lyeh>
 
 #include "base/parser/json.hpp"
-#include "base/platform.hpp"
 
 #include <cctype>
 #include <iostream>

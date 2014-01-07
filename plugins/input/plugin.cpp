@@ -1,8 +1,6 @@
 // Public Domain
 #include "plugins/input/plugin.hpp"
-#include "base/platform.hpp"
 #include "base/string/stringhash.hpp"
-#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 
 #include <chrono>
@@ -13,10 +11,12 @@
 #include <string>
 #include <thread>
 
+#include <platt/platform.hpp>
+#include <platt/window.hpp>
 #include <OIS/OIS.h>
 #include <zmq.hpp>
 
-std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
     std::unique_ptr<Plugin> pointer = std::make_unique<InputPlugin>(base_window, zmq_context);
     return std::move(pointer);
@@ -27,7 +27,7 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Input = { &InitPlugin};
 }
 
-InputPlugin::InputPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+InputPlugin::InputPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {
     /* ZMQ: Create input publication socket on this thread. */
@@ -60,7 +60,7 @@ void InputPlugin::operator()()
         /* OIS: Initialization.*/
         OIS::ParamList pl;
         std::ostringstream wnd; 
-        wnd << this->base_window.get()->GetNativeWindow();
+        wnd << this->base_window.get()->native_window();
         pl.insert(std::make_pair(std::string("WINDOW"), wnd.str()));
         pl.insert(std::make_pair(std::string("x11_mouse_grab"), std::string("false")));
         pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("false")));
@@ -115,7 +115,7 @@ void InputPlugin::operator()()
                 }
             }
             
-            if (!this->base_window->Closed())
+            if (this->base_window->poll())
             {
                 /* OIS: Handle input */
                 ois_keyboard->capture();

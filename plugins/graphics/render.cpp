@@ -1,18 +1,13 @@
 // Public Domain
 
 #include "plugins/graphics/render.hpp"
-#include "base/system/window.hpp"
 #include "plugins/common/entity.hpp"
 #include "plugins/graphics/sprite.hpp"
 #include "base/string/stringhash.hpp"
 
 #include <sstream>
 
-#include <oglplus/gl.hpp>
-/* X11 sucks */
-#undef Expose
-#undef None
-#include <oglplus/all.hpp>
+#include <platt/window.hpp>
 
 #include <zmq.hpp>
 #include <msgpack.hpp>
@@ -23,10 +18,10 @@ std::uint32_t TextureManager::GetEmptySlot()
     return slots;
 }
 
-Render::Render(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
+Render::Render(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
     this->texturemanager = std::make_shared<TextureManager>();
-    gl.Clear().ColorBuffer();
+    //gl.Clear().ColorBuffer();
 }
 
 void Render::operator()(double deltatime)
@@ -94,7 +89,7 @@ void Render::operator()(double deltatime)
     {
         
         this->akkumulator = 0.0f;
-        gl.Clear().ColorBuffer();
+        //gl.Clear().ColorBuffer();
         for (auto& sprite : this->sprites)
         {
             sprite();

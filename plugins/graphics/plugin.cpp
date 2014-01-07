@@ -1,8 +1,6 @@
 // Public Domain
 #include "plugins/graphics/plugin.hpp"
-#include "base/platform.hpp"
 #include "base/string/stringhash.hpp"
-#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 #include "plugins/graphics/render.hpp"
 
@@ -14,13 +12,15 @@
 #include <string>
 #include <thread>
 
-#include <eglplus/egl.hpp>
-#include <eglplus/all.hpp>
-#include <oglplus/gl.hpp>
-#include <oglplus/error.hpp>
+#include <platt/platform.hpp>
+#include <platt/window.hpp>
+
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES3/gl3.h>
 #include <zmq.hpp>
 
-std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
     std::unique_ptr<Plugin> pointer = std::make_unique<GraphicsPlugin>(base_window, zmq_context);
     return std::move(pointer);
@@ -31,7 +31,7 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Graphics = { &InitPlugin};
 }
 
-GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {      
     /* ZMQ: Create graphics publication socket on this thread. */
@@ -68,56 +68,62 @@ void GraphicsPlugin::operator()()
         /* ZMQ: Suscribe to graphics messages. */
        zmq_game_subscriber->setsockopt(ZMQ_SUBSCRIBE, "Graphics", 0);
         
+        /* EGL: Set configuration variables. */
+        const EGLint egl_attributes[] =
+        {
+            EGL_COLOR_BUFFER_TYPE,     EGL_RGB_BUFFER,
+            EGL_BUFFER_SIZE,           32,
+            EGL_RED_SIZE,              8,
+            EGL_GREEN_SIZE,            8,
+            EGL_BLUE_SIZE,             8,
+            EGL_ALPHA_SIZE,            8,
+
+            EGL_DEPTH_SIZE,            24,
+            EGL_STENCIL_SIZE,          8,
+
+            EGL_SAMPLE_BUFFERS,        0,
+            EGL_SAMPLES,               0,
+
+            EGL_SURFACE_TYPE,          EGL_WINDOW_BIT,
+            EGL_RENDERABLE_TYPE,       EGL_OPENGL_ES3_BIT_KHR,
+
+            EGL_NONE,
+        };
+        
+        const EGLint egl_context_attributes[] =
+        { 
+            EGL_CONTEXT_CLIENT_VERSION, 3,
+            EGL_NONE,
+        };
+
         /* EGL: Initialization. */
-        eglplus::Display display;
-        eglplus::LibEGL egl(display);
+        auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);   
 
+        EGLint egl_major = 0; 
+        EGLint egl_minor = 0;
+        eglInitialize(egl_display, &egl_major, &egl_minor);
+        eglBindAPI(EGL_OPENGL_ES_API);
+        
+        std::cout << "EGL vendor: " << eglQueryString(egl_display, EGL_VENDOR) << std::endl;
+        std::cout << "EGL version: " << eglQueryString(egl_display, EGL_VERSION) << std::endl;
+        std::cout << "EGL client apis: " << eglQueryString(egl_display, EGL_CLIENT_APIS) << std::endl;   
+        std::cout << "EGL extensions: " << eglQueryString(egl_display, EGL_EXTENSIONS) << std::endl;
+        
         /* EGL: Configuraion. */
-        eglplus::Configs configs(
-            display,
-            eglplus::ConfigAttribs()
-                .Add(eglplus::ConfigAttrib::RedSize, 8)
-                .Add(eglplus::ConfigAttrib::GreenSize, 8)
-                .Add(eglplus::ConfigAttrib::BlueSize, 8)
-                .Add(eglplus::ConfigAttrib::AlphaSize, 8)
-                .Add(eglplus::ConfigAttrib::DepthSize, 24)
-                .Add(eglplus::ColorBufferType::RGBBuffer)
-                .Add(eglplus::RenderableTypeBit::OpenGL)
-                .Add(eglplus::SurfaceTypeBit::Window)
-                .Get()
-        );
-
-        eglplus::Config config = configs.First();
+        EGLint egl_num_configs = 0;
+        EGLConfig egl_config;
+        eglChooseConfig(egl_display, egl_attributes, &egl_config, 1, &egl_num_configs);
 
         /* EGL: Link to base::Window. */
-        eglplus::Surface surface = eglplus::Surface::Window(
-            display,
-            config,
-            this->base_window.get()->GetNativeWindow(0),
-            eglplus::SurfaceAttribs().Get()
-        );
+        EGLint egl_format;
+        eglGetConfigAttrib(egl_display, egl_config, EGL_NATIVE_VISUAL_ID, &egl_format);
+        auto egl_surface = eglCreateWindowSurface(egl_display, egl_config, this->base_window.get()->native_window(egl_format), NULL);  
 
         /* EGL: Context creation. */
-        eglplus::BindAPI(eglplus::RenderingAPI::OpenGL);
-        eglplus::Context context(
-            display,
-            config,
-            eglplus::ContextAttribs()
-                .Add(eglplus::ContextAttrib::ClientVersion, 3)
-                .Add(eglplus::ContextAttrib::MinorVersion, 1)
-                .Add(eglplus::ContextFlag::OpenGLRobustAccess)
-                .Add(eglplus::ContextFlag::OpenGLDebug)
-                .Add(eglplus::ContextFlag::OpenGLForwardCompatible)
-                .Add(eglplus::OpenGLProfileBit::Core)
-                .Add(eglplus::OpenGLResetNotificationStrategy::NoResetNotification)
-                .Get()
-        );
-
+        auto egl_context = eglCreateContext(egl_display, egl_config, EGL_NO_CONTEXT, egl_context_attributes);
+        
         /* EGL: Make context current on this thread. */
-        context.MakeCurrent(surface);
-
-        /* OGL: Initialization. */
-        oglplus::GLAPIInitializer api_init;
+        eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
         
         /* OGL: Print version information */
         GLint gl_major = 0; 
@@ -125,6 +131,8 @@ void GraphicsPlugin::operator()()
         glGetIntegerv(GL_MAJOR_VERSION, &gl_major);
         glGetIntegerv(GL_MINOR_VERSION, &gl_minor);
         std::cout << "GL version: " << gl_major << "." << gl_minor << std::endl;
+
+        glClearColor(0.0f, 0.5f, 1.0f, 1.0f); 
         
         /* OGL: Render initialization. */
         Render ogl_render{this->base_window, zmq_game_subscriber};
@@ -171,56 +179,30 @@ void GraphicsPlugin::operator()()
             auto deltatime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 120000>>>(newtime - oldtime).count();
             oldtime = newtime;  
             
-            if (!this->base_window->Closed())
+            if(this->base_window->poll())
             {
                 /* OGL: Update & Draw. */
-                ogl_render(deltatime);
+                //ogl_render(deltatime);
+                glClear(GL_COLOR_BUFFER_BIT);
             
                 /* EGL: Swap buffers. */
-                surface.SwapBuffers();
+                eglSwapBuffers(egl_display, egl_surface);
             }
         }
+        /* EGL: Cleanup. */
+        eglDestroyContext(egl_display, egl_context);
+        eglDestroySurface(egl_display, egl_surface);
+        eglTerminate(egl_display);
     }
-    /* Plugin: Catch plugin specific exceptions and rethrow them as runtime error*/
-    catch(const oglplus::Error& err)
+    catch (...)
     {
         /* ZMQ: Send stop message. */
         base::StringHash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_graphics_publisher->send(zmq_message_send);
-        
-        std::stringstream error_string; 
-        error_string << "OGLPlus error (in " << 
-            err.GLSymbol() << ", " <<
-            err.ClassName() << ": '" <<
-            err.ObjectDescription() << "'): " <<
-            err.what() << " [" << 
-            err.File() << ":" << 
-            err.Line() << "] " << 
-            std::endl;
-        err.Cleanup();   
-        throw std::runtime_error(error_string.str());
-        return;
-    }
-    catch(const eglplus::Error& err)
-    {
-        /* ZMQ: Send stop message. */
-        base::StringHash message("Stop");
-        zmq::message_t zmq_message_send(message.Size());
-        memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
-        this->zmq_graphics_publisher->send(zmq_message_send);
-        
-        std::stringstream error_string; 
-        error_string << "EGLPlus error (in " << 
-            err.EGLSymbol() << ", " <<
-            err.ClassName() << ": '" <<
-            err.what() << " [" << 
-            err.File() << ":" << 
-            err.Line() << "] " << 
-            std::endl;
-        err.Cleanup();   
-        throw std::runtime_error(error_string.str());
+
+        std::rethrow_exception(std::current_exception());
         return;
     }
 }

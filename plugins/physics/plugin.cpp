@@ -1,8 +1,6 @@
 // Public Domain
 #include "plugins/physics/plugin.hpp"
-#include "base/platform.hpp"
 #include "base/string/stringhash.hpp"
-#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
 #include "plugins/physics/step.hpp"
 
@@ -14,9 +12,11 @@
 #include <string>
 #include <thread>
 
+#include <platt/platform.hpp>
+#include <platt/window.hpp>
 #include <zmq.hpp>
 
-std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
     std::unique_ptr<Plugin> pointer = std::make_unique<PhysicsPlugin>(base_window, zmq_context);
     return std::move(pointer);
@@ -27,7 +27,7 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Physics = { &InitPlugin};
 }
 
-PhysicsPlugin::PhysicsPlugin(const std::shared_ptr<base::Window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+PhysicsPlugin::PhysicsPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {
     /* ZMQ: Create physics publication socket on this thread. */

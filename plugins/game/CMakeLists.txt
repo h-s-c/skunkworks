@@ -8,9 +8,15 @@ project (PluginGame)
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
-    list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     
     list(APPEND PLUGIN_LIBRARIES Base)
+
+    if (UNIX)
+        list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
+    endif()
+
+    find_package(PLATT REQUIRED)
+    list(APPEND PLUGIN_INCLUDE_DIRS ${PLATT_INCLUDE_DIR})
     
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
@@ -24,10 +30,3 @@ project (PluginGame)
     add_library(PluginGame SHARED ${PLUGIN_SOURCE})
     target_link_libraries(PluginGame ${PLUGIN_LIBRARIES})
     set_target_properties(PluginGame PROPERTIES PREFIX "")
-
-    install (TARGETS PluginGame
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
-        CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS PluginGame
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
-        CONFIGURATIONS Debug)  

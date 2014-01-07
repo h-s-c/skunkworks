@@ -7,11 +7,21 @@ project (PluginInput)
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
-    list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/wreckedgames)
     
     list(APPEND PLUGIN_LIBRARIES Base)
     list(APPEND PLUGIN_LIBRARIES OIS)
+
+    if (UNIX)
+        list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
+
+        find_package(X11 REQUIRED)
+        list(APPEND PLUGIN_LIBRARIES ${X11_LIBRARY})   
+        list(APPEND PLUGIN_INCLUDE_DIRS ${X11_INCLUDE_DIR})
+    endif()
+
+    find_package(PLATT REQUIRED)
+    list(APPEND PLUGIN_INCLUDE_DIRS ${PLATT_INCLUDE_DIR})
     
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
@@ -21,10 +31,3 @@ project (PluginInput)
     add_library(PluginInput SHARED ${PLUGIN_SOURCE})
     target_link_libraries(PluginInput ${PLUGIN_LIBRARIES})
     set_target_properties(PluginInput PROPERTIES PREFIX "")
-
-    install (TARGETS PluginInput
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
-        CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS PluginInput
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
-        CONFIGURATIONS Debug)  

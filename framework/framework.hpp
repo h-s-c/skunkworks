@@ -1,8 +1,8 @@
 // Public Domain
 #pragma once
-
-#include "base/system/window.hpp"
 #include "framework/plugin_api.hpp"
+
+#include <platt/window.hpp>
 
 #include <memory>
 #include <mutex>
@@ -23,11 +23,11 @@ class Framework
     void LoadPlugin(std::string name);
     void RunPlugin(std::unique_ptr<Plugin> plugin);
   
-    std::shared_ptr<base::Window> base_window;
+    std::shared_ptr<platt::window> base_window;
     std::shared_ptr<zmq::context_t> zmq_context;
     std::shared_ptr<zmq::socket_t> zmq_framework_publisher;
     
-    std::vector<void*> handles; 
+    std::vector<std::unique_ptr<platt::shared_lib>> handles;
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::thread> threads;
     

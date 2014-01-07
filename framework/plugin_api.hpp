@@ -1,11 +1,10 @@
 // Public Domain
 #pragma once
 
-#include "base/platform.hpp"
-#include "base/system/window.hpp"
-
 #include <functional>
 #include <memory>
+
+#include <platt/window.hpp>
 
 #include <zmq.hpp>
 
@@ -20,6 +19,6 @@ extern "C"
 {    
     struct PluginFuncs 
     {
-        std::function<std::unique_ptr<Plugin>(const std::shared_ptr<base::Window>&, const std::shared_ptr<zmq::context_t>&)> InitPlugin;
+        std::function<std::unique_ptr<Plugin>(const std::shared_ptr<platt::window>&, const std::shared_ptr<zmq::context_t>&)> InitPlugin;
     };
 }

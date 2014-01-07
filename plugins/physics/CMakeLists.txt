@@ -8,10 +8,16 @@ project (PluginPhysics)
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
-    list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/khronos)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/howlingmoon)
     
     list(APPEND PLUGIN_LIBRARIES Base)
+
+    if (UNIX)
+        list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
+    endif()
+
+    find_package(PLATT REQUIRED)
+    list(APPEND PLUGIN_INCLUDE_DIRS ${PLATT_INCLUDE_DIR})
     
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
@@ -28,10 +34,3 @@ project (PluginPhysics)
     add_library(PluginPhysics SHARED ${PLUGIN_SOURCE})
     target_link_libraries(PluginPhysics ${PLUGIN_LIBRARIES})
     set_target_properties(PluginPhysics PROPERTIES PREFIX "")
-
-    install (TARGETS PluginPhysics
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/release 
-        CONFIGURATIONS Release RelWithDebInfo)  
-    install (TARGETS PluginPhysics
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/debug 
-        CONFIGURATIONS Debug)  
