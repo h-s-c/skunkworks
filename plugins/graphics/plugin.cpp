@@ -108,12 +108,16 @@ void GraphicsPlugin::operator()()
         EGLint egl_minor = 0;
         eglInitialize(egl_display, &egl_major, &egl_minor);
         eglBindAPI(EGL_OPENGL_ES_API);
-        
-        std::cout << "EGL vendor: " << eglQueryString(egl_display, EGL_VENDOR) << std::endl;
-        std::cout << "EGL version: " << eglQueryString(egl_display, EGL_VERSION) << std::endl;
-        std::cout << "EGL client apis: " << eglQueryString(egl_display, EGL_CLIENT_APIS) << std::endl;   
-        std::cout << "EGL extensions: " << eglQueryString(egl_display, EGL_EXTENSIONS) << std::endl;
-        
+
+        /* EGL: Print debugging information. */        
+        auto egl_info = std::string("-----EGL-----\n") + 
+            "Vendor: " + eglQueryString(egl_display, EGL_VENDOR) + "\n" +
+            "Version: " + eglQueryString(egl_display, EGL_VERSION) + "\n" +
+            "Client APIs: " + eglQueryString(egl_display, EGL_CLIENT_APIS) + "\n" +
+            "Extensions: " + eglQueryString(egl_display, EGL_EXTENSIONS);
+
+        std::cout << egl_info << std::endl;
+
         /* EGL: Configuraion. */
         EGLint egl_num_configs = 0;
         EGLConfig egl_config;

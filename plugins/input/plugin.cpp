@@ -70,11 +70,15 @@ void InputPlugin::operator()()
         auto ois_manager = OIS::InputManager::createInputSystem(pl);
 
         /* OIS: Print debugging information. */
-        std::cout << "OIS version: " << ois_manager->getVersionName() << std::endl;
-        std::cout << "OIS manager: " << ois_manager->inputSystemName() << std::endl;
-        std::cout << "OIS total keyboards: " << ois_manager->getNumberOfDevices(OIS::OISKeyboard) << std::endl;
-        std::cout << "OIS total mice: " << ois_manager->getNumberOfDevices(OIS::OISMouse) << std::endl;
-        std::cout << "OIS total joysticks: " << ois_manager->getNumberOfDevices(OIS::OISJoyStick) << std::endl;
+        auto ois_info = std::string("-----OIS-----\n") + 
+            "Version: " + ois_manager->getVersionName() + "\n" +
+            "Manager: " + ois_manager->inputSystemName() + "\n" +
+            "Total keyboards: " + std::to_string(ois_manager->getNumberOfDevices(OIS::OISKeyboard)) + "\n" +
+            "Total mice: " + std::to_string(ois_manager->getNumberOfDevices(OIS::OISMouse)) + "\n" +
+            "Total gamepads: " + "-" + "\n" +
+            "Total joysticks: " + std::to_string(ois_manager->getNumberOfDevices(OIS::OISJoyStick));
+
+        std::cout << ois_info << std::endl;
 
         /* OIS: Keyboard initialization. */
         auto ois_keyboard = static_cast<OIS::Keyboard*>(ois_manager->createInputObject( OIS::OISKeyboard, false));

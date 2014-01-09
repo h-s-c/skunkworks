@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include <platt/platform.hpp>
 #include <platt/shared_lib.hpp>
 #include <platt/window.hpp>
 
@@ -57,6 +58,9 @@ int RunFramework()
     
 Framework::Framework()
 {
+    /* General: Print debugging information. */
+    std::cout << platt::platform::verbose() << std::endl;
+
     /* platt::window: Initialization. */
     this->base_window = std::make_shared<platt::window>();
     
