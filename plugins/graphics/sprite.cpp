@@ -11,7 +11,7 @@
 
 #include <platt/window.hpp>
 
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 
 const StateStringEnum::vec_t StateStringEnum::en2str_vec = 
 {
@@ -49,6 +49,8 @@ Sprite::Sprite(const std::shared_ptr<platt::window> &base_window, const std::sha
         json_object.parse(json_buffer);
         this->json_objects.push_back(std::move(json_object));
     }
+
+    glClearColor(0.0f, 0.5f, 1.0f, 1.0f); 
 }
 
 void Sprite::SetPosition(std::pair<std::int32_t, std::int32_t> position)
@@ -81,12 +83,12 @@ void Sprite::SetState(SpriteState sprite_state)
         if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::IdleLeft)
         {
             this->current_json_object = this->json_objects.at(0);
-            this->current_texture_slot = this->texture_slots.at(0);
+            //this->current_texture_slot = this->texture_slots.at(0);
         }
         else if( this->sprite_state == SpriteState::WalkRight || this->sprite_state == SpriteState::WalkLeft)
         {
             this->current_json_object = this->json_objects.at(1);
-            this->current_texture_slot = this->texture_slots.at(1);
+            //this->current_texture_slot = this->texture_slots.at(1);
         }
     }
 }
@@ -136,5 +138,7 @@ void Sprite::operator()()
         };
     }
     
+    glClear(GL_COLOR_BUFFER_BIT);
+
     this->frame_number++;
 }

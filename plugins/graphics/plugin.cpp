@@ -18,7 +18,7 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <zmq.hpp>
 
 extern "C" { 
@@ -90,14 +90,14 @@ void GraphicsPlugin::operator()()
             EGL_SAMPLES,               0,
 
             EGL_SURFACE_TYPE,          EGL_WINDOW_BIT,
-            EGL_RENDERABLE_TYPE,       EGL_OPENGL_ES3_BIT_KHR,
+            EGL_RENDERABLE_TYPE,       EGL_OPENGL_ES2_BIT,
 
             EGL_NONE,
         };
         
         const EGLint egl_context_attributes[] =
         { 
-            EGL_CONTEXT_CLIENT_VERSION, 3,
+            EGL_CONTEXT_CLIENT_VERSION, 2,
             EGL_NONE,
         };
 
@@ -129,15 +129,6 @@ void GraphicsPlugin::operator()()
         
         /* EGL: Make context current on this thread. */
         eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-        
-        /* OGL: Print version information */
-        GLint gl_major = 0; 
-        GLint gl_minor = 0;
-        glGetIntegerv(GL_MAJOR_VERSION, &gl_major);
-        glGetIntegerv(GL_MINOR_VERSION, &gl_minor);
-        std::cout << "GL version: " << gl_major << "." << gl_minor << std::endl;
-
-        glClearColor(0.0f, 0.5f, 1.0f, 1.0f); 
         
         /* OGL: Render initialization. */
         Render ogl_render{this->base_window, zmq_game_subscriber};
@@ -187,8 +178,7 @@ void GraphicsPlugin::operator()()
             if(this->base_window->poll())
             {
                 /* OGL: Update & Draw. */
-                //ogl_render(deltatime);
-                glClear(GL_COLOR_BUFFER_BIT);
+                ogl_render(deltatime);
             
                 /* EGL: Swap buffers. */
                 eglSwapBuffers(egl_display, egl_surface);

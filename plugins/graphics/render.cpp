@@ -21,7 +21,6 @@ std::uint32_t TextureManager::GetEmptySlot()
 Render::Render(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
     this->texturemanager = std::make_shared<TextureManager>();
-    //gl.Clear().ColorBuffer();
 }
 
 void Render::operator()(double deltatime)
@@ -89,7 +88,6 @@ void Render::operator()(double deltatime)
     {
         
         this->akkumulator = 0.0f;
-        //gl.Clear().ColorBuffer();
         for (auto& sprite : this->sprites)
         {
             sprite();
