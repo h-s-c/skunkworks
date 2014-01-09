@@ -5,6 +5,7 @@
 #include "plugins/graphics/render.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -19,6 +20,10 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #include <zmq.hpp>
+
+extern "C" { 
+ COMPILER_DLLEXPORT std::uint32_t NvOptimusEnablement = 0x00000001;
+}
 
 std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
