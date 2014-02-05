@@ -10,7 +10,7 @@ namespace opengl
       // API
       public:
         // Load texture from file in memory
-        texture(std::unique_ptr<std::pair<std::uint8_t*,std::uint32_t>> file);
+        texture(std::pair<std::uint8_t*,std::uint32_t> file);
         // Underlying opengl object
         std::uint32_t native_handle;
 

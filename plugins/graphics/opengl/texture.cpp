@@ -12,13 +12,13 @@
 
 namespace opengl
 {
-    texture::texture(std::unique_ptr<std::pair<std::uint8_t*,std::uint32_t>> file)
+    texture::texture(std::pair<std::uint8_t*,std::uint32_t> file)
     {
         glGenTextures(1,&this->native_handle);
         glBindTexture(GL_TEXTURE_2D,this->native_handle);
 
         std::int32_t x,y,n;
-        auto rawimage = stbi_load_from_memory(file.get()->first, file.get()->second,&x,&y,&n,0);
+        auto rawimage = stbi_load_from_memory(file.first, file.second,&x,&y,&n,0);
 
         if (!rawimage)
         {

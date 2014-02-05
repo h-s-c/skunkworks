@@ -105,8 +105,7 @@ Sprite::Sprite(const std::shared_ptr<platt::window> &base_window, const std::sha
         auto texture_slot = texturemanager->GetEmptySlot();
 
         platt::memory_map file(sprite_path + "/", this->json_objects.at(i).get<base::json::Object>("meta").get<base::json::String>("image"));
-        auto texture = std::make_unique<opengl::texture>(std::move(file.memory));
-        textures.push_back(std::move(texture));
+        textures.push_back(std::make_unique<opengl::texture>(file.memory));
         texture_slots.push_back(texture_slot);
     }
 
