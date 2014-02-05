@@ -5,6 +5,10 @@ project (PluginGraphics)
         ${CMAKE_SOURCE_DIR}/plugins/graphics/plugin.cpp
         ${CMAKE_SOURCE_DIR}/plugins/graphics/render.cpp
         ${CMAKE_SOURCE_DIR}/plugins/graphics/sprite.cpp
+        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/program.cpp
+        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/shader.cpp
+        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/stb_image.c
+        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/texture.cpp
     )
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})

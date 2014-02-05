@@ -1,4 +1,7 @@
 #pragma once
+#include "plugins/graphics/opengl/program.hpp"
+#include "plugins/graphics/opengl/shader.hpp"
+#include "plugins/graphics/opengl/texture.hpp"
 #include "base/string/stringenum.hpp"
 #include "base/parser/json.hpp"
 
@@ -41,10 +44,7 @@ class Sprite
     
     void operator()();
     
-    /* Clang fix: explicit move constructor */
-#if defined(COMPILER_CLANG)
-    Sprite(Sprite&&) = default; 
-#elif defined(COMPILER_MSVC)
+#if defined(COMPILER_MSVC)
 	Sprite(Sprite && other)
 	{
 		*this = other;
@@ -80,7 +80,7 @@ class Sprite
     base::json::Object current_json_object;
     
     /* Texture slots */
-    //std::vector<oglplus::Texture> textures;
+    std::vector<std::unique_ptr<opengl::texture>> textures;
     std::vector<std::uint32_t> texture_slots;
     std::uint32_t current_texture_slot;
     
@@ -88,4 +88,6 @@ class Sprite
     SpriteState sprite_state;
 
     std::uint32_t frame_number;
+
+    std::unique_ptr<opengl::program> shaderprogram;
 };

@@ -1,14 +1,13 @@
 // Public Domain
 #pragma once
 
-#include "plugins/graphics/sprite.hpp"
-
 #include <memory>
 #include <vector>
 
 #include <platt/window.hpp>
-
 #include <zmq.hpp>
+
+#include "plugins/graphics/sprite.hpp"
 
 class TextureManager
 {

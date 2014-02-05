@@ -1,16 +1,14 @@
 // Public Domain
-
-#include "plugins/graphics/render.hpp"
-#include "plugins/common/entity.hpp"
-#include "plugins/graphics/sprite.hpp"
-#include "base/string/stringhash.hpp"
-
 #include <sstream>
 
 #include <platt/window.hpp>
-
-#include <zmq.hpp>
 #include <msgpack.hpp>
+#include <zmq.hpp>
+
+#include "base/string/stringhash.hpp"
+#include "plugins/common/entity.hpp"
+#include "plugins/graphics/render.hpp"
+#include "plugins/graphics/sprite.hpp"
 
 std::uint32_t TextureManager::GetEmptySlot()
 {

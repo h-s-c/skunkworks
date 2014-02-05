@@ -1,5 +1,7 @@
 #include "plugins/graphics/sprite.hpp"
 #include "plugins/graphics/render.hpp"
+#include "plugins/graphics/opengl/program.hpp"
+#include "plugins/graphics/opengl/shader.hpp"
 #include "base/parser/json.hpp"
 
 #include <cfloat>
@@ -9,6 +11,8 @@
 #include <memory>
 #include <utility>
 
+#include <platt/memory_map.hpp>
+#include <platt/platform.hpp>
 #include <platt/window.hpp>
 
 #include <GLES2/gl2.h>
@@ -48,6 +52,62 @@ Sprite::Sprite(const std::shared_ptr<platt::window> &base_window, const std::sha
         base::json::Object json_object;
         json_object.parse(json_buffer);
         this->json_objects.push_back(std::move(json_object));
+    }
+
+    auto vertexshader_string = R"(
+    #version 100
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    #else
+    precision mediump float;
+    #endif
+    
+    uniform mat4 ProjectionMatrix;
+    attribute vec2 Position;
+    attribute vec2 TexCoord;
+    varying vec2 vertTexCoord;
+    
+    void main(void)
+    {
+       vertTexCoord = TexCoord;
+       gl_Position =  ProjectionMatrix *  vec4( Position, 0.0, 1.0 );
+    }
+    )"; 
+
+    auto fragmentshader_string = R"(
+    #version 100
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    #else
+    precision mediump float;
+    #endif
+    
+    uniform sampler2D TexUnit;
+    varying vec2 vertTexCoord;
+    void main(void)
+    {
+        gl_FragColor = texture2D( TexUnit, vertTexCoord );
+    }
+    )"; 
+
+    this->shaderprogram = std::make_unique<opengl::program>();
+    this->shaderprogram.get()->attach(std::make_unique<opengl::shader>(vertexshader_string, GL_VERTEX_SHADER));
+    this->shaderprogram.get()->attach(std::make_unique<opengl::shader>(fragmentshader_string, GL_FRAGMENT_SHADER));
+    this->shaderprogram.get()->link();
+
+    GLushort rectangle_elements[] = {
+        0, 1, 2,
+        2, 3, 0,
+    };
+    
+    for( std::uint32_t i=0; i < this->json_objects.size(); i++)
+    {        
+        auto texture_slot = texturemanager->GetEmptySlot();
+
+        platt::memory_map file(sprite_path + "/", this->json_objects.at(i).get<base::json::Object>("meta").get<base::json::String>("image"));
+        auto texture = std::make_unique<opengl::texture>(std::move(file.memory));
+        textures.push_back(std::move(texture));
+        texture_slots.push_back(texture_slot);
     }
 
     glClearColor(0.0f, 0.5f, 1.0f, 1.0f); 

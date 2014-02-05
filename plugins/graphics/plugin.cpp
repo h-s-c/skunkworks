@@ -1,9 +1,4 @@
 // Public Domain
-#include "plugins/graphics/plugin.hpp"
-#include "base/string/stringhash.hpp"
-#include "framework/plugin_api.hpp"
-#include "plugins/graphics/render.hpp"
-
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -13,13 +8,16 @@
 #include <string>
 #include <thread>
 
-#include <platt/platform.hpp>
-#include <platt/window.hpp>
-
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GLES2/gl2.h>
+#include <platt/platform.hpp>
+#include <platt/window.hpp>
 #include <zmq.hpp>
+
+#include "base/string/stringhash.hpp"
+#include "framework/plugin_api.hpp"
+#include "plugins/graphics/plugin.hpp"
+#include "plugins/graphics/render.hpp"
 
 extern "C" { 
  COMPILER_DLLEXPORT std::uint32_t NvOptimusEnablement = 0x00000001;

@@ -1,13 +1,12 @@
 // Public Domain
 #pragma once
 
-#include "framework/plugin_api.hpp"
-
 #include <memory>
 
 #include <platt/window.hpp>
-
 #include <zmq.hpp>
+
+#include "framework/plugin_api.hpp"
 
 class GraphicsPlugin : public Plugin
 {

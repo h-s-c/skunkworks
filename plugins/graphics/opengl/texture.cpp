@@ -1,0 +1,52 @@
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <vector>
+
+#include <GLES2/gl2.h>
+
+#include "plugins/graphics/opengl/texture.hpp"
+#include "plugins/graphics/opengl/stb_image.h"
+
+#include <platt/platform.hpp>
+
+namespace opengl
+{
+    texture::texture(std::unique_ptr<std::pair<std::uint8_t*,std::uint32_t>> file)
+    {
+        glGenTextures(1,&this->native_handle);
+        glBindTexture(GL_TEXTURE_2D,this->native_handle);
+
+        std::int32_t x,y,n;
+        auto rawimage = stbi_load_from_memory(file.get()->first, file.get()->second,&x,&y,&n,0);
+
+        if (!rawimage)
+        {
+            std::string errormsg = "GL - Failed to load image.\n" + std::string(stbi_failure_reason());
+            throw std::runtime_error(errormsg);
+        }
+
+        GLenum format = 0;
+        if (n==3)
+        {
+            format=GL_RGB;
+        }
+        else if (n==4)
+        {
+            format=GL_RGBA;
+        }  
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D,0,format,x,y,0,format,GL_UNSIGNED_BYTE,rawimage);
+        stbi_image_free(rawimage);
+    }
+
+    texture::~texture()
+    {
+        glDeleteTextures(1,&this->native_handle);
+    }
+}
