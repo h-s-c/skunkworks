@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include <platt/window.hpp>
+#include <zeug/window.hpp>
 #include <zmq.hpp>
 
 #include "plugins/graphics/sprite.hpp"
@@ -22,7 +22,7 @@ class TextureManager
 class Render
 {
   public:
-    Render(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber);
+    Render(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber);
     void operator()(double deltatime);
     
   private:
@@ -30,6 +30,6 @@ class Render
     std::vector<Sprite> sprites;
     std::shared_ptr<TextureManager> texturemanager;
     
-    std::shared_ptr<platt::window> base_window;
+    std::shared_ptr<zeug::window> base_window;
     std::shared_ptr<zmq::socket_t> zmq_game_subscriber;
 };

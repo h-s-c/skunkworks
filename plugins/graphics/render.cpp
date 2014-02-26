@@ -1,11 +1,11 @@
 // Public Domain
 #include <sstream>
 
-#include <platt/window.hpp>
+#include <zeug/window.hpp>
+#include <zeug/stringhash.hpp>
 #include <msgpack.hpp>
 #include <zmq.hpp>
 
-#include "base/string/stringhash.hpp"
 #include "plugins/common/entity.hpp"
 #include "plugins/graphics/render.hpp"
 #include "plugins/graphics/sprite.hpp"
@@ -16,7 +16,7 @@ std::uint32_t TextureManager::GetEmptySlot()
     return slots;
 }
 
-Render::Render(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
+Render::Render(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
     this->texturemanager = std::make_shared<TextureManager>();
 }
@@ -25,15 +25,15 @@ void Render::operator()(double deltatime)
 {
     zmq::message_t zmq_message;
     zmq_game_subscriber->recv(&zmq_message, ZMQ_NOBLOCK);
-    if(base::StringHash("Sprite") == base::StringHash(zmq_message.data()))
+    if(zeug::stringhash("Sprite") == zeug::stringhash(zmq_message.data()))
     {
         zmq_message.rebuild();
         zmq_game_subscriber->recv(&zmq_message, 0);
-        if (base::StringHash("Create") == base::StringHash(zmq_message.data()))
+        if (zeug::stringhash("Create") == zeug::stringhash(zmq_message.data()))
         {
             zmq_message.rebuild();
             zmq_game_subscriber->recv(&zmq_message, 0);
-            while(base::StringHash("Finish") != base::StringHash(zmq_message.data()))
+            while(zeug::stringhash("Finish") != zeug::stringhash(zmq_message.data()))
             {
                 Entity entity{0, 0, 0, 0.0f, "", ""};
                 msgpack::unpacked unpacked;
@@ -50,11 +50,11 @@ void Render::operator()(double deltatime)
                 zmq_game_subscriber->recv(&zmq_message, 0);
             }
         }
-        else if(base::StringHash("Update") == base::StringHash(zmq_message.data()))
+        else if(zeug::stringhash("Update") == zeug::stringhash(zmq_message.data()))
         {
             zmq_message.rebuild();
             zmq_game_subscriber->recv(&zmq_message, 0);
-            while(base::StringHash("Finish") != base::StringHash(zmq_message.data()))
+            while(zeug::stringhash("Finish") != zeug::stringhash(zmq_message.data()))
             {
                 Entity entity{0, 0, 0, 0.0f, "", ""};
                 msgpack::unpacked unpacked;

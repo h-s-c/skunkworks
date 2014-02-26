@@ -2,7 +2,7 @@
 #pragma once
 #include "framework/plugin_api.hpp"
 
-#include <platt/window.hpp>
+#include <zeug/window.hpp>
 
 #include <memory>
 #include <mutex>
@@ -23,11 +23,11 @@ class Framework
     void LoadPlugin(std::string name);
     void RunPlugin(std::unique_ptr<Plugin> plugin);
   
-    std::shared_ptr<platt::window> base_window;
+    std::shared_ptr<zeug::window> base_window;
     std::shared_ptr<zmq::context_t> zmq_context;
     std::shared_ptr<zmq::socket_t> zmq_framework_publisher;
     
-    std::vector<std::unique_ptr<platt::shared_lib>> handles;
+    std::vector<std::unique_ptr<zeug::shared_lib>> handles;
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::thread> threads;
     

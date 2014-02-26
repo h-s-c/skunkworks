@@ -10,11 +10,11 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <platt/platform.hpp>
-#include <platt/window.hpp>
+#include <zeug/platform.hpp>
+#include <zeug/stringhash.hpp>
+#include <zeug/window.hpp>
 #include <zmq.hpp>
 
-#include "base/string/stringhash.hpp"
 #include "framework/plugin_api.hpp"
 #include "plugins/graphics/plugin.hpp"
 #include "plugins/graphics/render.hpp"
@@ -23,7 +23,7 @@ extern "C" {
  COMPILER_DLLEXPORT std::uint32_t NvOptimusEnablement = 0x00000001;
 }
 
-std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
     std::unique_ptr<Plugin> pointer = std::make_unique<GraphicsPlugin>(base_window, zmq_context);
     return std::move(pointer);
@@ -34,7 +34,7 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Graphics = { &InitPlugin};
 }
 
-GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+GraphicsPlugin::GraphicsPlugin(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {      
     /* ZMQ: Create graphics publication socket on this thread. */
@@ -137,7 +137,7 @@ void GraphicsPlugin::operator()()
         
         /* ZMQ: Send ready message. */
         {
-            base::StringHash message("Ready");
+            zeug::stringhash message("Ready");
             zmq::message_t zmq_message_send(message.Size());
             memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
             this->zmq_graphics_publisher->send(zmq_message_send);
@@ -149,7 +149,7 @@ void GraphicsPlugin::operator()()
             zmq::message_t zmq_message;
             if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                if (zeug::stringhash("Start") == zeug::stringhash(zmq_message.data()))
                 {
                     break;
                 }
@@ -165,7 +165,7 @@ void GraphicsPlugin::operator()()
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                    if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
                     {
                         break;
                     }
@@ -194,7 +194,7 @@ void GraphicsPlugin::operator()()
     catch (...)
     {
         /* ZMQ: Send stop message. */
-        base::StringHash message("Stop");
+        zeug::stringhash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_graphics_publisher->send(zmq_message_send);

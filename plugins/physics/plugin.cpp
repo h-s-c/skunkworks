@@ -1,6 +1,5 @@
 // Public Domain
 #include "plugins/physics/plugin.hpp"
-#include "base/string/stringhash.hpp"
 #include "framework/plugin_api.hpp"
 #include "plugins/physics/step.hpp"
 
@@ -12,11 +11,12 @@
 #include <string>
 #include <thread>
 
-#include <platt/platform.hpp>
-#include <platt/window.hpp>
+#include <zeug/platform.hpp>
+#include <zeug/stringhash.hpp>
+#include <zeug/window.hpp>
 #include <zmq.hpp>
 
-std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
     std::unique_ptr<Plugin> pointer = std::make_unique<PhysicsPlugin>(base_window, zmq_context);
     return std::move(pointer);
@@ -27,7 +27,7 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Physics = { &InitPlugin};
 }
 
-PhysicsPlugin::PhysicsPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+PhysicsPlugin::PhysicsPlugin(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {
     /* ZMQ: Create physics publication socket on this thread. */
@@ -71,7 +71,7 @@ void PhysicsPlugin::operator()()
         
         /* ZMQ: Send ready message. */
         {
-            base::StringHash message("Ready");
+            zeug::stringhash message("Ready");
             zmq::message_t zmq_message_send(message.Size());
             memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
             this->zmq_physics_publisher->send(zmq_message_send);
@@ -83,7 +83,7 @@ void PhysicsPlugin::operator()()
             zmq::message_t zmq_message;
             if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                if (zeug::stringhash("Start") == zeug::stringhash(zmq_message.data()))
                 {
                     break;
                 }
@@ -100,7 +100,7 @@ void PhysicsPlugin::operator()()
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                    if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
                     {
                         break;
                     }
@@ -120,7 +120,7 @@ void PhysicsPlugin::operator()()
     catch(...)
     {
         /* ZMQ: Send stop message. */
-        base::StringHash message("Stop");
+        zeug::stringhash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_physics_publisher->send(zmq_message_send);

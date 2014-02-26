@@ -5,16 +5,10 @@ project (PluginGraphics)
         ${CMAKE_SOURCE_DIR}/plugins/graphics/plugin.cpp
         ${CMAKE_SOURCE_DIR}/plugins/graphics/render.cpp
         ${CMAKE_SOURCE_DIR}/plugins/graphics/sprite.cpp
-        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/program.cpp
-        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/shader.cpp
-        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/stb_image.c
-        ${CMAKE_SOURCE_DIR}/plugins/graphics/opengl/texture.cpp
     )
     list(APPEND PLUGIN_SOURCE ${PLUGIN_SOURCE})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
-    
-    list(APPEND PLUGIN_LIBRARIES Base)
 
     find_package(EGL REQUIRED)
     list(APPEND PLUGIN_INCLUDE_DIRS ${EGL_INCLUDE_DIR})
@@ -27,8 +21,8 @@ project (PluginGraphics)
         list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
     endif()
 
-    find_package(PLATT REQUIRED)
-    list(APPEND PLUGIN_INCLUDE_DIRS ${PLATT_INCLUDE_DIR})
+    find_package(ZEUG REQUIRED)
+    list(APPEND PLUGIN_INCLUDE_DIRS ${ZEUG_INCLUDE_DIR})
     
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   

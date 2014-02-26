@@ -1,7 +1,6 @@
 // Public Domain
-#include "plugins/game/plugin.hpp"
-#include "base/string/stringhash.hpp"
 #include "framework/plugin_api.hpp"
+#include "plugins/game/plugin.hpp"
 #include "plugins/game/entitymanager.hpp"
 
 #include <chrono>
@@ -12,11 +11,12 @@
 #include <string>
 #include <thread>
 
-#include <platt/platform.hpp>
-#include <platt/window.hpp>
+#include <zeug/platform.hpp>
+#include <zeug/stringhash.hpp>
+#include <zeug/window.hpp>
 #include <zmq.hpp>
 
-std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+std::unique_ptr<Plugin> InitPlugin(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
 {
     std::unique_ptr<Plugin> pointer = std::make_unique<GamePlugin>(base_window, zmq_context);
     return std::move(pointer);
@@ -27,7 +27,7 @@ extern "C"
     COMPILER_DLLEXPORT struct PluginFuncs Game = { &InitPlugin};
 }
 
-GamePlugin::GamePlugin(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
+GamePlugin::GamePlugin(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::context_t> &zmq_context)
     : base_window(base_window), zmq_context(zmq_context)
 {
     /* ZMQ: Create game publication socket on this thread. */
@@ -68,7 +68,7 @@ void GamePlugin::operator()()
         
         /* ZMQ: Send ready message. */
         {
-            base::StringHash message("Ready");
+            zeug::stringhash message("Ready");
             zmq::message_t zmq_message_send(message.Size());
             memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
             this->zmq_game_publisher->send(zmq_message_send);
@@ -80,7 +80,7 @@ void GamePlugin::operator()()
             zmq::message_t zmq_message;
             if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Start") == base::StringHash(zmq_message.data()))
+                if (zeug::stringhash("Start") == zeug::stringhash(zmq_message.data()))
                 {
                     break;
                 }
@@ -95,7 +95,7 @@ void GamePlugin::operator()()
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                    if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
                     {
                         break;
                     }
@@ -107,21 +107,21 @@ void GamePlugin::operator()()
                 if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
                     /* Topic */
-                    if (base::StringHash("Keyboard") == base::StringHash(zmq_message.data()))
+                    if (zeug::stringhash("Keyboard") == zeug::stringhash(zmq_message.data()))
                     {
                         /* Message */
                         zmq_message.rebuild();
                         zmq_input_subscriber.recv(&zmq_message, 0);
-                        if (base::StringHash("Esc") == base::StringHash(zmq_message.data()))
+                        if (zeug::stringhash("Esc") == zeug::stringhash(zmq_message.data()))
                         {
                              /* End of message. */
                             zmq_message.rebuild();
                             zmq_input_subscriber.recv(&zmq_message, 0);
-                            if (base::StringHash("Finish") == base::StringHash(zmq_message.data()))
+                            if (zeug::stringhash("Finish") == zeug::stringhash(zmq_message.data()))
                             {
                             }
                             /* ZMQ: Send stop message. */
-                            base::StringHash message("Stop");
+                            zeug::stringhash message("Stop");
                             zmq_message.rebuild();
                             memcpy(zmq_message.data(), message.Get(), message.Size()); 
                             this->zmq_game_publisher->send(zmq_message);
@@ -136,7 +136,7 @@ void GamePlugin::operator()()
     catch (...)
     {
         /* ZMQ: Send stop message. */
-        base::StringHash message("Stop");
+        zeug::stringhash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_game_publisher->send(zmq_message_send);

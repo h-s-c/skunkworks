@@ -1,9 +1,4 @@
 #pragma once
-#include "plugins/graphics/opengl/program.hpp"
-#include "plugins/graphics/opengl/shader.hpp"
-#include "plugins/graphics/opengl/texture.hpp"
-#include "base/string/stringenum.hpp"
-#include "base/parser/json.hpp"
 
 #include <cfloat>
 #include <cstdint>
@@ -11,8 +6,14 @@
 #include <memory>
 #include <utility>
 
-#include <platt/platform.hpp>
-#include <platt/window.hpp>
+#include <zeug/json.hpp>
+#include <zeug/platform.hpp>
+#include <zeug/stringenum.hpp>
+#include <zeug/window.hpp>
+#include <zeug/opengl/buffer.hpp>
+#include <zeug/opengl/program.hpp>
+#include <zeug/opengl/shader.hpp>
+#include <zeug/opengl/texture.hpp>
 
 class TextureManager;
 
@@ -24,7 +25,7 @@ enum class SpriteState
     WalkLeft
 };
 
-class StateStringEnum : public base::StringEnum<StateStringEnum, SpriteState>
+class StateStringEnum : public zeug::stringenum<StateStringEnum, SpriteState>
 {
     StateStringEnum();
 public:
@@ -35,7 +36,7 @@ class Sprite
 {
   public:
     /* Construct sprite from json desc*/
-    Sprite(const std::shared_ptr<platt::window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
+    Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
     
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
@@ -64,7 +65,7 @@ class Sprite
 
   private:
   
-    std::shared_ptr<platt::window> base_window;
+    std::shared_ptr<zeug::window> base_window;
   
     /* Id of the entity this sprite belongs to. */
     std::int32_t id;
@@ -76,11 +77,11 @@ class Sprite
     float scale;
     
     /* json object */
-    std::vector<base::json::Object> json_objects;
-    base::json::Object current_json_object;
+    std::vector<zeug::json::Object> json_objects;
+    zeug::json::Object current_json_object;
     
     /* Texture slots */
-    std::vector<std::unique_ptr<opengl::texture>> textures;
+    std::vector<std::unique_ptr<zeug::opengl::texture>> textures;
     std::vector<std::uint32_t> texture_slots;
     std::uint32_t current_texture_slot;
     
@@ -89,5 +90,9 @@ class Sprite
 
     std::uint32_t frame_number;
 
-    std::unique_ptr<opengl::program> shaderprogram;
+    std::unique_ptr<zeug::opengl::program> shaderprog;
+
+    std::unique_ptr<zeug::opengl::buffer> indices;
+    std::unique_ptr<zeug::opengl::buffer> vertices;
+    std::unique_ptr<zeug::opengl::buffer> texcoords;
 };

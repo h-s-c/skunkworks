@@ -9,7 +9,6 @@ project (PluginInput)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/wreckedgames)
     
-    list(APPEND PLUGIN_LIBRARIES Base)
     list(APPEND PLUGIN_LIBRARIES OIS)
 
     if (UNIX)
@@ -20,8 +19,8 @@ project (PluginInput)
         list(APPEND PLUGIN_INCLUDE_DIRS ${X11_INCLUDE_DIR})
     endif()
 
-    find_package(PLATT REQUIRED)
-    list(APPEND PLUGIN_INCLUDE_DIRS ${PLATT_INCLUDE_DIR})
+    find_package(ZEUG REQUIRED)
+    list(APPEND PLUGIN_INCLUDE_DIRS ${ZEUG_INCLUDE_DIR})
     
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   

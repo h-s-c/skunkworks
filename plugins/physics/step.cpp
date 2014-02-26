@@ -1,6 +1,4 @@
 #include "plugins/physics/step.hpp"
-
-#include "base/string/stringhash.hpp"
 #include "plugins/common/entity.hpp"
 
 #include <zmq.hpp>

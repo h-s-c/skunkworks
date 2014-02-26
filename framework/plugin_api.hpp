@@ -4,7 +4,7 @@
 #include <functional>
 #include <memory>
 
-#include <platt/window.hpp>
+#include <zeug/window.hpp>
 
 #include <zmq.hpp>
 
@@ -19,6 +19,6 @@ extern "C"
 {    
     struct PluginFuncs 
     {
-        std::function<std::unique_ptr<Plugin>(const std::shared_ptr<platt::window>&, const std::shared_ptr<zmq::context_t>&)> InitPlugin;
+        std::function<std::unique_ptr<Plugin>(const std::shared_ptr<zeug::window>&, const std::shared_ptr<zmq::context_t>&)> InitPlugin;
     };
 }

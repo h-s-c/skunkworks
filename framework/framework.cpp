@@ -2,7 +2,6 @@
 
 #include "framework/framework.hpp"
 #include "framework/plugin_api.hpp"
-#include "base/string/stringhash.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -13,9 +12,10 @@
 #include <stdexcept>
 #include <utility>
 
-#include <platt/platform.hpp>
-#include <platt/shared_lib.hpp>
-#include <platt/window.hpp>
+#include <zeug/platform.hpp>
+#include <zeug/shared_lib.hpp>
+#include <zeug/stringhash.hpp>
+#include <zeug/window.hpp>
 
 #include <zmq.hpp>
 
@@ -59,10 +59,10 @@ int RunFramework()
 Framework::Framework()
 {
     /* General: Print debugging information. */
-    std::cout << platt::platform::verbose() << std::endl;
+    std::cout << zeug::platform::verbose() << std::endl;
 
-    /* platt::window: Initialization. */
-    this->base_window = std::make_shared<platt::window>();
+    /* zeug::window: Initialization. */
+    this->base_window = std::make_shared<zeug::window>();
     
     /* ZMQ: Initialization with 1 worker threads. */
     this->zmq_context = std::make_shared<zmq::context_t>(1);
@@ -103,7 +103,7 @@ void Framework::operator()()
             zmq::message_t zmq_message;
             if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Ready") == base::StringHash(zmq_message.data()))
+                if (zeug::stringhash("Ready") == zeug::stringhash(zmq_message.data()))
                 {
                     break;
                 }
@@ -113,7 +113,7 @@ void Framework::operator()()
     
     /* ZMQ: Send start message. */
     {
-        base::StringHash message("Start");
+        zeug::stringhash message("Start");
         zmq::message_t zmq_message;
         memcpy(zmq_message.data(), message.Get(), message.Size()); 
         this->zmq_framework_publisher->send(zmq_message);
@@ -132,7 +132,7 @@ void Framework::operator()()
             zmq::message_t zmq_message;
             if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (base::StringHash("Stop") == base::StringHash(zmq_message.data()))
+                if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
                 {
                     stop = true;
                     break;
@@ -143,7 +143,7 @@ void Framework::operator()()
     
     /* ZMQ: Send stop message. */
     {
-        base::StringHash message("Stop");
+        zeug::stringhash message("Stop");
         zmq::message_t zmq_message;
         memcpy(zmq_message.data(), message.Get(), message.Size()); 
         this->zmq_framework_publisher->send(zmq_message);
@@ -167,7 +167,7 @@ void Framework::operator()()
 
 void Framework::LoadPlugin(std::string name)
 {  
-    auto handle = std::make_unique<platt::shared_lib>(std::string("Plugin"+name));
+    auto handle = std::make_unique<zeug::shared_lib>(std::string("Plugin"+name));
     auto funcs = reinterpret_cast<PluginFuncs*>(handle.get()->symbol(name));
     
     handles.push_back(std::move(handle));
