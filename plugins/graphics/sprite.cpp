@@ -35,8 +35,8 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
     glClearColor(0.0f, 0.5f, 1.0f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    /* parse json descs */
-    {
+    // parse json descs 
+    /*{
         std::ifstream json_file(sprite_path+"/idle.json");
         std::stringstream json_buffer;
         json_buffer << json_file.rdbuf();
@@ -55,7 +55,7 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
         zeug::json::Object json_object;
         json_object.parse(json_buffer);
         this->json_objects.push_back(std::move(json_object));
-    }
+    }*/
 
     auto vertexshader_string = R"(
     #version 100
@@ -109,14 +109,14 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
 
     this->texcoords = std::make_unique<zeug::opengl::buffer>(GL_ARRAY_BUFFER);
 
-    for( std::uint32_t i=0; i < this->json_objects.size(); i++)
+    /*for( std::uint32_t i=0; i < this->json_objects.size(); i++)
     {        
         auto texture_slot = texturemanager->GetEmptySlot();
 
         zeug::memory_map file(sprite_path + "/", this->json_objects.at(i).get<zeug::json::Object>("meta").get<zeug::json::String>("image"));
         textures.push_back(std::make_unique<zeug::opengl::texture>(file.memory));
         texture_slots.push_back(texture_slot);
-    }
+    }*/
 }
 
 void Sprite::SetPosition(std::pair<std::int32_t, std::int32_t> position)
@@ -140,8 +140,8 @@ void Sprite::SetScale(float scale)
 
 void Sprite::SetState(SpriteState sprite_state)
 {
-    /* set state values */
-    if(sprite_state != this->sprite_state)
+    // set state values
+    /*if(sprite_state != this->sprite_state)
     {
         this->sprite_state = sprite_state;
         frame_number = 0;
@@ -156,14 +156,14 @@ void Sprite::SetState(SpriteState sprite_state)
             this->current_json_object = this->json_objects.at(1);
             //this->current_texture_slot = this->texture_slots.at(1);
         }
-    }
+    }*/
 }
 
 void Sprite::operator()()
 {
-    if(frame_number == this->current_json_object.get<zeug::json::Array>("frames").size())
+    /*if(frame_number == this->current_json_object.get<zeug::json::Array>("frames").size())
     {
-        /* repeat */
+        // repeat
         frame_number = 0;
     }
     auto sprite_sheet_width = this->current_json_object.get<zeug::json::Object>("meta").get<zeug::json::Object>("size").get<zeug::json::Number>("w");
@@ -174,7 +174,7 @@ void Sprite::operator()()
     auto frame_x = frame.get<zeug::json::Number>("x");
     auto frame_y = frame.get<zeug::json::Number>("y");
       
-    /* determine vertex positions */
+    // determine vertex positions
     GLfloat rectangle_verts[] = {
         float(((frame_width/2)*this->scale)+this->position.first),   float(((frame_height/2)*this->scale)+this->position.second),
         float(-(((frame_width/2)*this->scale)-this->position.first)),   float(((frame_height/2)*this->scale)+this->position.second),
@@ -191,7 +191,7 @@ void Sprite::operator()()
     std::vector<GLfloat> rectangle_texcoords;
     if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::WalkRight)
     {
-        /* determine texcoords */
+        // determine texcoords
         rectangle_texcoords = {
             float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
             float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
@@ -201,7 +201,7 @@ void Sprite::operator()()
     }
     else if( this->sprite_state == SpriteState::IdleLeft || this->sprite_state == SpriteState::WalkLeft)
     {
-        /* determine texcoords */
+        // determine texcoords
         rectangle_texcoords = {
             float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
             float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
@@ -219,4 +219,5 @@ void Sprite::operator()()
     auto texunit_attrib = glGetUniformLocation(shaderprog->native_handle(), "TexUnit");
 
     this->frame_number++;
+    */
 }

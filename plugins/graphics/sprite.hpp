@@ -77,8 +77,8 @@ class Sprite
     float scale;
     
     /* json object */
-    std::vector<zeug::json::Object> json_objects;
-    zeug::json::Object current_json_object;
+    /*std::vector<zeug::json::Object> json_objects;
+    zeug::json::Object current_json_object;*/
     
     /* Texture slots */
     std::vector<std::unique_ptr<zeug::opengl::texture>> textures;
