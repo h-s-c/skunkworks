@@ -6,7 +6,6 @@
 #include <memory>
 #include <utility>
 
-#include <zeug/json.hpp>
 #include <zeug/platform.hpp>
 #include <zeug/stringenum.hpp>
 #include <zeug/window.hpp>
@@ -14,6 +13,8 @@
 #include <zeug/opengl/program.hpp>
 #include <zeug/opengl/shader.hpp>
 #include <zeug/opengl/texture.hpp>
+
+#include "external/jsonxx.hpp"
 
 class TextureManager;
 
@@ -77,8 +78,8 @@ class Sprite
     float scale;
     
     /* json object */
-    /*std::vector<zeug::json::Object> json_objects;
-    zeug::json::Object current_json_object;*/
+    std::vector<jsonxx::Object> json_objects;
+    jsonxx::Object current_json_object;
     
     /* Texture slots */
     std::vector<std::unique_ptr<zeug::opengl::texture>> textures;

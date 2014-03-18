@@ -10,9 +10,13 @@ project (PluginGraphics)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
 
+    list(APPEND PLUGIN_LIBRARIES Json++)
+    list(APPEND PLUGIN_LIBRARIES Zeug)
+
     find_package(EGL REQUIRED)
     list(APPEND PLUGIN_INCLUDE_DIRS ${EGL_INCLUDE_DIR})
     list(APPEND PLUGIN_LIBRARIES ${EGL_LIBRARY})   
+
     find_package(GLES2 REQUIRED)
     list(APPEND PLUGIN_INCLUDE_DIRS ${GLES2_INCLUDE_DIR})
     list(APPEND PLUGIN_LIBRARIES ${GLES2_LIBRARY})  
@@ -20,9 +24,6 @@ project (PluginGraphics)
     if (UNIX)
         list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
     endif()
-
-    find_package(ZEUG REQUIRED)
-    list(APPEND PLUGIN_INCLUDE_DIRS ${ZEUG_INCLUDE_DIR})
     
     find_package(ZMQ REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${ZMQ_LIBRARY})   
@@ -31,7 +32,7 @@ project (PluginGraphics)
     find_package(MSGPACK REQUIRED)
     list(APPEND PLUGIN_LIBRARIES ${MSGPACK_LIBRARY})   
     list(APPEND PLUGIN_INCLUDE_DIRS ${MSGPACK_INCLUDE_DIR})
-    
+
     include_directories(${PLUGIN_INCLUDE_DIRS})
     add_library(PluginGraphics SHARED ${PLUGIN_SOURCE})
     target_link_libraries(PluginGraphics ${PLUGIN_LIBRARIES})

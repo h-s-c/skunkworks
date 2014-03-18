@@ -8,7 +8,6 @@
 #include <memory>
 #include <utility>
 
-#include <zeug/json.hpp>
 #include <zeug/memory_map.hpp>
 #include <zeug/platform.hpp>
 #include <zeug/window.hpp>
@@ -18,6 +17,8 @@
 #include <zeug/opengl/texture.hpp>
 
 #include <GLES2/gl2.h>
+
+#include "external/jsonxx.hpp"
 
 const StateStringEnum::vec_t StateStringEnum::en2str_vec = 
 {
@@ -36,13 +37,13 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
     glClear(GL_COLOR_BUFFER_BIT);
 
     // parse json descs 
-    /*{
+    {
         std::ifstream json_file(sprite_path+"/idle.json");
         std::stringstream json_buffer;
         json_buffer << json_file.rdbuf();
         json_file.close();
 
-        zeug::json::Object json_object;
+        jsonxx::Object json_object;
         json_object.parse(json_buffer);
         this->json_objects.push_back(std::move(json_object));
     }
@@ -52,10 +53,10 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
         json_buffer << json_file.rdbuf();
         json_file.close();
 
-        zeug::json::Object json_object;
+        jsonxx::Object json_object;
         json_object.parse(json_buffer);
         this->json_objects.push_back(std::move(json_object));
-    }*/
+    }
 
     auto vertexshader_string = R"(
     #version 100
@@ -107,16 +108,17 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
     this->indices.get()->bind();
     this->indices.get()->upload(rectangle_elements);
 
+    this->vertices = std::make_unique<zeug::opengl::buffer>(GL_ARRAY_BUFFER);
     this->texcoords = std::make_unique<zeug::opengl::buffer>(GL_ARRAY_BUFFER);
 
-    /*for( std::uint32_t i=0; i < this->json_objects.size(); i++)
+    for( std::uint32_t i=0; i < this->json_objects.size(); i++)
     {        
         auto texture_slot = texturemanager->GetEmptySlot();
 
-        zeug::memory_map file(sprite_path + "/", this->json_objects.at(i).get<zeug::json::Object>("meta").get<zeug::json::String>("image"));
+        zeug::memory_map file(sprite_path + "/", this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("image"));
         textures.push_back(std::make_unique<zeug::opengl::texture>(file.memory));
         texture_slots.push_back(texture_slot);
-    }*/
+    }
 }
 
 void Sprite::SetPosition(std::pair<std::int32_t, std::int32_t> position)
@@ -141,7 +143,7 @@ void Sprite::SetScale(float scale)
 void Sprite::SetState(SpriteState sprite_state)
 {
     // set state values
-    /*if(sprite_state != this->sprite_state)
+    if(sprite_state != this->sprite_state)
     {
         this->sprite_state = sprite_state;
         frame_number = 0;
@@ -156,23 +158,23 @@ void Sprite::SetState(SpriteState sprite_state)
             this->current_json_object = this->json_objects.at(1);
             //this->current_texture_slot = this->texture_slots.at(1);
         }
-    }*/
+    }
 }
 
 void Sprite::operator()()
 {
-    /*if(frame_number == this->current_json_object.get<zeug::json::Array>("frames").size())
+    if(frame_number == this->current_json_object.get<jsonxx::Array>("frames").size())
     {
         // repeat
         frame_number = 0;
     }
-    auto sprite_sheet_width = this->current_json_object.get<zeug::json::Object>("meta").get<zeug::json::Object>("size").get<zeug::json::Number>("w");
-    auto sprite_sheet_height = this->current_json_object.get<zeug::json::Object>("meta").get<zeug::json::Object>("size").get<zeug::json::Number>("h");
-    auto frame = this->current_json_object.get<zeug::json::Array>("frames").get<zeug::json::Object>(frame_number).get<zeug::json::Object>("frame");
-    auto frame_width = frame.get<zeug::json::Number>("w");
-    auto frame_height = frame.get<zeug::json::Number>("h");
-    auto frame_x = frame.get<zeug::json::Number>("x");
-    auto frame_y = frame.get<zeug::json::Number>("y");
+    auto sprite_sheet_width = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
+    auto sprite_sheet_height = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
+    auto frame = this->current_json_object.get<jsonxx::Array>("frames").get<jsonxx::Object>(frame_number).get<jsonxx::Object>("frame");
+    auto frame_width = frame.get<jsonxx::Number>("w");
+    auto frame_height = frame.get<jsonxx::Number>("h");
+    auto frame_x = frame.get<jsonxx::Number>("x");
+    auto frame_y = frame.get<jsonxx::Number>("y");
       
     // determine vertex positions
     GLfloat rectangle_verts[] = {
@@ -216,8 +218,39 @@ void Sprite::operator()()
     this->texcoords.get()->upload(&rectangle_texcoords[0]);
     glEnableVertexAttribArray(texcoord_attrib);
     
-    auto texunit_attrib = glGetUniformLocation(shaderprog->native_handle(), "TexUnit");
+    auto texunit_uniform = glGetUniformLocation(shaderprog->native_handle(), "TexUnit");
+    glUniform1i(texunit_uniform, this->current_texture_slot);
+
+    auto width = float(base_window->width());
+    auto aspect = float(base_window->width() / base_window->height());
+    auto near = 1.0f;
+    auto far = -1.0f;
+
+    auto right = width / 2.0f;
+    auto left = -right;
+
+    auto bottom = left / aspect;
+    auto top = right / aspect;
+
+    auto a = 2.0f / (right - left);
+    auto b = 2.0f / (top - bottom);
+    auto c = -2.0f / (far - near);
+
+    auto tx = - (right + left)/(right - left);
+    auto ty = - (top + bottom)/(top - bottom);
+    auto tz = - (far + near)/(far - near);
+
+    float ortho[16] = {
+        a,      0.0f,   0.0f,   0.0f,
+        0.0f,   b,      0.0f,   0.0f,
+        0.0f,   0.0f,   c,      0.0f,
+        tx,     ty,     tz,     1.0f
+    };
+
+    auto proj_uniform = glGetUniformLocation(shaderprog->native_handle(), "ProjectionMatrix");
+    glUniformMatrix4fv(proj_uniform, 1, 0, &ortho[0]);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (GLushort*)0);
 
     this->frame_number++;
-    */
 }

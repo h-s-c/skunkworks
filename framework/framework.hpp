@@ -3,6 +3,7 @@
 #include "framework/plugin_api.hpp"
 
 #include <zeug/window.hpp>
+#include <zeug/shared_lib.hpp>
 
 #include <memory>
 #include <mutex>

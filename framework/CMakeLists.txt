@@ -8,11 +8,10 @@ project (Framework)
     list(APPEND FRAMEWORK_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND FRAMEWORK_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
 
+    list(APPEND FRAMEWORK_LIBRARIES Zeug)
+
     find_package(EGL REQUIRED)
     list(APPEND FRAMEWORK_INCLUDE_DIRS ${EGL_INCLUDE_DIR})
-
-    find_package(ZEUG REQUIRED)
-    list(APPEND FRAMEWORK_INCLUDE_DIRS ${ZEUG_INCLUDE_DIR})
 
     if (UNIX)        
         find_package(X11 REQUIRED)
