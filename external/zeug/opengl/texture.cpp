@@ -28,6 +28,24 @@ namespace zeug
             throw std::runtime_error(errormsg);
         }
 
+        int width_in_bytes = x * 4;
+        unsigned char *top = NULL;
+        unsigned char *bottom = NULL;
+        unsigned char temp = 0;
+        int half_height = y / 2;
+
+        for (int row = 0; row < half_height; row++) {
+          top = rawimage + row * width_in_bytes;
+          bottom = rawimage + (y - row - 1) * width_in_bytes;
+          for (int col = 0; col < width_in_bytes; col++) {
+            temp = *top;
+            *top = *bottom;
+            *bottom = temp;
+            top++;
+            bottom++;
+          }
+        }
+
         GLenum format = 0;
         if (n==3)
         {
@@ -54,7 +72,7 @@ namespace zeug
 
     texture::~texture()
     {
-        glDeleteTextures(1,&this->native_handle_internal);
+        //glDeleteTextures(1,&this->native_handle_internal);
     }
   }
 }

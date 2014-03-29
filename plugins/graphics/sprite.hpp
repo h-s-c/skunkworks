@@ -38,7 +38,6 @@ class Sprite
   public:
     /* Construct sprite from json desc*/
     Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
-    
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
     void SetState(SpriteState sprite_state);
@@ -92,8 +91,9 @@ class Sprite
     std::uint32_t frame_number;
 
     std::unique_ptr<zeug::opengl::program> shaderprog;
-
-    std::unique_ptr<zeug::opengl::buffer> indices;
-    std::unique_ptr<zeug::opengl::buffer> vertices;
-    std::unique_ptr<zeug::opengl::buffer> texcoords;
+    std::array<float, 16> ortho_projection;
+    std::uint32_t texcoord_attrib;
+    std::uint32_t position_attrib;
+    std::uint32_t texunit_uniform;
+    std::uint32_t proj_uniform;
 };

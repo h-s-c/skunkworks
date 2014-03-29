@@ -6,6 +6,8 @@
 #include <msgpack.hpp>
 #include <zmq.hpp>
 
+#include <GLES2/gl2.h>
+
 #include "plugins/common/entity.hpp"
 #include "plugins/graphics/render.hpp"
 #include "plugins/graphics/sprite.hpp"
@@ -19,6 +21,9 @@ std::uint32_t TextureManager::GetEmptySlot()
 Render::Render(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
     this->texturemanager = std::make_shared<TextureManager>();
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
 }
 
 void Render::operator()(double deltatime)
@@ -84,7 +89,7 @@ void Render::operator()(double deltatime)
     /* 60 frames / second due to animations */
     if( this->akkumulator >= 2000)
     {
-        
+        glClear(GL_COLOR_BUFFER_BIT);
         this->akkumulator = 0.0f;
         for (auto& sprite : this->sprites)
         {

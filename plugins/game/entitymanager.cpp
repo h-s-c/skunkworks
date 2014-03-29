@@ -38,7 +38,7 @@ void EntityManager::operator()()
         }
         /* Entity data. */
         {
-            Entity sprite{1, 0, 0, 0.2f, "./../../assets/players/darksaber/sprite", "WalkRight"};
+            Entity sprite{1, 0, 0, 0.4f, "./../../assets/players/darksaber/sprite", "WalkRight"};
 
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -50,7 +50,7 @@ void EntityManager::operator()()
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         {
-            Entity sprite{2, 100, 100, 0.2f, "./../../assets/players/darksaber/sprite", "IdleRight"};
+            Entity sprite{2, 100, 100, 0.4f, "./../../assets/players/darksaber/sprite", "IdleRight"};
             
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -62,7 +62,7 @@ void EntityManager::operator()()
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         {
-            Entity sprite{3, -100, -100, 0.2f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
+            Entity sprite{3, -100, -100, 0.4f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
             
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -104,11 +104,11 @@ void EntityManager::operator()()
             Entity sprite;
             if(test < 100)
             {
-                sprite = {1, -200+test, -100, 0.2f, "./../../assets/players/darksaber/sprite", "WalkRight"};
+                sprite = {1, -200+test, -100, 0.4f, "./../../assets/players/darksaber/sprite", "WalkRight"};
             }
             else if(test < 200)
             {
-                sprite = {1, -test, -100, 0.2f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
+                sprite = {1, -test, -100, 0.4f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
             }
             else if(test == 200)
             {
@@ -126,11 +126,11 @@ void EntityManager::operator()()
             Entity sprite;
             if(test < 100)
             {
-                sprite = {3, 200-test, 0, 0.2f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
+                sprite = {3, 200-test, 0, 0.4f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
             }
             else if(test < 200)
             {
-                sprite = {3, test, 0, 0.2f, "./../../assets/players/darksaber/sprite", "WalkRight"};
+                sprite = {3, test, 0, 0.4f, "./../../assets/players/darksaber/sprite", "WalkRight"};
             }
             else if(test == 200)
             {
