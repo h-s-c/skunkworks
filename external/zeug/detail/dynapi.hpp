@@ -460,6 +460,7 @@ namespace zeug
                 static std::function<int (XScreen*)> XHeightOfScreen;
                 static std::function<int (XDisplay*, XWindow, unsigned long, XSetWindowAttributes*)> XChangeWindowAttributes;
                 static std::function<int (XDisplay*)> XFlush;
+                static std::function<int (XDisplay*, XWindow, char*)> XStoreName;
             }
             namespace detail
             {
@@ -501,6 +502,7 @@ namespace zeug
                     api::XHeightOfScreen = detail::lib->function<int (XScreen*)>("XHeightOfScreen");
                     api::XChangeWindowAttributes = detail::lib->function<int (XDisplay*, XWindow, unsigned long, XSetWindowAttributes*)>("XChangeWindowAttributes");
                     api::XFlush = detail::lib->function<int (XDisplay*)>("XFlush");
+                    api::XStoreName = detail::lib->function<int (XDisplay*, XWindow, char*)>("XStoreName");
                 }
                 detail::refcnt++;
             }

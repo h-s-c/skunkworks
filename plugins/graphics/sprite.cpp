@@ -136,7 +136,7 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
         glActiveTexture(GL_TEXTURE0 + texture_slot);
 
         zeug::memory_map file(sprite_path + "/", this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("image"));
-        textures.push_back(std::make_unique<zeug::opengl::texture>(file.memory));
+        textures.push_back(std::make_unique<zeug::opengl::texture>(this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("smartupdate"), file.memory.first, file.memory.second));
         texture_slots.push_back(texture_slot);
     }
 }

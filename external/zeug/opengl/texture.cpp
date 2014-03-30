@@ -1,68 +1,182 @@
 #include <cstdint>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
 
 #include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include <zeug/opengl/texture.hpp>
-#include "thirdparty/stb_image.h"
-
 #include <zeug/platform.hpp>
+#include <zeug/detail/platform_macros.hpp>
+
+#include <sys/stat.h>
+
+#define STBI_HEADER_FILE_ONLY
+#include "thirdparty/stb_image.c"
+#define STB_DXT_IMPLEMENTATION
+#include "thirdparty/stb_dxt.h"
+
+
+int imin(int x, int y) { return (x < y) ? x : y; }
+
+static void extract_block(const unsigned char *src, int x, int y, int w, int h, unsigned char *block)
+{
+    int i, j;
+
+    if ((w-x >=4) && (h-y >=4))
+    {
+        // Full Square shortcut
+        src += x*4;
+        src += y*w*4;
+        for (i=0; i < 4; ++i)
+        {
+            *(unsigned int*)block = *(unsigned int*) src; block += 4; src += 4;
+            *(unsigned int*)block = *(unsigned int*) src; block += 4; src += 4;
+            *(unsigned int*)block = *(unsigned int*) src; block += 4; src += 4;
+            *(unsigned int*)block = *(unsigned int*) src; block += 4; 
+            src += (w*4) - 12;
+        }
+        return;
+    }
+
+   int bw = imin(w - x, 4);
+   int bh = imin(h - y, 4);
+   int bx, by;
+   
+    const int rem[] =
+    {
+        0, 0, 0, 0,
+        0, 1, 0, 1,
+        0, 1, 2, 0,
+        0, 1, 2, 3
+    };
+   
+   for(i = 0; i < 4; ++i)
+   {
+        by = rem[(bh - 1) * 4 + i] + y;
+        for(j = 0; j < 4; ++j)
+        {
+            bx = rem[(bw - 1) * 4 + j] + x;
+            block[(i * 4 * 4) + (j * 4) + 0] = src[(by * (w * 4)) + (bx * 4) + 0];
+            block[(i * 4 * 4) + (j * 4) + 1] = src[(by * (w * 4)) + (bx * 4) + 1];
+            block[(i * 4 * 4) + (j * 4) + 2] = src[(by * (w * 4)) + (bx * 4) + 2];
+            block[(i * 4 * 4) + (j * 4) + 3] = src[(by * (w * 4)) + (bx * 4) + 3];
+        }
+    }
+}
+
+void compress_tex( unsigned char *dst, unsigned char *src, int w, int h, int isDxt5 )
+{
+    unsigned char block[64];
+    int x, y;
+
+    for(y = 0; y < h; y += 4)
+    {
+        for(x = 0; x < w; x += 4)
+        { 
+            extract_block(src, x, y, w, h, block);
+            stb_compress_dxt_block(dst, block, isDxt5, 10);
+            dst += isDxt5 ? 16 : 8;
+        }
+    }
+}
+
+bool file_exists(const std::string& file) 
+{
+    struct stat buf;
+    return (stat(file.c_str(), &buf) == 0);
+}
 
 namespace zeug
 {
   namespace opengl
   {
-    texture::texture(std::pair<std::uint8_t*,std::uint32_t> file)
+    texture::texture(std::string cache_name, std::uint8_t* file, std::uint32_t filesize)
     {
         glGenTextures(1,&this->native_handle_internal);
         glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
 
-        std::int32_t x,y,n;
-        auto rawimage = stbi_load_from_memory(file.first, file.second,&x,&y,&n,0);
-
-        if (!rawimage)
+        // Load image
+        std::int32_t w,h,n;
+        auto raw_image = stbi_load_from_memory(file, filesize, &w, &h, &n, 0);
+        if (!raw_image)
         {
             std::string errormsg = "GL - Failed to load image.\n" + std::string(stbi_failure_reason());
             throw std::runtime_error(errormsg);
         }
 
-        int width_in_bytes = x * 4;
-        unsigned char *top = NULL;
-        unsigned char *bottom = NULL;
-        unsigned char temp = 0;
-        int half_height = y / 2;
+        // Flip image upside-down
+        {
+            int width_in_bytes = w * 4;
+            unsigned char *top = NULL;
+            unsigned char *bottom = NULL;
+            unsigned char temp = 0;
+            int half_height = h / 2;
 
-        for (int row = 0; row < half_height; row++) {
-          top = rawimage + row * width_in_bytes;
-          bottom = rawimage + (y - row - 1) * width_in_bytes;
-          for (int col = 0; col < width_in_bytes; col++) {
-            temp = *top;
-            *top = *bottom;
-            *bottom = temp;
-            top++;
-            bottom++;
-          }
+            for (int row = 0; row < half_height; row++) 
+            {
+                top = raw_image + row * width_in_bytes;
+                bottom = raw_image + (h - row - 1) * width_in_bytes;
+                for (int col = 0; col < width_in_bytes; col++) 
+                {
+                    temp = *top;
+                    *top = *bottom;
+                    *bottom = temp;
+                    top++;
+                    bottom++;
+                }
+            }
         }
 
-        GLenum format = 0;
         if (n==3)
         {
-            format=GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,w,h,0,GL_RGB,GL_UNSIGNED_BYTE,raw_image);
         }
         else if (n==4)
         {
-            format=GL_RGBA;
-        }  
+            auto compressed_image = new unsigned char[w * h];
+
+            auto cache_path = std::string(getenv("HOME")) + std::string("/.cache/") + APP_NAME_STRING + std::string("/") + cache_name;
+            if (file_exists(cache_path))
+            {
+                std::ifstream cache_file;
+                cache_file.open (cache_path, std::ios::in | std::ios::binary);
+                cache_file.read(reinterpret_cast<char*>(compressed_image), w * h * sizeof(unsigned char));
+                cache_file.close();
+                std::clog << "Using texture cache " << cache_path << std::endl;
+            }
+            else
+            {
+                compress_tex( compressed_image, raw_image, w, h, true );
+
+                std::ofstream cache_file;
+                cache_file.open (cache_path, std::ios::out | std::ios::binary);
+                if (cache_file.is_open())
+                {
+                    cache_file.write(reinterpret_cast<char*>(compressed_image), w * h * sizeof(unsigned char));
+                    cache_file.close();
+                    std::clog << "Creating texture cache " << cache_path << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Could not cache " << cache_path << std::endl;
+                }
+            }
+
+            glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, w, h, 0, w * h * sizeof(unsigned char), compressed_image);
+            delete[] compressed_image;
+        }
+        stbi_image_free(raw_image);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexImage2D(GL_TEXTURE_2D,0,format,x,y,0,format,GL_UNSIGNED_BYTE,rawimage);
-        stbi_image_free(rawimage);
     }
 
     std::uint32_t texture::native_handle()
@@ -72,7 +186,6 @@ namespace zeug
 
     texture::~texture()
     {
-        //glDeleteTextures(1,&this->native_handle_internal);
     }
   }
 }

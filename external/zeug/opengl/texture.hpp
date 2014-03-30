@@ -11,8 +11,8 @@ namespace zeug
     {
       // API
       public:
-        // Load texture from file in memory
-        texture(std::pair<std::uint8_t*,std::uint32_t> file);
+        // Load texture from file in memory (cachefile/buffer/length of buffer)
+        texture(std::string cache_name, std::uint8_t* file, std::uint32_t filesize);
         // Underlying opengl object
         std::uint32_t native_handle();
 

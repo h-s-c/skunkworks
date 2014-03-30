@@ -4,10 +4,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 project (skunkworks)
     if(MSVC)
-        set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} /EHsc /W3 /wd4100 /wd4702 /Zc:strictStrings /Zc:rvalueCast")
+        set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} /DAPP_NAME=${PROJECT_NAME} /EHsc /W3 /wd4100 /wd4702 /Zc:strictStrings /Zc:rvalueCast")
     else()
-        set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -Wfatal-errors -std=c++11 -pedantic")
-        set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -Wfatal-errors -std=c11 -pedantic")
+        set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -DAPP_NAME=${PROJECT_NAME} -Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -Wfatal-errors -std=c++1y -pedantic")
+        set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} -DAPP_NAME=${PROJECT_NAME} -Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -Wfatal-errors -std=c11 -pedantic")
     endif()
 
     add_subdirectory(external)

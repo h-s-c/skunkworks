@@ -73,7 +73,7 @@ namespace zeug
        this->width_internal = desktop.right;
        this->height_internal = desktop.bottom;
 
-        this->native_window_internal = CreateWindow("", "", WS_OVERLAPPEDWINDOW|WS_VISIBLE, 0, 0, this->width_internal, this->height_internal, 0, 0, instance, nullptr);
+        this->native_window_internal = CreateWindow(STRINGIFY(APP_NAME), STRINGIFY(APP_NAME), WS_OVERLAPPEDWINDOW|WS_VISIBLE, 0, 0, this->width_internal, this->height_internal, 0, 0, instance, nullptr);
 	    if (!this->native_window_internal) 
 		{
             std::runtime_error e(zeug::util::win_errstr());
@@ -173,6 +173,8 @@ namespace zeug
             throw e;
         }
         XMapWindow(this->native_display_internal, this->native_window_internal);
+        XStoreName(this->native_display_internal, this->native_window_internal, const_cast<char*>(APP_NAME_STRING));
+
         XAtom wm_del_msg = XInternAtom(this->native_display_internal, const_cast<char*>("WM_DELETE_WINDOW"), false);
         XSetWMProtocols(this->native_display_internal, this->native_window_internal, &wm_del_msg, 1);
 
