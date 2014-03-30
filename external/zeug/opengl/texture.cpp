@@ -131,7 +131,12 @@ namespace zeug
             this->native_slot_internal = get_empty_texture_slot();
             texture_memcache.push_back(std::make_tuple(uid, this->native_slot_internal, this->native_handle_internal, false));
             
-            auto compcache_path = std::string(getenv("HOME")) + std::string("/.cache/") + APP_NAME_STRING + std::string("/textures/") + uid;
+            auto compcache_path = std::string(getenv("HOME")) + std::string("/.cache/") + APP_NAME_STRING;
+            mkdir(compcache_path.c_str(), 0700);
+            compcache_path = compcache_path + std::string("/textures");
+            mkdir(compcache_path.c_str(), 0700);
+            compcache_path = compcache_path + std::string("/") + uid;
+
             this->has_future_internal = true;
             this->future_internal = std::async(std::launch::async, [compcache_path, filepath, filename, size_xy, uid]()
             {
