@@ -12,15 +12,8 @@
 #include "plugins/graphics/render.hpp"
 #include "plugins/graphics/sprite.hpp"
 
-std::uint32_t TextureManager::GetEmptySlot()
-{
-    slots++;
-    return slots;
-}
-
 Render::Render(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
-    this->texturemanager = std::make_shared<TextureManager>();
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
@@ -46,7 +39,7 @@ void Render::operator()(double deltatime)
                 msgpack::object obj = unpacked.get();
                 obj.convert(&entity);
                 
-                Sprite sprite = {this->base_window, this->texturemanager, entity.json_desc, entity.id};
+                Sprite sprite = {this->base_window, entity.json_desc, entity.id};
                 sprite.SetPosition(std::make_pair(entity.position_x, entity.position_y));
                 sprite.SetScale(entity.scale);
                 sprite.SetState(StateStringEnum::toEnum(entity.state));
@@ -84,16 +77,9 @@ void Render::operator()(double deltatime)
         }
     }
     
-    this->akkumulator += deltatime;
-    
-    /* 60 frames / second due to animations */
-    if( this->akkumulator >= 2000)
+    glClear(GL_COLOR_BUFFER_BIT);
+    for (auto& sprite : this->sprites)
     {
-        glClear(GL_COLOR_BUFFER_BIT);
-        this->akkumulator = 0.0f;
-        for (auto& sprite : this->sprites)
-        {
-            sprite();
-        }
+        sprite(deltatime);
     }
 }

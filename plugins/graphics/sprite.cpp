@@ -28,7 +28,7 @@ const StateStringEnum::vec_t StateStringEnum::en2str_vec =
         pair_t(SpriteState::WalkLeft, "WalkLeft"),
 };
 
-Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id) :
+Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string sprite_path, std::int32_t id) :
     base_window(base_window), 
     id(id),
     frame_number(0)
@@ -132,12 +132,18 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shar
 
     for( std::uint32_t i=0; i < this->json_objects.size(); i++)
     {        
-        auto texture_slot = texturemanager->GetEmptySlot();
-        glActiveTexture(GL_TEXTURE0 + texture_slot);
+        auto name = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("image");
 
-        zeug::memory_map file(sprite_path + "/", this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("image"));
-        textures.push_back(std::make_unique<zeug::opengl::texture>(this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("smartupdate"), file.memory.first, file.memory.second));
-        texture_slots.push_back(texture_slot);
+        // Texturepacker creates a nice unique id for us
+        auto uid = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("smartupdate"); 
+        uid.erase (1,26);
+
+        auto w = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
+        auto h = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
+
+        auto texture = std::make_unique<zeug::opengl::texture>(uid, sprite_path, name, std::make_pair(w, h));
+        texture_slots.push_back(texture->native_slot());
+        textures.push_back(std::move(texture));
     }
 }
 
@@ -174,63 +180,86 @@ void Sprite::SetState(SpriteState sprite_state)
     }
 }
 
-void Sprite::operator()()
+void Sprite::operator()(double deltatime)
 {
-    this->shaderprog.get()->use();
-
-    glUniform1i(this->texunit_uniform, this->current_texture_slot);
-    glUniformMatrix4fv(this->proj_uniform, 1, 0, &this->ortho_projection[0]);
-
-    if(this->frame_number == this->current_json_object.get<jsonxx::Array>("frames").size())
+    if(!this->ready)
     {
-        // repeat
-        this->frame_number = 0;
+        this->ready = true;
+        for(auto& texture : textures)
+        {
+            if(!texture->ready())
+            {
+                this->ready = false;
+            }
+
+        }
     }
 
-    auto sprite_sheet_width = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
-    auto sprite_sheet_height = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
-    auto frame = this->current_json_object.get<jsonxx::Array>("frames").get<jsonxx::Object>(this->frame_number).get<jsonxx::Object>("frame");
-    auto frame_width = frame.get<jsonxx::Number>("w");
-    auto frame_height = frame.get<jsonxx::Number>("h");
-    auto frame_x = frame.get<jsonxx::Number>("x");
-    auto frame_y = frame.get<jsonxx::Number>("y");
-
-    // determine vertex positions
-    std::vector<GLfloat> vertices = {
-        float(((frame_width/2)*this->scale)+this->position.first),      float(((frame_height/2)*this->scale)+this->position.second),
-        float(-(((frame_width/2)*this->scale)-this->position.first)),   float(((frame_height/2)*this->scale)+this->position.second),
-        float(-(((frame_width/2)*this->scale)-this->position.first)),   float(-(((frame_height/2)*this->scale)-this->position.second)),
-        float(((frame_width/2)*this->scale)+this->position.first),      float(-(((frame_height/2)*this->scale)-this->position.second)),
-    };
-    glVertexAttribPointer(this->position_attrib, 2, GL_FLOAT, GL_FALSE, 0, &vertices[0]);
-
-    // determine texcoords
-    std::vector<GLfloat> texcoords;
-    if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::WalkRight)
+    if(this->ready)
     {
-        texcoords = {
-            float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
-            float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
-            float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
-            float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
+        this->shaderprog.get()->use();
+
+        glUniform1i(this->texunit_uniform, this->current_texture_slot);
+        glUniformMatrix4fv(this->proj_uniform, 1, 0, &this->ortho_projection[0]);
+
+        if(this->frame_number == this->current_json_object.get<jsonxx::Array>("frames").size())
+        {
+            // repeat
+            this->frame_number = 0;
+        }
+
+        auto sprite_sheet_width = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
+        auto sprite_sheet_height = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
+        auto frame = this->current_json_object.get<jsonxx::Array>("frames").get<jsonxx::Object>(this->frame_number).get<jsonxx::Object>("frame");
+        auto frame_width = frame.get<jsonxx::Number>("w");
+        auto frame_height = frame.get<jsonxx::Number>("h");
+        auto frame_x = frame.get<jsonxx::Number>("x");
+        auto frame_y = frame.get<jsonxx::Number>("y");
+
+        // determine vertex positions
+        std::vector<GLfloat> vertices = {
+            float(((frame_width/2)*this->scale)+this->position.first),      float(((frame_height/2)*this->scale)+this->position.second),
+            float(-(((frame_width/2)*this->scale)-this->position.first)),   float(((frame_height/2)*this->scale)+this->position.second),
+            float(-(((frame_width/2)*this->scale)-this->position.first)),   float(-(((frame_height/2)*this->scale)-this->position.second)),
+            float(((frame_width/2)*this->scale)+this->position.first),      float(-(((frame_height/2)*this->scale)-this->position.second)),
         };
-    }
-    else if( this->sprite_state == SpriteState::IdleLeft || this->sprite_state == SpriteState::WalkLeft)
-    {
-        texcoords = {
-            float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
-            float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
-            float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
-            float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
+        glVertexAttribPointer(this->position_attrib, 2, GL_FLOAT, GL_FALSE, 0, &vertices[0]);
+
+        // determine texcoords
+        std::vector<GLfloat> texcoords;
+        if( this->sprite_state == SpriteState::IdleRight || this->sprite_state == SpriteState::WalkRight)
+        {
+            texcoords = {
+                float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
+                float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
+                float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
+                float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
+            };
+        }
+        else if( this->sprite_state == SpriteState::IdleLeft || this->sprite_state == SpriteState::WalkLeft)
+        {
+            texcoords = {
+                float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
+                float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*frame_y)),
+                float((1.0f/sprite_sheet_width)*(frame_x+frame_width)),    float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
+                float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
+            };
+        }
+        glVertexAttribPointer(this->texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, &texcoords[0]);
+
+        std::vector<GLushort> elements = {
+            0, 1, 2,
+            2, 3, 0,
         };
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &elements[0]);
+
+        this->akkumulator += deltatime;
+        
+        // 60 frames / second
+        if( this->akkumulator >= 2000)
+        {
+            this->akkumulator = 0.0f;
+            this->frame_number++;
+        }
     }
-    glVertexAttribPointer(this->texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, &texcoords[0]);
-
-    std::vector<GLushort> elements = {
-        0, 1, 2,
-        2, 3, 0,
-    };
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &elements[0]);
-
-    this->frame_number++;
 }

@@ -9,16 +9,6 @@
 
 #include "plugins/graphics/sprite.hpp"
 
-class TextureManager
-{
-  public:
-    TextureManager() : slots(-1) {};
-    std::uint32_t GetEmptySlot();
-    
-  private:
-    std::uint32_t slots;
-};
-
 class Render
 {
   public:
@@ -28,7 +18,6 @@ class Render
   private:
     float akkumulator;
     std::vector<Sprite> sprites;
-    std::shared_ptr<TextureManager> texturemanager;
     
     std::shared_ptr<zeug::window> base_window;
     std::shared_ptr<zmq::socket_t> zmq_game_subscriber;

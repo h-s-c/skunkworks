@@ -28,7 +28,7 @@ namespace zeug
 #elif defined(PLATFORM_UNIX)
         struct stat buf;
 
-        int fd = open(std::string(path + name).c_str(),O_RDONLY);
+        int fd = open(std::string(path + "/" + name).c_str(),O_RDONLY);
         if (fd < 0) 
         {
             std::runtime_error error("Could not map file.");

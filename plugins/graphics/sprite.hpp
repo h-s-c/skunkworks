@@ -16,8 +16,6 @@
 
 #include "external/jsonxx.hpp"
 
-class TextureManager;
-
 enum class SpriteState
 {
     IdleRight,
@@ -37,13 +35,13 @@ class Sprite
 {
   public:
     /* Construct sprite from json desc*/
-    Sprite(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<TextureManager> &texturemanager, std::string sprite_path, std::int32_t id);
+    Sprite(const std::shared_ptr<zeug::window> &base_window, std::string sprite_path, std::int32_t id);
     void SetPosition(std::pair<std::int32_t, std::int32_t> position);
     void SetScale(float scale);
     void SetState(SpriteState sprite_state);
     std::int32_t GetId() { return this->id; };
     
-    void operator()();
+    void operator()(double deltatime);
     
 #if defined(COMPILER_MSVC)
 	Sprite(Sprite && other)
@@ -96,4 +94,7 @@ class Sprite
     std::uint32_t position_attrib;
     std::uint32_t texunit_uniform;
     std::uint32_t proj_uniform;
+
+    double akkumulator;
+    double ready = false;
 };
