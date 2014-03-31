@@ -32,33 +32,31 @@ std::uint32_t get_empty_texture_slot()
     return slots;
 }
 
-int imin(int x, int y) { return (x < y) ? x : y; }
+std::int32_t imin(std::int32_t x, std::int32_t y) { return (x < y) ? x : y; }
 
-static void extract_block(const unsigned char *src, int x, int y, int w, int h, unsigned char *block)
+void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::int32_t w, std::int32_t h, std::uint8_t*block)
 {
-    int i, j;
-
     if ((w-x >=4) && (h-y >=4))
     {
         // Full Square shortcut
         src += x*4;
         src += y*w*4;
-        for (i=0; i < 4; ++i)
+        for (auto i=0; i < 4; ++i)
         {
-            *(unsigned int*)block = *(unsigned int*) src; block += 4; src += 4;
-            *(unsigned int*)block = *(unsigned int*) src; block += 4; src += 4;
-            *(unsigned int*)block = *(unsigned int*) src; block += 4; src += 4;
-            *(unsigned int*)block = *(unsigned int*) src; block += 4; 
+            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
+            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
+            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
+            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; 
             src += (w*4) - 12;
         }
         return;
     }
 
-   int bw = imin(w - x, 4);
-   int bh = imin(h - y, 4);
-   int bx, by;
+   std::int32_t bw = imin(w - x, 4);
+   std::int32_t bh = imin(h - y, 4);
+   std::int32_t bx, by;
    
-    const int rem[] =
+    const std::int32_t rem[] =
     {
         0, 0, 0, 0,
         0, 1, 0, 1,
@@ -66,10 +64,10 @@ static void extract_block(const unsigned char *src, int x, int y, int w, int h, 
         0, 1, 2, 3
     };
    
-   for(i = 0; i < 4; ++i)
+   for(auto i = 0; i < 4; ++i)
    {
         by = rem[(bh - 1) * 4 + i] + y;
-        for(j = 0; j < 4; ++j)
+        for(auto j = 0; j < 4; ++j)
         {
             bx = rem[(bw - 1) * 4 + j] + x;
             block[(i * 4 * 4) + (j * 4) + 0] = src[(by * (w * 4)) + (bx * 4) + 0];
@@ -80,14 +78,12 @@ static void extract_block(const unsigned char *src, int x, int y, int w, int h, 
     }
 }
 
-void compress_tex( unsigned char *dst, unsigned char *src, int w, int h, int isDxt5 )
+void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int32_t h, std::int32_t isDxt5 )
 {
-    unsigned char block[64];
-    int x, y;
-
-    for(y = 0; y < h; y += 4)
+    std::uint8_t block[64];
+    for(auto y = 0; y < h; y += 4)
     {
-        for(x = 0; x < w; x += 4)
+        for(auto x = 0; x < w; x += 4)
         { 
             extract_block(src, x, y, w, h, block);
             stb_compress_dxt_block(dst, block, isDxt5, 10);
@@ -96,7 +92,7 @@ void compress_tex( unsigned char *dst, unsigned char *src, int w, int h, int isD
     }
 }
 
-bool file_exists(const std::string& file) 
+bool file_exists(std::string file) 
 {
     struct stat buf;
     return (stat(file.c_str(), &buf) == 0);
@@ -135,18 +131,15 @@ namespace zeug
             mkdir(compcache_path.c_str(), 0700);
             compcache_path = compcache_path + std::string("/textures");
             mkdir(compcache_path.c_str(), 0700);
-            compcache_path = compcache_path + std::string("/") + uid;
 
             this->has_future_internal = true;
             this->future_internal = std::async(std::launch::async, [compcache_path, filepath, filename, size_xy, uid]()
             {
-                auto compressed_image_internal = new unsigned char[size_xy.first * size_xy.second];
-                if (file_exists(compcache_path))
+                auto compressed_image_internal = new std::uint8_t[size_xy.first * size_xy.second];
+                if (file_exists(compcache_path+uid))
                 {
-                    std::ifstream compcache_file;
-                    compcache_file.open (compcache_path, std::ios::in | std::ios::binary);
-                    compcache_file.read(reinterpret_cast<char*>(compressed_image_internal ), size_xy.first * size_xy.second * sizeof(unsigned char));
-                    compcache_file.close();
+                    zeug::memory_map file(compcache_path, uid);
+                    std::copy(file.memory.first, file.memory.first+file.memory.second, compressed_image_internal);
                 }
                 else
                 {
@@ -163,17 +156,17 @@ namespace zeug
 
                     // Flip image upside-down
                     {
-                        int width_in_bytes = w * 4;
-                        unsigned char *top = NULL;
-                        unsigned char *bottom = NULL;
-                        unsigned char temp = 0;
-                        int half_height = h / 2;
+                        std::int32_t width_in_bytes = w * 4;
+                        std::uint8_t *top = nullptr;
+                        std::uint8_t *bottom = nullptr;
+                        std::uint8_t temp = 0;
+                        auto half_height = h / 2;
 
-                        for (int row = 0; row < half_height; row++) 
+                        for (auto row = 0; row < half_height; row++) 
                         {
                             top = raw_image + row * width_in_bytes;
                             bottom = raw_image + (h - row - 1) * width_in_bytes;
-                            for (int col = 0; col < width_in_bytes; col++) 
+                            for (auto col = 0; col < width_in_bytes; col++) 
                             {
                                 temp = *top;
                                 *top = *bottom;
@@ -192,10 +185,10 @@ namespace zeug
                     compress_tex( compressed_image_internal , raw_image, w, h, true );
 
                     std::ofstream compcache_file;
-                    compcache_file.open (compcache_path, std::ios::out | std::ios::binary);
+                    compcache_file.open (compcache_path+uid, std::ios::out | std::ios::binary);
                     if (compcache_file.is_open())
                     {
-                        compcache_file.write(reinterpret_cast<char*>(compressed_image_internal ), w * h * sizeof(unsigned char));
+                        compcache_file.write(reinterpret_cast<char*>(compressed_image_internal), w * h * sizeof(std::uint8_t));
                         compcache_file.close();
                     }
                     else
