@@ -22,6 +22,7 @@
 
 const StateStringEnum::vec_t StateStringEnum::en2str_vec = 
 {
+        pair_t(SpriteState::None, "None"),
         pair_t(SpriteState::IdleRight, "IdleRight"),
         pair_t(SpriteState::IdleLeft, "IdleLeft"),
         pair_t(SpriteState::WalkRight, "WalkRight"),
@@ -195,14 +196,14 @@ void Sprite::operator()(double deltatime)
         }
     }
 
-    if(this->ready)
+    else if(this->sprite_state != SpriteState::None)
     {
         this->shaderprog.get()->use();
 
         glUniform1i(this->texunit_uniform, this->current_texture_slot);
         glUniformMatrix4fv(this->proj_uniform, 1, 0, &this->ortho_projection[0]);
 
-        if(this->frame_number == this->current_json_object.get<jsonxx::Array>("frames").size())
+        if(this->frame_number >= this->current_json_object.get<jsonxx::Array>("frames").size())
         {
             // repeat
             this->frame_number = 0;

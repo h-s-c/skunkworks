@@ -9,7 +9,7 @@ class EntityManager
   public:
     EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publisher);
     ~EntityManager();
-    void operator()();
+    void operator()(bool start_game);
     
   private:
     std::vector<Entity> entities;

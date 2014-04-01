@@ -86,7 +86,9 @@ void GamePlugin::operator()()
                 }
             }
         }
-    
+        
+        bool start_game = false;
+
         /* Plugin: Loop. */        
         for(;;)
         {
@@ -114,23 +116,27 @@ void GamePlugin::operator()()
                         zmq_input_subscriber.recv(&zmq_message, 0);
                         if (zeug::stringhash("Esc") == zeug::stringhash(zmq_message.data()))
                         {
-                             /* End of message. */
-                            zmq_message.rebuild();
-                            zmq_input_subscriber.recv(&zmq_message, 0);
-                            if (zeug::stringhash("Finish") == zeug::stringhash(zmq_message.data()))
-                            {
-                            }
                             /* ZMQ: Send stop message. */
                             zeug::stringhash message("Stop");
                             zmq_message.rebuild();
                             memcpy(zmq_message.data(), message.Get(), message.Size()); 
                             this->zmq_game_publisher->send(zmq_message);
                         }
+                        else if (zeug::stringhash("Enter") == zeug::stringhash(zmq_message.data()))
+                        {
+                            start_game = true;
+                        }
+                        /* End of message. */
+                        zmq_message.rebuild();
+                        zmq_input_subscriber.recv(&zmq_message, 0);
+                        if (zeug::stringhash("Finish") == zeug::stringhash(zmq_message.data()))
+                        {
+                        }
                     }
                 }
             }
             
-            entitymanager();
+            entitymanager(start_game);
         }
     }
     catch (...)

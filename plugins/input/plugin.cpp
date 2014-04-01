@@ -147,6 +147,30 @@ void InputPlugin::operator()()
                         zmq_input_publisher->send(zmq_message);
                     }
                 }
+                else if( ois_keyboard->isKeyDown( OIS::KC_RETURN )) 
+                {
+                    /* Topic */
+                    {
+                        zeug::stringhash message("Keyboard");
+                        zmq::message_t zmq_message(message.Size());
+                        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                        zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
+                    }
+                    /* Message */
+                    {
+                        zeug::stringhash message("Enter");
+                        zmq::message_t zmq_message(message.Size());
+                        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                        zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
+                    }
+                    /* End of message. */
+                    {
+                        zeug::stringhash message("Finish");
+                        zmq::message_t zmq_message(message.Size());
+                        memcpy(zmq_message.data(), message.Get(), message.Size()); 
+                        zmq_input_publisher->send(zmq_message);
+                    }
+                }
             }
         }
     }

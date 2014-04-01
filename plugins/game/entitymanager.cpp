@@ -9,6 +9,7 @@
 
 int test = 0;
 std::once_flag flag;
+std::once_flag flag2;
 
 EntityManager::EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publisher) : zmq_game_publisher(zmq_game_publisher)
 {
@@ -18,7 +19,7 @@ EntityManager::~EntityManager()
 {
 }
 
-void EntityManager::operator()()
+void EntityManager::operator()(bool start_game)
 {
     /* Gamelogic: Create 3 sprites */
     std::call_once(flag, [&](){ 
@@ -38,7 +39,7 @@ void EntityManager::operator()()
         }
         /* Entity data. */
         {
-            Entity sprite{1, 0, 0, 0.4f, "./../../assets/players/darksaber/sprite", "WalkRight"};
+            Entity sprite{1, 0, 0, 0.4f, "./../../assets/players/darksaber/sprite", "None"};
 
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -50,7 +51,7 @@ void EntityManager::operator()()
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         {
-            Entity sprite{2, 100, 100, 0.4f, "./../../assets/players/darksaber/sprite", "IdleRight"};
+            Entity sprite{2, 100, 100, 0.4f, "./../../assets/players/darksaber/sprite", "None"};
             
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -62,7 +63,7 @@ void EntityManager::operator()()
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         {
-            Entity sprite{3, -100, -100, 0.4f, "./../../assets/players/darksaber/sprite", "WalkLeft"};
+            Entity sprite{3, -100, -100, 0.4f, "./../../assets/players/darksaber/sprite", "None"};
             
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -82,6 +83,11 @@ void EntityManager::operator()()
         }
     });
     
+    if(!start_game)
+    {
+        return;
+    }
+
     test++;
     /* Gamelogic: Update sprites */
     { 
@@ -122,6 +128,17 @@ void EntityManager::operator()()
             memcpy(zmq_message.data(), sbuf.data(), sbuf.size());
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
+        std::call_once(flag2, [&](){
+            Entity sprite;
+            sprite = {2, 0, 0, 0.4f, "./../../assets/players/darksaber/sprite", "IdleRight"};
+
+            msgpack::sbuffer sbuf;
+            msgpack::pack(&sbuf, sprite);
+            
+            zmq::message_t zmq_message( sbuf.size());
+            memcpy(zmq_message.data(), sbuf.data(), sbuf.size());
+            zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
+        });
         {
             Entity sprite;
             if(test < 100)

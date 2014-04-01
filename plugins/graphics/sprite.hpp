@@ -16,8 +16,10 @@
 
 #include "external/jsonxx.hpp"
 
+#undef None
 enum class SpriteState
 {
+    None,
     IdleRight,
     IdleLeft,
     WalkRight,
