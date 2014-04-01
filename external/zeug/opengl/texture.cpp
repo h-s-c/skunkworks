@@ -32,8 +32,6 @@ std::uint32_t get_empty_texture_slot()
     return slots;
 }
 
-std::int32_t imin(std::int32_t x, std::int32_t y) { return (x < y) ? x : y; }
-
 void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::int32_t w, std::int32_t h, std::uint8_t*block)
 {
     if ((w-x >=4) && (h-y >=4))
@@ -52,9 +50,9 @@ void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::
         return;
     }
 
-   std::int32_t bw = imin(w - x, 4);
-   std::int32_t bh = imin(h - y, 4);
-   std::int32_t bx, by;
+    std::int32_t bw = std::min(w - x, 4);
+    std::int32_t bh = std::min(h - y, 4);
+    std::int32_t bx, by;
    
     const std::int32_t rem[] =
     {
@@ -63,9 +61,9 @@ void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::
         0, 1, 2, 0,
         0, 1, 2, 3
     };
-   
-   for(auto i = 0; i < 4; ++i)
-   {
+     
+    for(auto i = 0; i < 4; ++i)
+    {
         by = rem[(bh - 1) * 4 + i] + y;
         for(auto j = 0; j < 4; ++j)
         {
@@ -78,7 +76,7 @@ void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::
     }
 }
 
-void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int32_t h, std::int32_t isDxt5 )
+void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int32_t h, bool alpha )
 {
     std::uint8_t block[64];
     for(auto y = 0; y < h; y += 4)
@@ -86,8 +84,8 @@ void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int
         for(auto x = 0; x < w; x += 4)
         { 
             extract_block(src, x, y, w, h, block);
-            stb_compress_dxt_block(dst, block, isDxt5, 10);
-            dst += isDxt5 ? 16 : 8;
+            stb_compress_dxt_block(dst, block, alpha, STB_DXT_NORMAL);
+            dst += alpha ? 16 : 8;
         }
     }
 }
@@ -136,10 +134,10 @@ namespace zeug
             this->future_internal = std::async(std::launch::async, [compcache_path, filepath, filename, size_xy, uid]()
             {
                 auto compressed_image_internal = new std::uint8_t[size_xy.first * size_xy.second];
-                if (file_exists(compcache_path+uid))
+                if (file_exists(compcache_path + "/" + uid))
                 {
                     zeug::memory_map file(compcache_path, uid);
-                    std::copy(file.memory.first, file.memory.first+file.memory.second, compressed_image_internal);
+                    std::memcpy(compressed_image_internal, file.memory.first, file.memory.second);
                 }
                 else
                 {
@@ -168,9 +166,7 @@ namespace zeug
                             bottom = raw_image + (h - row - 1) * width_in_bytes;
                             for (auto col = 0; col < width_in_bytes; col++) 
                             {
-                                temp = *top;
-                                *top = *bottom;
-                                *bottom = temp;
+                                std::swap(*top, *bottom);
                                 top++;
                                 bottom++;
                             }
@@ -182,10 +178,10 @@ namespace zeug
                         throw std::runtime_error( "Only RGBA textures supported.\n");
                     }
 
-                    compress_tex( compressed_image_internal , raw_image, w, h, true );
+                    compress_tex( compressed_image_internal , raw_image, w, h, true);
 
                     std::ofstream compcache_file;
-                    compcache_file.open (compcache_path+uid, std::ios::out | std::ios::binary);
+                    compcache_file.open (compcache_path + "/" + uid, std::ios::out | std::ios::binary);
                     if (compcache_file.is_open())
                     {
                         compcache_file.write(reinterpret_cast<char*>(compressed_image_internal), w * h * sizeof(std::uint8_t));
@@ -237,7 +233,7 @@ namespace zeug
                 glActiveTexture(GL_TEXTURE0 + this->native_slot_internal);
                 glGenTextures(1,&this->native_handle_internal);
                 glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image );
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
