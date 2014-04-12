@@ -224,7 +224,7 @@ namespace zeug
             std::int32_t percent = 0;
             zeug::powerstate powerstate = zeug::powerstate::unknown;
 
-            [&powerstate, &seconds, &percent]() noexcept
+            try
             {
                 zeug::dynapi::sdl2::init();
                 using namespace zeug::dynapi::sdl2::api;
@@ -240,7 +240,8 @@ namespace zeug
                 powerstate = translation_array[SDL_GetPowerInfo(&seconds, &percent)];
 
                 zeug::dynapi::sdl2::kill();
-            };
+            }
+            catch(...){}
 
             return std::make_tuple(powerstate, std::chrono::seconds(seconds), percent);
         }
@@ -529,249 +530,234 @@ namespace zeug
 
         void try_adl()
         {
-            []() noexcept
-            {
-                zeug::dynapi::adl::init();
-                using namespace zeug::dynapi::adl::api;
+            zeug::dynapi::adl::init();
+            using namespace zeug::dynapi::adl::api;
 
-                vendor = "AMD";
-                driver_vendor = "AMD";
+            vendor = "AMD";
+            driver_vendor = "AMD";
 
-                adl_version_info_t version_info;
-                ADL_Graphics_Versions_Get(&version_info);
-                driver_version = to_ver(std::string(version_info.version));
+            adl_version_info_t version_info;
+            ADL_Graphics_Versions_Get(&version_info);
+            driver_version = to_ver(std::string(version_info.version));
 
-                zeug::dynapi::adl::kill();
-            };
+            zeug::dynapi::adl::kill();
         }
 
         void try_cuda()
         {
-            []() noexcept
+            zeug::dynapi::cuda::init();        
+            using namespace zeug::dynapi::cuda::api;
+
+            vendor = "Nvidia";
+            driver_vendor = "Nvidia";
+
+            cudaDeviceProp devProp;
+            cudaGetDeviceProperties(&devProp, 0);
+
+            switch(devProp.major)
             {
-                zeug::dynapi::cuda::init();        
-                using namespace zeug::dynapi::cuda::api;
+                case 1:
+                    model = "Tesla";
+                    break;
+                case 2:
+                    model = "Fermi";
+                    break;
+                case 3:
+                    model = "Kepler";
+                    break;
+                default:
+                    model = "Unknown";
+                    break;
+            }
 
-                vendor = "Nvidia";
-                driver_vendor = "Nvidia";
-
-                cudaDeviceProp devProp;
-                cudaGetDeviceProperties(&devProp, 0);
-
-                switch(devProp.major)
-                {
-                    case 1:
-                        model = "Tesla";
-                        break;
-                    case 2:
-                        model = "Fermi";
-                        break;
-                    case 3:
-                        model = "Kepler";
-                        break;
-                    default:
-                        model = "Unknown";
-                        break;
-                }
-
-                zeug::dynapi::cuda::kill();
-            };
+            zeug::dynapi::cuda::kill();
         }
 
         void try_ogl()
         {
-            []() noexcept
+            zeug::dynapi::egl::init();
+            using namespace zeug::dynapi::egl::api;
+
+            EGLConfig eglConfigWindow = nullptr;
+            auto eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+            eglInitialize(eglDisplay, nullptr, nullptr);
+            eglChooseConfig(eglDisplay,  nullptr, &eglConfigWindow, 1, nullptr);
+            auto eglContext = eglCreateContext(eglDisplay, eglConfigWindow, nullptr, nullptr);
+            auto eglSurfacePbuffer = eglCreatePbufferSurface(eglDisplay,  nullptr, nullptr);
+            eglMakeCurrent(eglDisplay, eglSurfacePbuffer, eglSurfacePbuffer, eglContext);
+
+            typedef const std::uint8_t *(PFNGLGETSTRINGPROC) (std::uint32_t name);
+
+            void* raw_ptr = eglGetProcAddress("glGetString");
+            PFNGLGETSTRINGPROC* func_ptr = nullptr;
+            std::memcpy(&func_ptr, &raw_ptr, sizeof(raw_ptr));
+            
+            auto glGetString = std::function<PFNGLGETSTRINGPROC>(func_ptr);
+
+            std::string vendor_string = reinterpret_cast<const char*>(glGetString(0x1F00));
+            std::string renderer_string = reinterpret_cast<const char*>(glGetString(0x1F01));
+            std::string version_string = reinterpret_cast<const char*>(glGetString(0x1F02));
+
+            std::transform(vendor_string.begin(), vendor_string.end(), vendor_string.begin(), tolower);
+            std::transform(renderer_string.begin(), renderer_string.end(), renderer_string.begin(), tolower);
+            std::transform(version_string.begin(), version_string.end(), version_string.begin(), tolower);
+
+            auto pos = version_string.find("mesa");
+            if(pos != std::string::npos)
             {
-                zeug::dynapi::egl::init();
-                using namespace zeug::dynapi::egl::api;
+                driver_vendor = "Mesa";
+                driver_version = to_ver(version_string.substr(pos+5, std::string::npos));
+            }
 
-                EGLConfig eglConfigWindow = nullptr;
-                auto eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-                eglInitialize(eglDisplay, nullptr, nullptr);
-                eglChooseConfig(eglDisplay,  nullptr, &eglConfigWindow, 1, nullptr);
-                auto eglContext = eglCreateContext(eglDisplay, eglConfigWindow, nullptr, nullptr);
-                auto eglSurfacePbuffer = eglCreatePbufferSurface(eglDisplay,  nullptr, nullptr);
-                eglMakeCurrent(eglDisplay, eglSurfacePbuffer, eglSurfacePbuffer, eglContext);
+            if((vendor_string.find("amd") != std::string::npos) || (renderer_string.find("amd") != std::string::npos))
+            {
+                vendor = "AMD";
 
-                typedef const std::uint8_t *(PFNGLGETSTRINGPROC) (std::uint32_t name);
-
-                void* raw_ptr = eglGetProcAddress("glGetString");
-                PFNGLGETSTRINGPROC* func_ptr = nullptr;
-                std::memcpy(&func_ptr, &raw_ptr, sizeof(raw_ptr));
-                
-                auto glGetString = std::function<PFNGLGETSTRINGPROC>(func_ptr);
-
-                std::string vendor_string = reinterpret_cast<const char*>(glGetString(0x1F00));
-                std::string renderer_string = reinterpret_cast<const char*>(glGetString(0x1F01));
-                std::string version_string = reinterpret_cast<const char*>(glGetString(0x1F02));
-
-                std::transform(vendor_string.begin(), vendor_string.end(), vendor_string.begin(), tolower);
-                std::transform(renderer_string.begin(), renderer_string.end(), renderer_string.begin(), tolower);
-                std::transform(version_string.begin(), version_string.end(), version_string.begin(), tolower);
-
-                auto pos = version_string.find("mesa");
-                if(pos != std::string::npos)
+                if( (renderer_string.find("cedar") != std::string::npos) ||
+                    (renderer_string.find("redwood") != std::string::npos) ||
+                    (renderer_string.find("juniper") != std::string::npos) ||
+                    (renderer_string.find("cypress") != std::string::npos) ||
+                    (renderer_string.find("sumo") != std::string::npos) ||
+                    (renderer_string.find("sumo2") != std::string::npos))
                 {
-                    driver_vendor = "Mesa";
-                    driver_version = to_ver(version_string.substr(pos+5, std::string::npos));
+                    model = "Evergreen (VLIW5)";
                 }
+                if( (renderer_string.find("aruba") != std::string::npos) ||
+                    (renderer_string.find("barts") != std::string::npos) ||
+                    (renderer_string.find("turks") != std::string::npos) ||
+                    (renderer_string.find("caicos") != std::string::npos))
+                {
+                    model = "Northern Islands (VLIW5)";
+                }
+                if( (renderer_string.find("cayman") != std::string::npos) ||
+                    (renderer_string.find("antilles") != std::string::npos))
+                {
+                    model = "Northern Islands (VLIW4)";
+                }
+                if( (renderer_string.find("cape verde") != std::string::npos) ||
+                    (renderer_string.find("pitcairn") != std::string::npos) ||
+                    (renderer_string.find("tahiti") != std::string::npos) ||
+                    (renderer_string.find("oland") != std::string::npos) ||
+                    (renderer_string.find("hainan") != std::string::npos))
+                {
+                    model = "Southern Islands (GCN)";
+                }
+                if( (renderer_string.find("bonaire") != std::string::npos) ||
+                    (renderer_string.find("kabini") != std::string::npos) ||
+                    (renderer_string.find("kaveri") != std::string::npos))
+                {
+                    model = "Sea Islands (GCN)";
+                }
+                if( (renderer_string.find("hawaii") != std::string::npos))
+                {
+                    model = "Vulcanic Islands (GCN2)";
+                }
+            }
+            if((vendor_string.find("nvidia") != std::string::npos) || (renderer_string.find("nvidia") != std::string::npos))
+            {
+                vendor = "Nvidia";
 
-                if((vendor_string.find("amd") != std::string::npos) || (renderer_string.find("amd") != std::string::npos))
+                if( (renderer_string.find("nv50") != std::string::npos) ||
+                    (renderer_string.find("nv8") != std::string::npos) ||
+                    (renderer_string.find("nv9") != std::string::npos) ||
+                    (renderer_string.find("nva") != std::string::npos))
                 {
-                    vendor = "AMD";
+                    model = "Tesla";
+                }
+                if( (renderer_string.find("nvc") != std::string::npos) ||
+                    (renderer_string.find("nvd") != std::string::npos))
+                {
+                    model = "Fermi";
+                }
+                if( (renderer_string.find("nve") != std::string::npos) ||
+                    (renderer_string.find("nvf") != std::string::npos) ||
+                    (renderer_string.find("nv108") != std::string::npos))
+                {
+                    model = "Kepler";
+                }
+            }
+            if((vendor_string.find("intel") != std::string::npos) || (renderer_string.find("intel") != std::string::npos))
+            {
+                vendor = "Intel";
+            }
+            if((vendor_string.find("imagination") != std::string::npos) || (renderer_string.find("imagination") != std::string::npos))
+            {
+                vendor = "Imagination Technologies";
+            }
+            if((vendor_string.find("qualcomm") != std::string::npos) || (renderer_string.find("qualcomm") != std::string::npos))
+            {
+                vendor = "Qualcomm";
+            }
+            if((vendor_string.find("arm") != std::string::npos) || (renderer_string.find("arm") != std::string::npos))
+            {
+                vendor = "ARM";
+            }
 
-                    if( (renderer_string.find("cedar") != std::string::npos) ||
-                        (renderer_string.find("redwood") != std::string::npos) ||
-                        (renderer_string.find("juniper") != std::string::npos) ||
-                        (renderer_string.find("cypress") != std::string::npos) ||
-                        (renderer_string.find("sumo") != std::string::npos) ||
-                        (renderer_string.find("sumo2") != std::string::npos))
-                    {
-                        model = "Evergreen (VLIW5)";
-                    }
-                    if( (renderer_string.find("aruba") != std::string::npos) ||
-                        (renderer_string.find("barts") != std::string::npos) ||
-                        (renderer_string.find("turks") != std::string::npos) ||
-                        (renderer_string.find("caicos") != std::string::npos))
-                    {
-                        model = "Northern Islands (VLIW5)";
-                    }
-                    if( (renderer_string.find("cayman") != std::string::npos) ||
-                        (renderer_string.find("antilles") != std::string::npos))
-                    {
-                        model = "Northern Islands (VLIW4)";
-                    }
-                    if( (renderer_string.find("cape verde") != std::string::npos) ||
-                        (renderer_string.find("pitcairn") != std::string::npos) ||
-                        (renderer_string.find("tahiti") != std::string::npos) ||
-                        (renderer_string.find("oland") != std::string::npos) ||
-                        (renderer_string.find("hainan") != std::string::npos))
-                    {
-                        model = "Southern Islands (GCN)";
-                    }
-                    if( (renderer_string.find("bonaire") != std::string::npos) ||
-                        (renderer_string.find("kabini") != std::string::npos) ||
-                        (renderer_string.find("kaveri") != std::string::npos))
-                    {
-                        model = "Sea Islands (GCN)";
-                    }
-                    if( (renderer_string.find("hawaii") != std::string::npos))
-                    {
-                        model = "Vulcanic Islands (GCN2)";
-                    }
-                }
-                if((vendor_string.find("nvidia") != std::string::npos) || (renderer_string.find("nvidia") != std::string::npos))
-                {
-                    vendor = "Nvidia";
+            eglDestroyContex(eglDisplay, eglContext);
+            eglTerminate(eglDisplay);
 
-                    if( (renderer_string.find("nv50") != std::string::npos) ||
-                        (renderer_string.find("nv8") != std::string::npos) ||
-                        (renderer_string.find("nv9") != std::string::npos) ||
-                        (renderer_string.find("nva") != std::string::npos))
-                    {
-                        model = "Tesla";
-                    }
-                    if( (renderer_string.find("nvc") != std::string::npos) ||
-                        (renderer_string.find("nvd") != std::string::npos))
-                    {
-                        model = "Fermi";
-                    }
-                    if( (renderer_string.find("nve") != std::string::npos) ||
-                        (renderer_string.find("nvf") != std::string::npos) ||
-                        (renderer_string.find("nv108") != std::string::npos))
-                    {
-                        model = "Kepler";
-                    }
-                }
-                if((vendor_string.find("intel") != std::string::npos) || (renderer_string.find("intel") != std::string::npos))
-                {
-                    vendor = "Intel";
-                }
-                if((vendor_string.find("imagination") != std::string::npos) || (renderer_string.find("imagination") != std::string::npos))
-                {
-                    vendor = "Imagination Technologies";
-                }
-                if((vendor_string.find("qualcomm") != std::string::npos) || (renderer_string.find("qualcomm") != std::string::npos))
-                {
-                    vendor = "Qualcomm";
-                }
-                if((vendor_string.find("arm") != std::string::npos) || (renderer_string.find("arm") != std::string::npos))
-                {
-                    vendor = "ARM";
-                }
-
-                eglDestroyContex(eglDisplay, eglContext);
-                eglTerminate(eglDisplay);
-
-                zeug::dynapi::egl::kill();
-            };
+            zeug::dynapi::egl::kill();
         }
 
         void try_nvapi()
         {
-            []() noexcept
-            {
-                zeug::dynapi::nvapi::init(); 
-                using namespace zeug::dynapi::nvapi::api;
+            zeug::dynapi::nvapi::init(); 
+            using namespace zeug::dynapi::nvapi::api;
 
-                vendor = "Nvidia";   
-                driver_vendor = "Nvidia";
+            vendor = "Nvidia";   
+            driver_vendor = "Nvidia";
 
-                std::uint32_t version = 0;
-                NvAPI_SYS_GetDriverAndBranchVersion(&version, nullptr);
-                //driver_version = std::to_string(version);         
+            std::uint32_t version = 0;
+            NvAPI_SYS_GetDriverAndBranchVersion(&version, nullptr);
+            //driver_version = std::to_string(version);         
 
-                zeug::dynapi::nvapi::kill();
-            };
+            zeug::dynapi::nvapi::kill();
         }
 
         void try_xnvctrl()
         {
-            []() noexcept
-            {
 #if defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)
 #elif defined(PLATFORM_EMSCRIPTEN)
 #elif defined(PLATFORM_RASBERRYPI)
 #elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)
-                zeug::dynapi::x11::init();
-                zeug::dynapi::xnvctrl::init();
-                using namespace zeug::dynapi::x11::api;
-                using namespace zeug::dynapi::xnvctrl::api;
+            zeug::dynapi::x11::init();
+            zeug::dynapi::xnvctrl::init();
+            using namespace zeug::dynapi::x11::api;
+            using namespace zeug::dynapi::xnvctrl::api;
 
-                XDisplay* display = XOpenDisplay(nullptr);
-                int event_base = 0, error_base = 0;
-                if (XNVCTRLQueryExtension(display, &event_base, &error_base)) 
+            XDisplay* display = XOpenDisplay(nullptr);
+            int event_base = 0, error_base = 0;
+            if (XNVCTRLQueryExtension(display, &event_base, &error_base)) 
+            {
+                int screen_count = XScreenCount(display);
+                for (int screen = 0; screen < screen_count; ++screen) 
                 {
-                    int screen_count = XScreenCount(display);
-                    for (int screen = 0; screen < screen_count; ++screen) 
+                    char* buffer = nullptr;
+                    if (XNVCTRLIsNvScreen(display, screen) && XNVCTRLQueryStringAttribute(display, screen, 0, 3, &buffer)) 
                     {
-                        char* buffer = nullptr;
-                        if (XNVCTRLIsNvScreen(display, screen) && XNVCTRLQueryStringAttribute(display, screen, 0, 3, &buffer)) 
-                        {
-                            vendor = "Nvidia";   
-                            driver_vendor = "Nvidia";
-                            //driver_version = std::string (buffer);
-                            XFree(buffer);
-                        }
+                        vendor = "Nvidia";   
+                        driver_vendor = "Nvidia";
+                        //driver_version = std::string (buffer);
+                        XFree(buffer);
                     }
                 }
+            }
 
-                zeug::dynapi::xnvctrl::kill();
-                zeug::dynapi::x11::kill();
+            zeug::dynapi::xnvctrl::kill();
+            zeug::dynapi::x11::kill();
 #endif
-            };
         }
 
         void detect()
         {
             std::call_once(flag, []()
             {
-                try_adl();
-                try_cuda();
-                try_ogl();
-                try_nvapi();
-                try_xnvctrl();
+                try{try_adl();} catch(...){};
+                try{try_cuda();} catch(...){};
+                try{try_ogl();} catch(...){};
+                try{try_nvapi();} catch(...){};
+                try{try_xnvctrl();} catch(...){};
             });
         }
     }
