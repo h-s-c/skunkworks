@@ -224,19 +224,23 @@ namespace zeug
             std::int32_t percent = 0;
             zeug::powerstate powerstate = zeug::powerstate::unknown;
 
-            try
+            [&powerstate, &seconds, &percent]() noexcept
             {
                 zeug::dynapi::sdl2::init();
                 using namespace zeug::dynapi::sdl2::api;
 
-                std::array<zeug::powerstate, 5> translation_array 
-                {{zeug::powerstate::unknown, zeug::powerstate::on_battery, zeug::powerstate::no_battery, zeug::powerstate::charging, zeug::powerstate::charged}};
+                std::array<zeug::powerstate, 5> translation_array =
+                {
+                    zeug::powerstate::unknown, 
+                    zeug::powerstate::on_battery, 
+                    zeug::powerstate::no_battery, 
+                    zeug::powerstate::charging, 
+                    zeug::powerstate::charged
+                };
                 powerstate = translation_array[SDL_GetPowerInfo(&seconds, &percent)];
-                
-                zeug::dynapi::sdl2::kill();
 
-            }
-            catch(...){}
+                zeug::dynapi::sdl2::kill();
+            };
 
             return std::make_tuple(powerstate, std::chrono::seconds(seconds), percent);
         }
@@ -525,7 +529,7 @@ namespace zeug
 
         void try_adl()
         {
-            try
+            []() noexcept
             {
                 zeug::dynapi::adl::init();
                 using namespace zeug::dynapi::adl::api;
@@ -538,13 +542,12 @@ namespace zeug
                 driver_version = to_ver(std::string(version_info.version));
 
                 zeug::dynapi::adl::kill();
-            }
-            catch(...){}
+            };
         }
 
         void try_cuda()
         {
-            try
+            []() noexcept
             {
                 zeug::dynapi::cuda::init();        
                 using namespace zeug::dynapi::cuda::api;
@@ -572,13 +575,12 @@ namespace zeug
                 }
 
                 zeug::dynapi::cuda::kill();
-            }
-            catch(...){}
+            };
         }
 
         void try_ogl()
         {
-            try
+            []() noexcept
             {
                 zeug::dynapi::egl::init();
                 using namespace zeug::dynapi::egl::api;
@@ -702,13 +704,12 @@ namespace zeug
                 eglTerminate(eglDisplay);
 
                 zeug::dynapi::egl::kill();
-            }
-            catch(...){}
+            };
         }
 
         void try_nvapi()
         {
-            try
+            []() noexcept
             {
                 zeug::dynapi::nvapi::init(); 
                 using namespace zeug::dynapi::nvapi::api;
@@ -721,13 +722,12 @@ namespace zeug
                 //driver_version = std::to_string(version);         
 
                 zeug::dynapi::nvapi::kill();
-            }
-            catch(...){}
+            };
         }
 
         void try_xnvctrl()
         {
-            try
+            []() noexcept
             {
 #if defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)
@@ -760,8 +760,7 @@ namespace zeug
                 zeug::dynapi::xnvctrl::kill();
                 zeug::dynapi::x11::kill();
 #endif
-            }
-            catch(...){}
+            };
         }
 
         void detect()
