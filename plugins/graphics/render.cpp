@@ -14,6 +14,15 @@
 
 Render::Render(const std::shared_ptr<zeug::window> &base_window, const std::shared_ptr<zmq::socket_t> &zmq_game_subscriber) : base_window(base_window), zmq_game_subscriber(zmq_game_subscriber)
 {
+    auto ogl_info = std::string("-----OGL-----\n") + 
+        "Vendor: " + reinterpret_cast<const char*>(glGetString(GL_VENDOR)) + "\n" +
+        "Renderer: " + reinterpret_cast<const char*>(glGetString(GL_RENDERER)) + "\n" +
+        "Version: " + reinterpret_cast<const char*>(glGetString(GL_VERSION)) + "\n" +
+        "Shading language: " + reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)) + "\n" +
+        "Extensions: " + reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+
+    std::cout << ogl_info << std::endl;
+
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
