@@ -200,24 +200,24 @@ class Value {
     type_ = BOOL_;
     bool_value_ = b;
   }
-#define $number(TYPE) \
+#define number(TYPE) \
   void import( const TYPE &n ) { \
     reset(); \
     type_ = NUMBER_; \
     number_value_ = n; \
   }
-  $number( char )
-  $number( int )
-  $number( long )
-  $number( long long )
-  $number( unsigned char )
-  $number( unsigned int )
-  $number( unsigned long )
-  $number( unsigned long long )
-  $number( float )
-  $number( double )
-  $number( long double )
-#undef $number
+  number( char )
+  number( int )
+  number( long )
+  number( long long )
+  number( unsigned char )
+  number( unsigned int )
+  number( unsigned long )
+  number( unsigned long long )
+  number( float )
+  number( double )
+  number( long double )
+#undef number
 #if JSONXX_COMPILER_HAS_CXX11 > 0
   void import( const std::nullptr_t & ) {
     reset();

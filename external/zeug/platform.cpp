@@ -584,7 +584,6 @@ namespace zeug
             eglChooseConfig(eglDisplay,  nullptr, &eglConfigWindow, 1, nullptr);
             auto eglContext = eglCreateContext(eglDisplay, eglConfigWindow, nullptr, nullptr);
             auto eglSurfacePbuffer = eglCreatePbufferSurface(eglDisplay,  nullptr, nullptr);
-            eglMakeCurrent(eglDisplay, eglSurfacePbuffer, eglSurfacePbuffer, eglContext);
 
             typedef const std::uint8_t *(PFNGLGETSTRINGPROC) (std::uint32_t name);
 
@@ -751,14 +750,20 @@ namespace zeug
 
         void detect()
         {
+            // Clang does not like this
+            #if !defined(COMPILER_CLANG)
             std::call_once(flag, []()
+            #endif
             {
                 try{try_adl();} catch(...){};
                 try{try_cuda();} catch(...){};
                 try{try_ogl();} catch(...){};
                 try{try_nvapi();} catch(...){};
                 try{try_xnvctrl();} catch(...){};
-            });
+            }
+            #if !defined(COMPILER_CLANG)
+            );
+            #endif
         }
     }
 

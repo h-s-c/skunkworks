@@ -12,11 +12,12 @@ project (PluginInput)
     list(APPEND PLUGIN_LIBRARIES Zeug)
 
     if (UNIX)
+        if(NOT ANDROID)
+            find_package(X11 REQUIRED)
+            list(APPEND PLUGIN_LIBRARIES ${X11_LIBRARY})   
+            list(APPEND PLUGIN_INCLUDE_DIRS ${X11_INCLUDE_DIR})
+        endif()
         list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
-
-        find_package(X11 REQUIRED)
-        list(APPEND PLUGIN_LIBRARIES ${X11_LIBRARY})   
-        list(APPEND PLUGIN_INCLUDE_DIRS ${X11_INCLUDE_DIR})
     endif()
     
     find_package(ZMQ REQUIRED)
