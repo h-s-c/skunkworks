@@ -190,16 +190,6 @@ void LinuxForceFeedback::remove( const Effect* effect )
 }
 
 //--------------------------------------------------------------//
-// To Signed16/Unsigned15 safe conversions
-#define MaxUnsigned15Value 0x7FFF
-#define toUnsigned15(value) \
-    (__u16)((value) < 0 ? 0 : ((value) > MaxUnsigned15Value ? MaxUnsigned15Value : (value)))
-
-#define MaxSigned16Value  0x7FFF
-#define MinSigned16Value -0x7FFF
-#define toSigned16(value) \
-  (__s16)((value) < MinSigned16Value ? MinSigned16Value : ((value) > MaxSigned16Value ? MaxSigned16Value : (value)))
-
 // OIS to Linux duration
 #define LinuxInfiniteDuration 0xFFFF
 #define OISDurationUnitMS 1000 // OIS duration unit (microseconds), expressed in milliseconds (theLinux duration unit)
@@ -207,7 +197,7 @@ void LinuxForceFeedback::remove( const Effect* effect )
 // linux/input.h : All duration values are expressed in ms. Values above 32767 ms (0x7fff)
 //                 should not be used and have unspecified results.
 #define LinuxDuration(oisDuration) ((oisDuration) == Effect::OIS_INFINITE ? LinuxInfiniteDuration \
-                                    : toUnsigned15((oisDuration)/OISDurationUnitMS))
+                                    : (oisDuration)/OISDurationUnitMS)
 
 
 // OIS to Linux levels
@@ -215,9 +205,9 @@ void LinuxForceFeedback::remove( const Effect* effect )
 #define LinuxMaxLevel 0x7FFF
 
 // linux/input.h : Valid range for the attack and fade levels is 0x0000 - 0x7fff
-#define LinuxPositiveLevel(oisLevel) toUnsigned15(LinuxMaxLevel*(long)(oisLevel)/OISMaxLevel)
+#define LinuxPositiveLevel(oisLevel) (LinuxMaxLevel*(long)(oisLevel)/OISMaxLevel)
 
-#define LinuxSignedLevel(oisLevel) toSigned16(LinuxMaxLevel*(long)(oisLevel)/OISMaxLevel)
+#define LinuxSignedLevel(oisLevel) (LinuxMaxLevel*(long)(oisLevel)/OISMaxLevel)
 
 
 //--------------------------------------------------------------//

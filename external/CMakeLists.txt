@@ -125,8 +125,6 @@ project (Zeug)
             ${CMAKE_SOURCE_DIR}/external/zeug/opengl/program.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/opengl/shader.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/opengl/texture.cpp
-            ${CMAKE_SOURCE_DIR}/external/zeug/thirdparty/nanovg.c
-            ${CMAKE_SOURCE_DIR}/external/zeug/thirdparty/stb_image.c
         )
 
     list(APPEND ZEUG_SOURCE ${ZEUG_SOURCE})

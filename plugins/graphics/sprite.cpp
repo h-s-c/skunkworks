@@ -124,12 +124,13 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
     auto ty = - (top + bottom)/(top - bottom);
     auto tz = - (far + near)/(far - near);
 
-    this->ortho_projection = {
+    this->ortho_projection = 
+    {{
         a,      0.0f,   0.0f,   0.0f,
         0.0f,   b,      0.0f,   0.0f,
         0.0f,   0.0f,   c,      0.0f,
         tx,     ty,     tz,     1.0f
-    };
+    }};
 
     for( std::uint32_t i=0; i < this->json_objects.size(); i++)
     {        

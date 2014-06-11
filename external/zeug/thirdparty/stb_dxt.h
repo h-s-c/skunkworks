@@ -198,18 +198,14 @@ static unsigned int stb__MatchColorsBlock(unsigned char *block, unsigned char *c
 
    if(!dither) {
       // the version without dithering is straightforward
-      const int indexMap[8] = { 0 << 30,2 << 30,0 << 30,2 << 30,3 << 30,3 << 30,1 << 30,1 << 30 };
+      for (i=15;i>=0;i--) {
+         int dot = dots[i];
+         mask <<= 2;
 
-      for(int i=0;i<16;i++)
-      {
-        int dot = dots[i];
-        mask >>= 2;
-
-        int bits =( (dot < halfPoint) ? 4 : 0 )
-                | ( (dot < c0Point) ? 2 : 0 )
-                | ( (dot < c3Point) ? 1 : 0 );
-
-        mask |= indexMap[bits];
+         if(dot < halfPoint)
+           mask |= (dot < c0Point) ? 1 : 3;
+         else
+           mask |= (dot < c3Point) ? 2 : 0;
       }
   } else {
       // with floyd-steinberg dithering
@@ -270,6 +266,7 @@ static unsigned int stb__MatchColorsBlock(unsigned char *block, unsigned char *c
 // The color optimization function. (Clever code, part 1)
 static void stb__OptimizeColorsBlock(unsigned char *block, unsigned short *pmax16, unsigned short *pmin16)
 {
+  int mind = 0x7fffffff,maxd = -0x7fffffff;
   unsigned char *minp, *maxp;
   double magn;
   int v_r,v_g,v_b;
@@ -286,36 +283,13 @@ static void stb__OptimizeColorsBlock(unsigned char *block, unsigned short *pmax1
     const unsigned char *bp = ((const unsigned char *) block) + ch;
     int muv,minv,maxv;
 
-#   define MIN(a,b)      (int)a + ( ((int)b-a) & ( ((int)b-a) >> 31 ) )
-#   define MAX(a,b)      (int)a + ( ((int)b-a) & ( ((int)a-b) >> 31 ) )
-#   define RANGE(a,b,n)  int min##n = MIN(a,b); int max##n = a+b - min##n; muv += a+b;
-#   define MINMAX(a,b,n) int min##n = MIN(min##a, min##b); int max##n = MAX(max##a, max##b); 
-
-    muv = 0;
-    RANGE(bp[0],  bp[4],  1);
-    RANGE(bp[8],  bp[12], 2);
-    RANGE(bp[16], bp[20], 3);
-    RANGE(bp[24], bp[28], 4);
-    RANGE(bp[32], bp[36], 5);
-    RANGE(bp[40], bp[44], 6);
-    RANGE(bp[48], bp[52], 7);
-    RANGE(bp[56], bp[60], 8);
-
-    MINMAX(1,2,9);
-    MINMAX(3,4,10);
-    MINMAX(5,6,11);
-    MINMAX(7,8,12);
-
-    MINMAX(9,10,13);
-    MINMAX(11,12,14);
-
-    minv = MIN(min13,min14);
-    maxv = MAX(max13,max14);
-
-#   undef MIN
-#   undef MAX
-#   undef MINMAX
-#   undef RANGE
+    muv = minv = maxv = bp[0];
+    for(i=4;i<64;i+=4)
+    {
+      muv += bp[i];
+      if (bp[i] < minv) minv = bp[i];
+      else if (bp[i] > maxv) maxv = bp[i];
+    }
 
     mu[ch] = (muv + 8) >> 4;
     min[ch] = minv;
@@ -375,17 +349,13 @@ static void stb__OptimizeColorsBlock(unsigned char *block, unsigned short *pmax1
    }
 
    // Pick colors at extreme points
-   int mind, maxd;
-   mind = maxd = block[0]*v_r + block[1]*v_g + block[2]*v_b;
-   minp = maxp = block;
-   for(i=1;i<16;i++)
+   for(i=0;i<16;i++)
    {
       int dot = block[i*4+0]*v_r + block[i*4+1]*v_g + block[i*4+2]*v_b;
 
       if (dot < mind) {
          mind = dot;
          minp = block+i*4;
-     continue;
       }
 
       if (dot > maxd) {
@@ -400,9 +370,10 @@ static void stb__OptimizeColorsBlock(unsigned char *block, unsigned short *pmax1
 
 static int stb__sclamp(float y, int p0, int p1)
 {
-    int x = (int) y;
-    x = x>p1 ? p1 : x;
-    return x<p0 ? p0 : x;
+   int x = (int) y;
+   if (x < p0) return p0;
+   if (x > p1) return p1;
+   return x;
 }
 
 // The refinement function. (Clever code, part 2)
@@ -579,15 +550,6 @@ static void stb__CompressAlphaBlock(unsigned char *dest,unsigned char *src,int m
    ((unsigned char *)dest)[0] = mx;
    ((unsigned char *)dest)[1] = mn;
    dest += 2;
-
-  // mono-alpha shortcut
-   if (mn==mx)
-   {
-     *(unsigned short*)dest = 0;
-     dest += 2;
-     *(unsigned int*)dest = 0;
-     return;
-   }
 
    // determine bias and emit color indices
    // given the choice of mx/mn, these indices are optimal:

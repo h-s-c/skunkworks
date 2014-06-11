@@ -230,13 +230,13 @@ namespace zeug
                 using namespace zeug::dynapi::sdl2::api;
 
                 std::array<zeug::powerstate, 5> translation_array =
-                {
+                {{
                     zeug::powerstate::unknown, 
                     zeug::powerstate::on_battery, 
                     zeug::powerstate::no_battery, 
                     zeug::powerstate::charging, 
                     zeug::powerstate::charged
-                };
+                }};
                 powerstate = translation_array[SDL_GetPowerInfo(&seconds, &percent)];
 
                 zeug::dynapi::sdl2::kill();

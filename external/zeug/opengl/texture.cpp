@@ -17,8 +17,8 @@
 
 #include <sys/stat.h>
 
-#define STBI_HEADER_FILE_ONLY
-#include "thirdparty/stb_image.c"
+#define STB_IMAGE_IMPLEMENTATION
+#include "thirdparty/stb_image.h"
 #define STB_DXT_IMPLEMENTATION
 #include "thirdparty/stb_dxt.h"
 
