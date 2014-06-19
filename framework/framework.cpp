@@ -64,8 +64,8 @@ Framework::Framework()
     /* zeug::window: Initialization. */
     this->base_window = std::make_shared<zeug::window>();
     
-    /* ZMQ: Initialization with 1 worker threads. */
-    this->zmq_context = std::make_shared<zmq::context_t>(1);
+    /* ZMQ: Initialization with 0 worker threads (we are using shared memory). */
+    this->zmq_context = std::make_shared<zmq::context_t>(0);
     
     /* ZMQ: Create framework publication socket on this thread. */
     this->zmq_framework_publisher = std::make_shared<zmq::socket_t>(*this->zmq_context.get(), ZMQ_PUB);
