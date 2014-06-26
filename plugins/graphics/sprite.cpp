@@ -20,7 +20,7 @@
 
 #include "external/jsonxx.hpp"
 
-const StateStringEnum::vec_t StateStringEnum::en2str_vec = 
+const Statestring_enum::vec_t Statestring_enum::en2str_vec = 
 {
         pair_t(SpriteState::None, "None"),
         pair_t(SpriteState::IdleRight, "IdleRight"),

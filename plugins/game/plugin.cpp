@@ -12,7 +12,7 @@
 #include <thread>
 
 #include <zeug/platform.hpp>
-#include <zeug/stringhash.hpp>
+#include <zeug/string_hash.hpp>
 #include <zeug/window.hpp>
 #include <zmq.hpp>
 
@@ -68,7 +68,7 @@ void GamePlugin::operator()()
         
         /* ZMQ: Send ready message. */
         {
-            zeug::stringhash message("Ready");
+            zeug::string_hash message("Ready");
             zmq::message_t zmq_message_send(message.Size());
             memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
             this->zmq_game_publisher->send(zmq_message_send);
@@ -80,7 +80,7 @@ void GamePlugin::operator()()
             zmq::message_t zmq_message;
             if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (zeug::stringhash("Start") == zeug::stringhash(zmq_message.data()))
+                if (zeug::string_hash("Start") == zeug::string_hash(zmq_message.data()))
                 {
                     break;
                 }
@@ -97,7 +97,7 @@ void GamePlugin::operator()()
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
+                    if (zeug::string_hash("Stop") == zeug::string_hash(zmq_message.data()))
                     {
                         break;
                     }
@@ -109,27 +109,27 @@ void GamePlugin::operator()()
                 if (zmq_input_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
                     /* Topic */
-                    if (zeug::stringhash("Keyboard") == zeug::stringhash(zmq_message.data()))
+                    if (zeug::string_hash("Keyboard") == zeug::string_hash(zmq_message.data()))
                     {
                         /* Message */
                         zmq_message.rebuild();
                         zmq_input_subscriber.recv(&zmq_message, 0);
-                        if (zeug::stringhash("Esc") == zeug::stringhash(zmq_message.data()))
+                        if (zeug::string_hash("Esc") == zeug::string_hash(zmq_message.data()))
                         {
                             /* ZMQ: Send stop message. */
-                            zeug::stringhash message("Stop");
+                            zeug::string_hash message("Stop");
                             zmq_message.rebuild();
                             memcpy(zmq_message.data(), message.Get(), message.Size()); 
                             this->zmq_game_publisher->send(zmq_message);
                         }
-                        else if (zeug::stringhash("Enter") == zeug::stringhash(zmq_message.data()))
+                        else if (zeug::string_hash("Enter") == zeug::string_hash(zmq_message.data()))
                         {
                             start_game = true;
                         }
                         /* End of message. */
                         zmq_message.rebuild();
                         zmq_input_subscriber.recv(&zmq_message, 0);
-                        if (zeug::stringhash("Finish") == zeug::stringhash(zmq_message.data()))
+                        if (zeug::string_hash("Finish") == zeug::string_hash(zmq_message.data()))
                         {
                         }
                     }
@@ -142,7 +142,7 @@ void GamePlugin::operator()()
     catch (...)
     {
         /* ZMQ: Send stop message. */
-        zeug::stringhash message("Stop");
+        zeug::string_hash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_game_publisher->send(zmq_message_send);

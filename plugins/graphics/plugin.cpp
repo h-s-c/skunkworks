@@ -11,7 +11,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <zeug/platform.hpp>
-#include <zeug/stringhash.hpp>
+#include <zeug/string_hash.hpp>
 #include <zeug/window.hpp>
 #include <zmq.hpp>
 
@@ -137,7 +137,7 @@ void GraphicsPlugin::operator()()
         
         /* ZMQ: Send ready message. */
         {
-            zeug::stringhash message("Ready");
+            zeug::string_hash message("Ready");
             zmq::message_t zmq_message_send(message.Size());
             memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
             this->zmq_graphics_publisher->send(zmq_message_send);
@@ -149,7 +149,7 @@ void GraphicsPlugin::operator()()
             zmq::message_t zmq_message;
             if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (zeug::stringhash("Start") == zeug::stringhash(zmq_message.data()))
+                if (zeug::string_hash("Start") == zeug::string_hash(zmq_message.data()))
                 {
                     break;
                 }
@@ -165,7 +165,7 @@ void GraphicsPlugin::operator()()
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
+                    if (zeug::string_hash("Stop") == zeug::string_hash(zmq_message.data()))
                     {
                         break;
                     }
@@ -194,7 +194,7 @@ void GraphicsPlugin::operator()()
     catch (...)
     {
         /* ZMQ: Send stop message. */
-        zeug::stringhash message("Stop");
+        zeug::string_hash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_graphics_publisher->send(zmq_message_send);

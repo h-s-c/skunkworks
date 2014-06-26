@@ -1,7 +1,7 @@
 #include "plugins/game/entitymanager.hpp"
 #include "plugins/common/entity.hpp"
 
-#include <zeug/stringhash.hpp>
+#include <zeug/string_hash.hpp>
 #include <zmq.hpp>
 #include <msgpack.hpp>
 
@@ -25,14 +25,14 @@ void EntityManager::operator()(bool start_game)
     std::call_once(flag, [&](){ 
         /* Topic. */
         {
-            zeug::stringhash message("Sprite");
+            zeug::string_hash message("Sprite");
             zmq::message_t zmq_message(message.Size());
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         /* Subtopic. */
         {
-            zeug::stringhash message("Create");
+            zeug::string_hash message("Create");
             zmq::message_t zmq_message(message.Size());
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
@@ -76,7 +76,7 @@ void EntityManager::operator()(bool start_game)
         }
         /* End of message. */
         {
-            zeug::stringhash message("Finish");
+            zeug::string_hash message("Finish");
             zmq::message_t zmq_message(message.Size());
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message);
@@ -93,14 +93,14 @@ void EntityManager::operator()(bool start_game)
     { 
         /* Topic. */
         {
-            zeug::stringhash message("Sprite");
+            zeug::string_hash message("Sprite");
             zmq::message_t zmq_message(message.Size());
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         /* Subtopic. */
         {
-            zeug::stringhash message("Update");
+            zeug::string_hash message("Update");
             zmq::message_t zmq_message(message.Size());
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
@@ -163,7 +163,7 @@ void EntityManager::operator()(bool start_game)
         }
         /* End of message. */
         {
-            zeug::stringhash message("Finish");
+            zeug::string_hash message("Finish");
             zmq::message_t zmq_message(message.Size());
             memcpy(zmq_message.data(), message.Get(), message.Size()); 
             zmq_game_publisher->send(zmq_message);

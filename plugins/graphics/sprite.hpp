@@ -7,7 +7,7 @@
 #include <utility>
 
 #include <zeug/platform.hpp>
-#include <zeug/stringenum.hpp>
+#include <zeug/string_enum.hpp>
 #include <zeug/window.hpp>
 #include <zeug/opengl/buffer.hpp>
 #include <zeug/opengl/program.hpp>
@@ -26,9 +26,9 @@ enum class SpriteState
     WalkLeft
 };
 
-class StateStringEnum : public zeug::stringenum<StateStringEnum, SpriteState>
+class Statestring_enum : public zeug::string_enum<Statestring_enum, SpriteState>
 {
-    StateStringEnum();
+    Statestring_enum();
 public:
     static const vec_t en2str_vec;
 };

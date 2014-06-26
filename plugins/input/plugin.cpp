@@ -11,7 +11,7 @@
 #include <thread>
 
 #include <zeug/platform.hpp>
-#include <zeug/stringhash.hpp>
+#include <zeug/string_hash.hpp>
 #include <zeug/window.hpp>
 #include <OIS/OIS.h>
 #include <zmq.hpp>
@@ -85,7 +85,7 @@ void InputPlugin::operator()()
         
         /* ZMQ: Send ready message. */
         {
-            zeug::stringhash message("Ready");
+            zeug::string_hash message("Ready");
             zmq::message_t zmq_message_send(message.Size());
             memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
             this->zmq_input_publisher->send(zmq_message_send);
@@ -97,7 +97,7 @@ void InputPlugin::operator()()
             zmq::message_t zmq_message;
             if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (zeug::stringhash("Start") == zeug::stringhash(zmq_message.data()))
+                if (zeug::string_hash("Start") == zeug::string_hash(zmq_message.data()))
                 {
                     break;
                 }
@@ -112,7 +112,7 @@ void InputPlugin::operator()()
                 zmq::message_t zmq_message;
                 if (zmq_framework_subscriber.recv(&zmq_message, ZMQ_NOBLOCK)) 
                 {
-                    if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
+                    if (zeug::string_hash("Stop") == zeug::string_hash(zmq_message.data()))
                     {
                         break;
                     }
@@ -127,21 +127,21 @@ void InputPlugin::operator()()
                 {
                     /* Topic */
                     {
-                        zeug::stringhash message("Keyboard");
+                        zeug::string_hash message("Keyboard");
                         zmq::message_t zmq_message(message.Size());
                         memcpy(zmq_message.data(), message.Get(), message.Size()); 
                         zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
                     }
                     /* Message */
                     {
-                        zeug::stringhash message("Esc");
+                        zeug::string_hash message("Esc");
                         zmq::message_t zmq_message(message.Size());
                         memcpy(zmq_message.data(), message.Get(), message.Size()); 
                         zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
                     }
                     /* End of message. */
                     {
-                        zeug::stringhash message("Finish");
+                        zeug::string_hash message("Finish");
                         zmq::message_t zmq_message(message.Size());
                         memcpy(zmq_message.data(), message.Get(), message.Size()); 
                         zmq_input_publisher->send(zmq_message);
@@ -151,21 +151,21 @@ void InputPlugin::operator()()
                 {
                     /* Topic */
                     {
-                        zeug::stringhash message("Keyboard");
+                        zeug::string_hash message("Keyboard");
                         zmq::message_t zmq_message(message.Size());
                         memcpy(zmq_message.data(), message.Get(), message.Size()); 
                         zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
                     }
                     /* Message */
                     {
-                        zeug::stringhash message("Enter");
+                        zeug::string_hash message("Enter");
                         zmq::message_t zmq_message(message.Size());
                         memcpy(zmq_message.data(), message.Get(), message.Size()); 
                         zmq_input_publisher->send(zmq_message, ZMQ_SNDMORE);
                     }
                     /* End of message. */
                     {
-                        zeug::stringhash message("Finish");
+                        zeug::string_hash message("Finish");
                         zmq::message_t zmq_message(message.Size());
                         memcpy(zmq_message.data(), message.Get(), message.Size()); 
                         zmq_input_publisher->send(zmq_message);
@@ -178,7 +178,7 @@ void InputPlugin::operator()()
     catch(const OIS::Exception& ois_exception )
     {
         /* ZMQ: Send stop message. */
-        zeug::stringhash message("Stop");
+        zeug::string_hash message("Stop");
         zmq::message_t zmq_message_send(message.Size());
         memcpy(zmq_message_send.data(), message.Get(), message.Size()); 
         this->zmq_input_publisher->send(zmq_message_send);

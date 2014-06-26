@@ -14,7 +14,7 @@
 
 #include <zeug/platform.hpp>
 #include <zeug/shared_lib.hpp>
-#include <zeug/stringhash.hpp>
+#include <zeug/string_hash.hpp>
 #include <zeug/window.hpp>
 
 #include <zmq.hpp>
@@ -103,7 +103,7 @@ void Framework::operator()()
             zmq::message_t zmq_message;
             if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (zeug::stringhash("Ready") == zeug::stringhash(zmq_message.data()))
+                if (zeug::string_hash("Ready") == zeug::string_hash(zmq_message.data()))
                 {
                     break;
                 }
@@ -113,7 +113,7 @@ void Framework::operator()()
     
     /* ZMQ: Send start message. */
     {
-        zeug::stringhash message("Start");
+        zeug::string_hash message("Start");
         zmq::message_t zmq_message;
         memcpy(zmq_message.data(), message.Get(), message.Size()); 
         this->zmq_framework_publisher->send(zmq_message);
@@ -132,7 +132,7 @@ void Framework::operator()()
             zmq::message_t zmq_message;
             if (subscriber->recv(&zmq_message, ZMQ_NOBLOCK)) 
             {
-                if (zeug::stringhash("Stop") == zeug::stringhash(zmq_message.data()))
+                if (zeug::string_hash("Stop") == zeug::string_hash(zmq_message.data()))
                 {
                     stop = true;
                     break;
@@ -143,7 +143,7 @@ void Framework::operator()()
     
     /* ZMQ: Send stop message. */
     {
-        zeug::stringhash message("Stop");
+        zeug::string_hash message("Stop");
         zmq::message_t zmq_message;
         memcpy(zmq_message.data(), message.Get(), message.Size()); 
         this->zmq_framework_publisher->send(zmq_message);

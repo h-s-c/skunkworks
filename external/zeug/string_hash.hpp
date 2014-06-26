@@ -12,21 +12,21 @@ namespace zeug
 {
 
 /* Compile time string hash */
-class stringhash
+class string_hash
 { 
   public:
 
-    explicit constexpr stringhash(const char* str):
+    explicit constexpr string_hash(const char* str):
     hash(hashString(str))
     {
     }
     
-    explicit constexpr stringhash(const std::int64_t hash):
+    explicit constexpr string_hash(const std::int64_t hash):
     hash(hash)
     {
     }
     
-    explicit constexpr stringhash(void* hash):
+    explicit constexpr string_hash(void* hash):
     hash(*(std::int64_t*)(hash))
     {
     }
@@ -41,17 +41,17 @@ class stringhash
         return &this->hash;
     }
     
-    inline std::int64_t operator=(const stringhash& other)  const
+    inline std::int64_t operator=(const string_hash& other)  const
     {
         return other.hash;
     }
     
-    inline bool operator==(const stringhash& other) const
+    inline bool operator==(const string_hash& other) const
     {
         return this->hash == other.hash;
     }
     
-    inline bool operator!=(const stringhash& other) const
+    inline bool operator!=(const string_hash& other) const
     {
         return this->hash != other.hash;
     }

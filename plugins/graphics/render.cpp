@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include <zeug/window.hpp>
-#include <zeug/stringhash.hpp>
+#include <zeug/string_hash.hpp>
 #include <msgpack.hpp>
 #include <zmq.hpp>
 
@@ -32,15 +32,15 @@ void Render::operator()(double deltatime)
 {
     zmq::message_t zmq_message;
     zmq_game_subscriber->recv(&zmq_message, ZMQ_NOBLOCK);
-    if(zeug::stringhash("Sprite") == zeug::stringhash(zmq_message.data()))
+    if(zeug::string_hash("Sprite") == zeug::string_hash(zmq_message.data()))
     {
         zmq_message.rebuild();
         zmq_game_subscriber->recv(&zmq_message, 0);
-        if (zeug::stringhash("Create") == zeug::stringhash(zmq_message.data()))
+        if (zeug::string_hash("Create") == zeug::string_hash(zmq_message.data()))
         {
             zmq_message.rebuild();
             zmq_game_subscriber->recv(&zmq_message, 0);
-            while(zeug::stringhash("Finish") != zeug::stringhash(zmq_message.data()))
+            while(zeug::string_hash("Finish") != zeug::string_hash(zmq_message.data()))
             {
                 Entity entity{0, 0, 0, 0.0f, "", ""};
                 msgpack::unpacked unpacked;
@@ -51,17 +51,17 @@ void Render::operator()(double deltatime)
                 Sprite sprite = {this->base_window, entity.json_desc, entity.id};
                 sprite.SetPosition(std::make_pair(entity.position_x, entity.position_y));
                 sprite.SetScale(entity.scale);
-                sprite.SetState(StateStringEnum::toEnum(entity.state));
+                sprite.SetState(Statestring_enum::toEnum(entity.state));
                 this->sprites.push_back(std::move(sprite));
                 zmq_message.rebuild();
                 zmq_game_subscriber->recv(&zmq_message, 0);
             }
         }
-        else if(zeug::stringhash("Update") == zeug::stringhash(zmq_message.data()))
+        else if(zeug::string_hash("Update") == zeug::string_hash(zmq_message.data()))
         {
             zmq_message.rebuild();
             zmq_game_subscriber->recv(&zmq_message, 0);
-            while(zeug::stringhash("Finish") != zeug::stringhash(zmq_message.data()))
+            while(zeug::string_hash("Finish") != zeug::string_hash(zmq_message.data()))
             {
                 Entity entity{0, 0, 0, 0.0f, "", ""};
                 msgpack::unpacked unpacked;
@@ -76,7 +76,7 @@ void Render::operator()(double deltatime)
                     {
                         sprite.SetPosition(std::make_pair(entity.position_x, entity.position_y));
                         sprite.SetScale(entity.scale);
-                        sprite.SetState(StateStringEnum::toEnum(entity.state));
+                        sprite.SetState(Statestring_enum::toEnum(entity.state));
                         break;
                     }
                 }
