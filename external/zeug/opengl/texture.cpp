@@ -85,6 +85,9 @@ void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int
         { 
             extract_block(src, x, y, w, h, block);
             stb_compress_dxt_block(dst, block, alpha, STB_DXT_NORMAL);
+            #if defined(PLATFORM_ANDROID)
+            //convert to atc
+            #endif
             dst += alpha ? 16 : 8;
         }
     }
@@ -233,7 +236,11 @@ namespace zeug
                 glActiveTexture(GL_TEXTURE0 + this->native_slot_internal);
                 glGenTextures(1,&this->native_handle_internal);
                 glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
+#if defined(PLATFORM_ANDROID)
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_ATC_RGB_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
+#else
                 glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
+ #endif
                 glGenerateMipmap(GL_TEXTURE_2D);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

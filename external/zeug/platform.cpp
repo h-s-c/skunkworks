@@ -23,7 +23,7 @@
 #include <windows.h>
 #elif defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)
-#include <zeug/detail/thirdparty/cpu-features.h>
+#include <zeug/thirdparty/cpu-features.h>
 #elif defined(PLATFORM_EMSCRIPTEN)
 #elif defined(PLATFORM_RASBERRYPI)
 #elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)

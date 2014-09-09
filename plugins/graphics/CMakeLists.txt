@@ -23,6 +23,9 @@ project (PluginGraphics)
 
     if (UNIX)
         list(APPEND PLUGIN_LIBRARIES ${CMAKE_DL_LIBS})
+        if(ANDROID)
+            list(APPEND PLUGIN_LIBRARIES android)
+        endif()
     endif()
     
     find_package(ZMQ REQUIRED)
