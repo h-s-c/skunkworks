@@ -1,5 +1,5 @@
 ## Public Domain
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.0.1)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 project (skunkworks)
@@ -19,10 +19,20 @@ project (skunkworks)
     list(APPEND SKUNKWORKS_INCLUDE_DIRS ${ZMQ_INCLUDE_DIR})
     
     list(APPEND SKUNKWORKS_LIBRARIES Framework)    
-    list(APPEND SKUNKWORKS_SOURCE ${CMAKE_SOURCE_DIR}/main.cpp)
+    if(ANDROID)
+        list(APPEND SKUNKWORKS_SOURCE ${CMAKE_SOURCE_DIR}/android_main.cpp)
+        list(APPEND SKUNKWORKS_SOURCE ${CMAKE_SOURCE_DIR}/external/android_native_app_glue.c)
+        list(APPEND SKUNKWORKS_LIBRARIES log)
+    else()
+        list(APPEND SKUNKWORKS_SOURCE ${CMAKE_SOURCE_DIR}/main.cpp)
+    endif()
     list(APPEND SKUNKWORKS_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
 
     include_directories(${SKUNKWORKS_INCLUDE_DIRS} )
-    add_executable(Skunkworks ${SKUNKWORKS_SOURCE})
+    if(ANDROID)
+        add_library(Skunkworks SHARED ${SKUNKWORKS_SOURCE})
+    else()
+        add_executable(Skunkworks ${SKUNKWORKS_SOURCE})
+    endif()
     target_link_libraries(Skunkworks ${SKUNKWORKS_LIBRARIES})
 
