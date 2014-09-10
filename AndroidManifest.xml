@@ -4,7 +4,7 @@
         android:versionCode="1"
         android:versionName="1.0">
     <uses-sdk android:minSdkVersion="19" />
-    <application android:label="Skunkworks" android:hasCode="false">
+    <application android:label="Skunkworks" android:hasCode="false" android:debuggable="true">
         <activity android:name="android.app.NativeActivity"
                 android:label="Skunkworks"
                 android:configChanges="orientation|keyboardHidden">

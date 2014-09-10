@@ -1,6 +1,8 @@
 ## Public Domain
 cmake_minimum_required (VERSION 3.0.1)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+cmake_policy(SET CMP0026 OLD)
+include(AndroidNdkGdb)
 
 project (skunkworks)
     if(MSVC)
@@ -30,7 +32,9 @@ project (skunkworks)
 
     include_directories(${SKUNKWORKS_INCLUDE_DIRS} )
     if(ANDROID)
+        android_ndk_gdb_enable()
         add_library(Skunkworks SHARED ${SKUNKWORKS_SOURCE})
+        android_ndk_gdb_debuggable(Skunkworks)
     else()
         add_executable(Skunkworks ${SKUNKWORKS_SOURCE})
     endif()
