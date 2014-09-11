@@ -34,16 +34,16 @@ macro(android_ndk_gdb_enable)
         # create custom target that depends on the real target so it gets executed afterwards
         add_custom_target(NDK_GDB ALL)
         
-        set(NDK_GDB_SOLIB_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/obj/local/${ANDROID_NDK_ABI_NAME}/)
+        set(NDK_GDB_SOLIB_PATH ${CMAKE_BINARY_DIR}/obj/local/${ANDROID_NDK_ABI_NAME}/)
         file(MAKE_DIRECTORY ${NDK_GDB_SOLIB_PATH})
         
         # 1. generate essential Android Makefiles
-        file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/jni)
-        if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/jni/Android.mk)
-            file(WRITE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/jni/Android.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/jni)
+        if(NOT EXISTS ${CMAKE_BINARY_DIR}/jni/Android.mk)
+            file(WRITE ${CMAKE_BINARY_DIR}/jni/Android.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
         endif()
-        if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/jni/Application.mk)
-            file(WRITE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/jni/Application.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
+        if(NOT EXISTS ${CMAKE_BINARY_DIR}/jni/Application.mk)
+            file(WRITE ${CMAKE_BINARY_DIR}/jni/Application.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
         endif()
     
         # 2. generate gdb.setup
@@ -53,7 +53,7 @@ macro(android_ndk_gdb_enable)
         file(APPEND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gdb.setup "directory ${PROJECT_INCLUDES}\n")
     
         # 3. copy gdbserver executable
-        file(COPY ${PROJECT_SOURCE_DIR}/toolchain/prebuilt/android-${ANDROID_ARCH_NAME}/gdbserver/gdbserver DESTINATION ${LIBRARY_OUTPUT_PATH})
+        file(COPY ${PROJECT_SOURCE_DIR}/../tools/toolchain/prebuilt/android-${ANDROID_ARCH_NAME}/gdbserver/gdbserver DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     endif()
 endmacro()
 
