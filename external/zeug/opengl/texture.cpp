@@ -21,6 +21,8 @@
 #include "thirdparty/stb_image.h"
 #define STB_DXT_IMPLEMENTATION
 #include "thirdparty/stb_dxt.h"
+#define DXTC2ATC_IMPLEMENTATION
+#include "thirdparty/dxtc2atc.h"
 
 // Texture cache (uid, slot , handle)
 static std::vector<std::tuple<std::string, std::uint32_t, std::uint32_t, bool>> texture_memcache;
@@ -76,7 +78,7 @@ void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::
     }
 }
 
-void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int32_t h, bool alpha )
+void compress_tex(std::uint8_t* dest, std::uint8_t* src, std::int32_t w, std::int32_t h, bool alpha )
 {
     std::uint8_t block[64];
     for(auto y = 0; y < h; y += 4)
@@ -84,13 +86,13 @@ void compress_tex(std::uint8_t* dst, std::uint8_t* src, std::int32_t w, std::int
         for(auto x = 0; x < w; x += 4)
         { 
             extract_block(src, x, y, w, h, block);
-            stb_compress_dxt_block(dst, block, alpha, STB_DXT_NORMAL);
-            #if defined(PLATFORM_ANDROID)
-            //convert to atc
-            #endif
-            dst += alpha ? 16 : 8;
+            stb_compress_dxt_block(dest, block, alpha, STB_DXT_NORMAL);
+            dest += alpha ? 16 : 8;
         }
     }
+#if defined(PLATFORM_ANDROID)
+    dxt2atc_convert_texture(dest, DXTC2ATC_DXT5,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, w, h);
+#endif
 }
 
 bool file_exists(std::string file) 
@@ -237,7 +239,7 @@ namespace zeug
                 glGenTextures(1,&this->native_handle_internal);
                 glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
 #if defined(PLATFORM_ANDROID)
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_ATC_RGB_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
 #else
                 glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
  #endif
