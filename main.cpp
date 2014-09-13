@@ -4,5 +4,5 @@
 
 int main(int argc, char* argv[])
 {
-    return RunFramework(0);
+    return RunFramework(0, "../Skunkworks.pak");
 }
