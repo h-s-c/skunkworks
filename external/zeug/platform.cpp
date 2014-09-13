@@ -575,9 +575,12 @@ namespace zeug
 
         void try_ogl()
         {
+            #if defined (PLATFORM_ANDROID)
+            return;
+            #endif
+            
             zeug::dynapi::egl::init();
             using namespace zeug::dynapi::egl::api;
-
             EGLConfig eglConfigWindow = nullptr;
             auto eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
             eglInitialize(eglDisplay, nullptr, nullptr);

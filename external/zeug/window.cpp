@@ -47,8 +47,9 @@ LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 namespace zeug
 {
-    window::window()
+    window::window(EGLNativeWindowType window)
     {
+        this->native_window_internal = window;
 #if defined(PLATFORM_WINDOWS)
 
         WNDCLASS windowclass{0};
@@ -109,7 +110,6 @@ namespace zeug
         this->native_display_internal = EGL_DEFAULT_DISPLAY;
         this->native_context_internal = static_cast<void*>(screen_ctx);
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_EMSCRIPTEN)
-        this->native_window_internal = 0;
         this->native_display_internal = EGL_DEFAULT_DISPLAY;
 #elif defined(PLATFORM_RASBERRYPI)
         zeug::dynapi::dispman::init();
@@ -210,18 +210,10 @@ namespace zeug
 #endif
     } 
 
-    EGLNativeWindowType window::native_window() 
-    {
-        return this->native_window_internal;
-    }
-       
     EGLNativeWindowType window::native_window(const EGLint format) 
     {
 #if defined(PLATFORM_ANDROID)
-        if(!this->native_window_internal)
-        {
-            ANativeWindow_setBuffersGeometry(this->native_window_internal, this->width_internal, this->height_internal, format);
-        }
+        ANativeWindow_setBuffersGeometry(this->native_window_internal, this->width_internal, this->height_internal, format);
 #endif
         return this->native_window_internal;
     }
@@ -233,11 +225,17 @@ namespace zeug
 
     std::uint32_t  window::width() 
     { 
+#if defined(PLATFORM_ANDROID)
+         this->width_internal = ANativeWindow_getWidth(this->native_window_internal);
+#endif
         return this->width_internal;
     }
 
     std::uint32_t window::height() 
     { 
+#if defined(PLATFORM_ANDROID)
+         this->height_internal = ANativeWindow_getHeight(this->native_window_internal);
+#endif
         return this->height_internal;
     }
     

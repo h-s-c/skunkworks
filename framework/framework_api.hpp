@@ -1,4 +1,7 @@
 // Public Domain
 #pragma once
 
-#include "framework/framework_api.h"
+#include <EGL/egl.h>
+
+// The window parameter is only used on some platforms (Android etc.)
+int RunFramework(EGLNativeWindowType window);

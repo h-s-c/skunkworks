@@ -74,23 +74,13 @@ void GraphicsPlugin::operator()()
         /* EGL: Set configuration variables. */
         const EGLint egl_attributes[] =
         {
-            EGL_COLOR_BUFFER_TYPE,     EGL_RGB_BUFFER,
-            EGL_BUFFER_SIZE,           32,
-            EGL_RED_SIZE,              8,
-            EGL_GREEN_SIZE,            8,
-            EGL_BLUE_SIZE,             8,
-            EGL_ALPHA_SIZE,            8,
-
-            EGL_DEPTH_SIZE,            24,
-            EGL_STENCIL_SIZE,          8,
-
-            EGL_SAMPLE_BUFFERS,        0,
-            EGL_SAMPLES,               0,
-
-            EGL_SURFACE_TYPE,          EGL_WINDOW_BIT,
-            EGL_RENDERABLE_TYPE,       EGL_OPENGL_ES2_BIT,
-
-            EGL_NONE,
+            EGL_SURFACE_TYPE,             EGL_WINDOW_BIT,
+            EGL_RENDERABLE_TYPE,     EGL_OPENGL_ES2_BIT,
+            EGL_RED_SIZE,                       8,
+            EGL_GREEN_SIZE,                  8,
+            EGL_BLUE_SIZE,                     8,
+            EGL_ALPHA_SIZE,                  8,
+            EGL_NONE
         };
         
         const EGLint egl_context_attributes[] =
@@ -122,7 +112,7 @@ void GraphicsPlugin::operator()()
         eglChooseConfig(egl_display, egl_attributes, &egl_config, 1, &egl_num_configs);
 
         /* EGL: Link to base::Window. */
-        EGLint egl_format;
+        EGLint egl_format = 0;
         eglGetConfigAttrib(egl_display, egl_config, EGL_NATIVE_VISUAL_ID, &egl_format);
         auto egl_surface = eglCreateWindowSurface(egl_display, egl_config, this->base_window.get()->native_window(egl_format), NULL);  
 

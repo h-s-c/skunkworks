@@ -16,7 +16,7 @@
 class Framework
 {
   public:
-    Framework();
+    Framework(EGLNativeWindowType window);
     ~Framework();  
     void operator()();
     

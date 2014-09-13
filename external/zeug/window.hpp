@@ -12,7 +12,8 @@ namespace zeug
       // API
       public:
         // Create borderless fullscreen window
-        window();
+        window() : window(0) {} ;
+        window(EGLNativeWindowType window);
 
         // Query resolution
         std::uint32_t width();
@@ -22,7 +23,7 @@ namespace zeug
         bool poll();
 
         // Get native window/display
-        EGLNativeWindowType native_window();
+        EGLNativeWindowType native_window(){return native_window(0);} ;
         EGLNativeWindowType native_window(const EGLint format);
         EGLNativeDisplayType native_display();
 

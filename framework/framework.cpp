@@ -13,22 +13,18 @@
 #include <utility>
 
 #include <zeug/platform.hpp>
+#include <zeug/detail/platform_macros.hpp>
 #include <zeug/shared_lib.hpp>
 #include <zeug/string_hash.hpp>
 #include <zeug/window.hpp>
 
 #include <zmq.hpp>
 
-#ifdef __cplusplus  
-extern "C" 
-{
-#endif
-
-int RunFramework()
+int RunFramework(EGLNativeWindowType window)
 {
     try
     {
-        Framework framework;
+        Framework framework(window);
         framework();
         return 0;
     }
@@ -51,18 +47,14 @@ int RunFramework()
     }
     return 1;
 }
-
-#ifdef __cplusplus  
-}
-#endif
     
-Framework::Framework()
+Framework::Framework(EGLNativeWindowType window)
 {
     /* General: Print debugging information. */
     std::cout << zeug::platform::verbose() << std::endl;
 
     /* zeug::window: Initialization. */
-    this->base_window = std::make_shared<zeug::window>();
+    this->base_window = std::make_shared<zeug::window>(window);
     
     /* ZMQ: Initialization with 0 worker threads (we are using shared memory). */
     this->zmq_context = std::make_shared<zmq::context_t>(0);
@@ -167,7 +159,11 @@ void Framework::operator()()
 
 void Framework::LoadPlugin(std::string name)
 {  
+#if defined (PLATFORM_ANDROID)
+    auto handle = std::make_unique<zeug::shared_lib>("/data/data/com.hsc.skunkworks/lib/", std::string("Plugin"+name));
+#else
     auto handle = std::make_unique<zeug::shared_lib>(std::string("Plugin"+name));
+#endif
     auto funcs = reinterpret_cast<PluginFuncs*>(handle.get()->symbol(name));
     
     handles.push_back(std::move(handle));

@@ -4,5 +4,5 @@
 
 int main(int argc, char* argv[])
 {
-    return RunFramework();
+    return RunFramework(0);
 }

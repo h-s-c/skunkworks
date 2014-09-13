@@ -5,6 +5,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <iostream>
 
 #if defined(PLATFORM_WINDOWS)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -37,6 +38,7 @@ namespace zeug
         #else
         auto suffix = ".so";
         #endif
+
         this->shared_lib_internal = dlopen(std::string(path + name + suffix).c_str(),RTLD_LAZY);
         if (!this->shared_lib_internal) 
         {

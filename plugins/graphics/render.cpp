@@ -18,7 +18,6 @@ Render::Render(const std::shared_ptr<zeug::window> &base_window, const std::shar
         "Vendor: " + reinterpret_cast<const char*>(glGetString(GL_VENDOR)) + "\n" +
         "Renderer: " + reinterpret_cast<const char*>(glGetString(GL_RENDERER)) + "\n" +
         "Version: " + reinterpret_cast<const char*>(glGetString(GL_VERSION)) + "\n" +
-        "Shading language: " + reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)) + "\n" +
         "Extensions: " + reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
 
     std::cout << ogl_info << std::endl;
