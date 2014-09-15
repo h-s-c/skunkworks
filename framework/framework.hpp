@@ -16,7 +16,7 @@
 class Framework
 {
   public:
-    Framework(EGLNativeWindowType window, std::string pakfile);
+    Framework();
     ~Framework();  
     void operator()();
     

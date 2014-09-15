@@ -7,6 +7,7 @@
 #include <zeug/shared_lib.hpp>
 
 #include <cstdint>
+#include <mutex>
 #include <stdexcept>
 
 #include <EGL/egl.h>
@@ -40,18 +41,29 @@ LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 #elif defined(PLATFORM_BLACKBERRY)
 #include <bps/screen.h>
 #elif defined(PLATFORM_ANDROID)
-#include <android/native_window.h>
+#include <android/native_activity.h>
+EGLNativeWindowType native_window_external = nullptr;
+std::mutex native_window_external_mutex;
+void onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window)
+{
+    std::lock_guard<std::mutex> lock(native_window_external_mutex);
+    native_window_external = window;
+}
+void onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window)
+{
+    std::lock_guard<std::mutex> lock(native_window_external_mutex);
+    native_window_external = nullptr;
+}
 #elif defined(PLATFORM_RASBERRYPI)
 #elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)
 #endif
 
 namespace zeug
 {
-    window::window(EGLNativeWindowType window)
+    window::window()
     {
-        this->native_window_internal = window;
+        this->native_display_internal = EGL_DEFAULT_DISPLAY;
 #if defined(PLATFORM_WINDOWS)
-
         WNDCLASS windowclass{0};
         HINSTANCE instance = GetModuleHandle(nullptr);
 
@@ -107,10 +119,13 @@ namespace zeug
         screen_create_window(&screen_win, screen_ctx);
         
         this->native_window_internal = static_cast<EGLNativeWindowType>(screen_win);
-        this->native_display_internal = EGL_DEFAULT_DISPLAY;
         this->native_context_internal = static_cast<void*>(screen_ctx);
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_EMSCRIPTEN)
-        this->native_display_internal = EGL_DEFAULT_DISPLAY;
+#elif defined(PLATFORM_ANDROID)
+        while(!this->native_window_internal)
+        {
+            std::lock_guard<std::mutex> lock(native_window_external_mutex);
+            this->native_window_internal = native_window_external;
+        }
 #elif defined(PLATFORM_RASBERRYPI)
         zeug::dynapi::dispman::init();
         using namespace zeug::dynapi::dispman::api;
@@ -149,7 +164,6 @@ namespace zeug
         vc_dispmanx_update_submit_sync( dispman_update );
 
         this->native_window_internal = &dispman_window;
-        this->native_display_internal = EGL_DEFAULT_DISPLAY;
 
         zeug::dynapi::dispman::kill();
 #elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)
@@ -260,7 +274,14 @@ namespace zeug
                 break;
             }
         } 
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_EMSCRIPTEN) || defined(PLATFORM_RASBERRYPI)
+#elif defined(PLATFORM_ANDROID)
+        std::lock_guard<std::mutex> lock(native_window_external_mutex);
+        this->native_window_internal = native_window_external;
+        if(!this->native_window_internal)
+        {
+            return false;
+        }
+        return true;
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
         if(this->native_display_internal)
         {

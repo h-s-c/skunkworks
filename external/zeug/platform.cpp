@@ -8,11 +8,22 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <fstream>
 #include <mutex>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
+
+#if defined (PLATFORM_UNIX)
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#if !defined(PLATFORM_ANDROID)
+#include <cpuid.h>
+#endif
+#endif
 
 #include <EGL/egl.h>
 
@@ -26,8 +37,9 @@
 #include <zeug/thirdparty/cpu-features.h>
 #elif defined(PLATFORM_EMSCRIPTEN)
 #elif defined(PLATFORM_RASBERRYPI)
-#elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)
-#include <cpuid.h>
+#elif defined(PLATFORM_LINUX)
+extern char *__progname;
+#elif defined(PLATFORM_BSD)
 #endif
 
 namespace zeug
@@ -174,6 +186,48 @@ namespace zeug
         return "AArch64";
 #elif defined(PLATFORM_ARCH_ARM)
         return "AArch32";
+#else
+        return "Unknown";
+#endif
+    }
+
+    std::string name()
+    {
+#if defined(PLATFORM_WINDOWS)
+        return "zeugapp";
+#elif defined(PLATFORM_BLACKBERRY)
+        return "zeugapp";
+#elif defined(PLATFORM_ANDROID)
+        auto procpath = std::string("/proc/") +  std::to_string(getpid) + "/cmdline";
+        std::ifstream procfile (procpath);
+        if (!procfile.is_open())
+        {
+            auto error_text = std::string("Could not open ") + procpath;
+            std::runtime_error error(error_text);
+        }
+        std::string firstline = "";
+        getline (procfile,firstline);
+        procfile.close();
+        return firstline;
+#elif defined(PLATFORM_BSD)
+        return getprogname();
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_RASBERRYPI) || defined(PLATFORM_EMSCRIPTEN)
+        return ::__progname;
+#else
+        return "Unknown";
+#endif
+    }
+
+    std::string cachedir()
+    {
+#if defined(PLATFORM_WINDOWS)
+#elif defined(PLATFORM_BLACKBERRY)
+#elif defined(PLATFORM_ANDROID)
+        return std::string("/data/data/") + this_app::name();
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_RASBERRYPI) || defined(PLATFORM_EMSCRIPTEN) || defined(PLATFORM_BSD)
+        auto path = std::string(getenv("HOME")) + std::string("/.cache/") + this_app::name();
+        mkdir(path.c_str(), 0700);
+        return path;
 #else
         return "Unknown";
 #endif

@@ -41,7 +41,7 @@ namespace zeug
 
     shader::~shader()
     {
-        glDeleteShader(this->native_handle_internal);
+        //glDeleteShader(this->native_handle_internal);
     }
   }
 }

@@ -27,6 +27,8 @@ namespace zeug
   {
     // General properties
     std::string arch();
+    std::string name();
+    std::string cachedir();
     std::string compiler();
     zeug::version_t compiler_version();
     std::string stdlib();

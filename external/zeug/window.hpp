@@ -12,8 +12,7 @@ namespace zeug
       // API
       public:
         // Create borderless fullscreen window
-        window() : window(0) {} ;
-        window(EGLNativeWindowType window);
+        window();
 
         // Query resolution
         std::uint32_t width();

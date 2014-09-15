@@ -15,7 +15,10 @@
 #include <zeug/memory_map.hpp>
 #include <zeug/detail/platform_macros.hpp>
 
+#if defined (PLATFORM_UNIX)
 #include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb_image.h"
@@ -130,10 +133,7 @@ namespace zeug
             this->native_slot_internal = get_empty_texture_slot();
             texture_memcache.push_back(std::make_tuple(uid, this->native_slot_internal, this->native_handle_internal, false));
             
-            auto compcache_path = std::string(getenv("HOME")) + std::string("/.cache/") + APP_NAME_STRING;
-            mkdir(compcache_path.c_str(), 0700);
-            compcache_path = compcache_path + std::string("/textures");
-            mkdir(compcache_path.c_str(), 0700);
+            auto compcache_path = zeug::this_app::cachedir();
 
             this->has_future_internal = true;
             this->future_internal = std::async(std::launch::async, [compcache_path, filepath, filename, size_xy, uid]()

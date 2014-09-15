@@ -20,11 +20,11 @@
 
 #include <zmq.hpp>
 
-int RunFramework(EGLNativeWindowType window, const char* pakfile)
+int RunFramework()
 {
     try
     {
-        Framework framework(window, pakfile);
+        Framework framework;
         framework();
         return 0;
     }
@@ -48,14 +48,13 @@ int RunFramework(EGLNativeWindowType window, const char* pakfile)
     return 1;
 }
     
-Framework::Framework(EGLNativeWindowType window, std::string pakfile)
+Framework::Framework()
 {
     /* General: Print debugging information. */
-    std::cout << std::string("-----Pakfile-----\nName: " +  pakfile) << std::endl;
     std::cout << zeug::platform::verbose() << std::endl;
 
     /* zeug::window: Initialization. */
-    this->base_window = std::make_shared<zeug::window>(window);
+    this->base_window = std::make_shared<zeug::window>();
     
     /* ZMQ: Initialization with 0 worker threads (we are using shared memory). */
     this->zmq_context = std::make_shared<zmq::context_t>(0);
