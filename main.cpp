@@ -20,7 +20,6 @@ extern "C" void ANativeActivity_onCreate(ANativeActivity* activity, void* savedS
     {  
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-        extern int main(int argc, char* argv[]);
          main(0, NULL);  
 #pragma GCC diagnostic pop
     });
