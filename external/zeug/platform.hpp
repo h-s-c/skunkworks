@@ -29,6 +29,7 @@ namespace zeug
     std::string arch();
     std::string name();
     std::string cachedir();
+    std::string libdir();
     std::string compiler();
     zeug::version_t compiler_version();
     std::string stdlib();
@@ -72,17 +73,5 @@ namespace zeug
     bool fma4();
     // ARM extensions
     bool neon();    
-  }
-  
-  namespace this_gpu
-  {
-    // General properties
-    std::string vendor();
-    std::string model();
-    // Driver properties
-    std::string driver_vendor();
-    zeug::version_t driver_version();
-    // Tell the driver to use a high performance profile
-    void driver_perf_profile(bool perf);
   }
 }

@@ -180,7 +180,9 @@ namespace zeug
             {
                 static std::function<EGLDisplay (EGLNativeDisplayType)> eglGetDisplay;
                 static std::function<EGLBoolean (EGLDisplay, EGLint*, EGLint*)> eglInitialize;
+                static std::function<EGLBoolean (EGLenum)> eglBindAPI;
                 static std::function<EGLBoolean (EGLDisplay, const EGLint*, EGLConfig*, EGLint, EGLint*)> eglChooseConfig;
+                static std::function<EGLBoolean (EGLDisplay, EGLConfig*, EGLint, EGLint*)> eglGetConfigs;
                 static std::function<EGLContext (EGLDisplay, EGLConfig, EGLContext, const EGLint*)> eglCreateContext;
                 static std::function<EGLSurface (EGLDisplay, EGLConfig, const EGLint*)> eglCreatePbufferSurface;
                 static std::function<EGLBoolean (EGLDisplay, EGLSurface, EGLSurface, EGLContext)> eglMakeCurrent;
@@ -204,7 +206,9 @@ namespace zeug
 
                     api::eglGetDisplay = detail::lib->function<EGLDisplay (NativeDisplayType)>("eglGetDisplay");
                     api::eglInitialize = detail::lib->function<EGLBoolean (EGLDisplay, EGLint*, EGLint*)>("eglInitialize");
+                    api::eglBindAPI = detail::lib->function<EGLBoolean (EGLenum)>("eglBindAPI");
                     api::eglChooseConfig = detail::lib->function<EGLBoolean (EGLDisplay, const EGLint*, EGLConfig*, EGLint, EGLint*)>("eglChooseConfig");
+                    api::eglGetConfigs = detail::lib->function<EGLBoolean (EGLDisplay, EGLConfig*, EGLint, EGLint*)>("eglGetConfigs");
                     api::eglCreateContext = detail::lib->function<EGLContext (EGLDisplay, EGLConfig, EGLContext, const EGLint*)>("eglCreateContext");
                     api::eglCreatePbufferSurface = detail::lib->function<EGLSurface (EGLDisplay, EGLConfig, const EGLint*)>("eglCreatePbufferSurface");
                     api::eglMakeCurrent = detail::lib->function<EGLBoolean (EGLDisplay, EGLSurface, EGLSurface, EGLContext)>("eglMakeCurrent");

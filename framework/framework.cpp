@@ -159,11 +159,7 @@ void Framework::operator()()
 
 void Framework::LoadPlugin(std::string name)
 {  
-#if defined (PLATFORM_ANDROID)
-    auto handle = std::make_unique<zeug::shared_lib>("/data/data/com.hsc.skunkworks/lib/", std::string("Plugin"+name));
-#else
     auto handle = std::make_unique<zeug::shared_lib>(std::string("Plugin"+name));
-#endif
     auto funcs = reinterpret_cast<PluginFuncs*>(handle.get()->symbol(name));
     
     handles.push_back(std::move(handle));

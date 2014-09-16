@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <limits.h>
 #if !defined(PLATFORM_ANDROID)
 #include <cpuid.h>
 #endif
@@ -102,6 +103,9 @@ namespace zeug
 
         auto app = std::string("-----Application-----\n") + 
             "Arch: " + this_app::arch() + "\n" + 
+            "Name: " + this_app::name() + "\n"+ 
+            "Cache Directory: " + this_app::cachedir() + "\n"+ 
+            "Library Directory: " + this_app::libdir() + "\n"+ 
             "Compiler: " + this_app::compiler() + "\n" + 
             "Compiler version: " + std::to_string(this_app::compiler_version().major) + 
             "." + std::to_string(this_app::compiler_version().minor) + 
@@ -161,16 +165,7 @@ namespace zeug
         if(this_cpu::neon()) cpu += "NEON ";
         cpu += "\n";
 
-        auto gpu = std::string("-----GPU-----\n") + 
-            "Vendor: " + this_gpu::vendor() + "\n" +
-            "Model: " + this_gpu::model() + "\n" +
-            "Driver vendor: " + this_gpu::driver_vendor() + "\n";
-
-        gpu += "Driver version: ";
-        if(this_gpu::driver_version().major == 0) gpu += "Unknown\n";
-        else  gpu += std::to_string(this_gpu::driver_version().major) + "." + std::to_string(this_gpu::driver_version().minor);
-
-        return platform + app + battery + cpu + gpu;
+        return platform + app + battery + cpu;
     }
   }
 
@@ -223,11 +218,27 @@ namespace zeug
 #if defined(PLATFORM_WINDOWS)
 #elif defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)
-        return std::string("/data/data/") + this_app::name();
-#elif defined(PLATFORM_LINUX) || defined(PLATFORM_RASBERRYPI) || defined(PLATFORM_EMSCRIPTEN) || defined(PLATFORM_BSD)
-        auto path = std::string(getenv("HOME")) + std::string("/.cache/") + this_app::name();
+        auto path = std::string("/data/data/") + this_app::name() + "/cache";
         mkdir(path.c_str(), 0700);
         return path;
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_RASBERRYPI) || defined(PLATFORM_EMSCRIPTEN) || defined(PLATFORM_BSD)
+        auto path = std::string(getenv("HOME")) + std::string("/.cache/") + this_app::name() ;
+        mkdir(path.c_str(), 0700);
+        return path;
+#else
+        return "Unknown";
+#endif
+    }
+
+    std::string libdir()
+    {
+#if defined(PLATFORM_WINDOWS)
+#elif defined(PLATFORM_BLACKBERRY)
+#elif defined(PLATFORM_ANDROID)
+        return std::string("/data/data/") + this_app::name() + "/lib";
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
+        char buffer[PATH_MAX + 1];
+        return std::string(getcwd(buffer, PATH_MAX + 1));
 #else
         return "Unknown";
 #endif
@@ -277,26 +288,6 @@ namespace zeug
             std::int32_t seconds = 0;
             std::int32_t percent = 0;
             zeug::powerstate powerstate = zeug::powerstate::unknown;
-
-            try
-            {
-                zeug::dynapi::sdl2::init();
-                using namespace zeug::dynapi::sdl2::api;
-
-                std::array<zeug::powerstate, 5> translation_array =
-                {{
-                    zeug::powerstate::unknown, 
-                    zeug::powerstate::on_battery, 
-                    zeug::powerstate::no_battery, 
-                    zeug::powerstate::charging, 
-                    zeug::powerstate::charged
-                }};
-                powerstate = translation_array[SDL_GetPowerInfo(&seconds, &percent)];
-
-                zeug::dynapi::sdl2::kill();
-            }
-            catch(...){}
-
             return std::make_tuple(powerstate, std::chrono::seconds(seconds), percent);
         }
     }
@@ -543,319 +534,6 @@ namespace zeug
         }
 #endif
         return false;
-    }
-  }
-  namespace this_gpu
-  {
-    namespace detail
-    {
-        static std::string vendor = "Unknown";
-        static std::string model = "Unknown";
-        static std::string driver_vendor = "Unknown";
-        static zeug::version_t driver_version = {0U, 0U, 0U};
-
-        static std::once_flag flag;
-
-        zeug::version_t to_ver(const std::string& str)
-        {  
-            std::vector<std::uint32_t> vec;
-            std::string substr = str;
-            for(;;)
-            {
-                std::uint32_t ret = 0U;
-                std::stringstream sstream;
-                for(std::uint32_t j = 0; j < substr.size(); j++)
-                {
-                    if(substr.at(j) == '.') break;
-                    sstream << substr.at(j);
-                }
-                sstream >> ret;
-                vec.emplace_back(ret);
-                if(substr.find(".") == std::string::npos) break;
-                substr = substr.substr(substr.find(".")+1, std::string::npos);
-            }
-            for(;;)
-            {
-                if(vec.size() >= 3) break;
-                vec.emplace_back(0U);
-            } 
-            return zeug::version_t{vec.at(0), vec.at(1), vec.at(2)};
-        }
-
-        void try_adl()
-        {
-            zeug::dynapi::adl::init();
-            using namespace zeug::dynapi::adl::api;
-
-            vendor = "AMD";
-            driver_vendor = "AMD";
-
-            adl_version_info_t version_info;
-            ADL_Graphics_Versions_Get(&version_info);
-            driver_version = to_ver(std::string(version_info.version));
-
-            zeug::dynapi::adl::kill();
-        }
-
-        void try_cuda()
-        {
-            zeug::dynapi::cuda::init();        
-            using namespace zeug::dynapi::cuda::api;
-
-            vendor = "Nvidia";
-            driver_vendor = "Nvidia";
-
-            cudaDeviceProp devProp;
-            cudaGetDeviceProperties(&devProp, 0);
-
-            switch(devProp.major)
-            {
-                case 1:
-                    model = "Tesla";
-                    break;
-                case 2:
-                    model = "Fermi";
-                    break;
-                case 3:
-                    model = "Kepler";
-                    break;
-                default:
-                    model = "Unknown";
-                    break;
-            }
-
-            zeug::dynapi::cuda::kill();
-        }
-
-        void try_ogl()
-        {
-            #if defined (PLATFORM_ANDROID)
-            return;
-            #endif
-            
-            zeug::dynapi::egl::init();
-            using namespace zeug::dynapi::egl::api;
-            EGLConfig eglConfigWindow = nullptr;
-            auto eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-            eglInitialize(eglDisplay, nullptr, nullptr);
-            eglChooseConfig(eglDisplay,  nullptr, &eglConfigWindow, 1, nullptr);
-            auto eglContext = eglCreateContext(eglDisplay, eglConfigWindow, nullptr, nullptr);
-            auto eglSurfacePbuffer = eglCreatePbufferSurface(eglDisplay,  nullptr, nullptr);
-
-            typedef const std::uint8_t *(PFNGLGETSTRINGPROC) (std::uint32_t name);
-
-            void* raw_ptr = eglGetProcAddress("glGetString");
-            PFNGLGETSTRINGPROC* func_ptr = nullptr;
-            std::memcpy(&func_ptr, &raw_ptr, sizeof(raw_ptr));
-            
-            auto glGetString = std::function<PFNGLGETSTRINGPROC>(func_ptr);
-
-            std::string vendor_string = reinterpret_cast<const char*>(glGetString(0x1F00));
-            std::string renderer_string = reinterpret_cast<const char*>(glGetString(0x1F01));
-            std::string version_string = reinterpret_cast<const char*>(glGetString(0x1F02));
-
-            std::transform(vendor_string.begin(), vendor_string.end(), vendor_string.begin(), tolower);
-            std::transform(renderer_string.begin(), renderer_string.end(), renderer_string.begin(), tolower);
-            std::transform(version_string.begin(), version_string.end(), version_string.begin(), tolower);
-
-            auto pos = version_string.find("mesa");
-            if(pos != std::string::npos)
-            {
-                driver_vendor = "Mesa";
-                driver_version = to_ver(version_string.substr(pos+5, std::string::npos));
-            }
-
-            if((vendor_string.find("amd") != std::string::npos) || (renderer_string.find("amd") != std::string::npos))
-            {
-                vendor = "AMD";
-
-                if( (renderer_string.find("cedar") != std::string::npos) ||
-                    (renderer_string.find("redwood") != std::string::npos) ||
-                    (renderer_string.find("juniper") != std::string::npos) ||
-                    (renderer_string.find("cypress") != std::string::npos) ||
-                    (renderer_string.find("sumo") != std::string::npos) ||
-                    (renderer_string.find("sumo2") != std::string::npos))
-                {
-                    model = "Evergreen (VLIW5)";
-                }
-                if( (renderer_string.find("aruba") != std::string::npos) ||
-                    (renderer_string.find("barts") != std::string::npos) ||
-                    (renderer_string.find("turks") != std::string::npos) ||
-                    (renderer_string.find("caicos") != std::string::npos))
-                {
-                    model = "Northern Islands (VLIW5)";
-                }
-                if( (renderer_string.find("cayman") != std::string::npos) ||
-                    (renderer_string.find("antilles") != std::string::npos))
-                {
-                    model = "Northern Islands (VLIW4)";
-                }
-                if( (renderer_string.find("cape verde") != std::string::npos) ||
-                    (renderer_string.find("pitcairn") != std::string::npos) ||
-                    (renderer_string.find("tahiti") != std::string::npos) ||
-                    (renderer_string.find("oland") != std::string::npos) ||
-                    (renderer_string.find("hainan") != std::string::npos))
-                {
-                    model = "Southern Islands (GCN)";
-                }
-                if( (renderer_string.find("bonaire") != std::string::npos) ||
-                    (renderer_string.find("kabini") != std::string::npos) ||
-                    (renderer_string.find("kaveri") != std::string::npos))
-                {
-                    model = "Sea Islands (GCN)";
-                }
-                if( (renderer_string.find("hawaii") != std::string::npos))
-                {
-                    model = "Vulcanic Islands (GCN2)";
-                }
-            }
-            if((vendor_string.find("nvidia") != std::string::npos) || (renderer_string.find("nvidia") != std::string::npos))
-            {
-                vendor = "Nvidia";
-
-                if( (renderer_string.find("nv50") != std::string::npos) ||
-                    (renderer_string.find("nv8") != std::string::npos) ||
-                    (renderer_string.find("nv9") != std::string::npos) ||
-                    (renderer_string.find("nva") != std::string::npos))
-                {
-                    model = "Tesla";
-                }
-                if( (renderer_string.find("nvc") != std::string::npos) ||
-                    (renderer_string.find("nvd") != std::string::npos))
-                {
-                    model = "Fermi";
-                }
-                if( (renderer_string.find("nve") != std::string::npos) ||
-                    (renderer_string.find("nvf") != std::string::npos) ||
-                    (renderer_string.find("nv108") != std::string::npos))
-                {
-                    model = "Kepler";
-                }
-            }
-            if((vendor_string.find("intel") != std::string::npos) || (renderer_string.find("intel") != std::string::npos))
-            {
-                vendor = "Intel";
-            }
-            if((vendor_string.find("imagination") != std::string::npos) || (renderer_string.find("imagination") != std::string::npos))
-            {
-                vendor = "Imagination Technologies";
-            }
-            if((vendor_string.find("qualcomm") != std::string::npos) || (renderer_string.find("qualcomm") != std::string::npos))
-            {
-                vendor = "Qualcomm";
-            }
-            if((vendor_string.find("arm") != std::string::npos) || (renderer_string.find("arm") != std::string::npos))
-            {
-                vendor = "ARM";
-            }
-
-            eglDestroyContex(eglDisplay, eglContext);
-            eglTerminate(eglDisplay);
-
-            zeug::dynapi::egl::kill();
-        }
-
-        void try_nvapi()
-        {
-            zeug::dynapi::nvapi::init(); 
-            using namespace zeug::dynapi::nvapi::api;
-
-            vendor = "Nvidia";   
-            driver_vendor = "Nvidia";
-
-            std::uint32_t version = 0;
-            NvAPI_SYS_GetDriverAndBranchVersion(&version, nullptr);
-            //driver_version = std::to_string(version);         
-
-            zeug::dynapi::nvapi::kill();
-        }
-
-        void try_xnvctrl()
-        {
-#if defined(PLATFORM_BLACKBERRY)
-#elif defined(PLATFORM_ANDROID)
-#elif defined(PLATFORM_EMSCRIPTEN)
-#elif defined(PLATFORM_RASBERRYPI)
-#elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)
-            zeug::dynapi::x11::init();
-            zeug::dynapi::xnvctrl::init();
-            using namespace zeug::dynapi::x11::api;
-            using namespace zeug::dynapi::xnvctrl::api;
-
-            XDisplay* display = XOpenDisplay(nullptr);
-            int event_base = 0, error_base = 0;
-            if (XNVCTRLQueryExtension(display, &event_base, &error_base)) 
-            {
-                int screen_count = XScreenCount(display);
-                for (int screen = 0; screen < screen_count; ++screen) 
-                {
-                    char* buffer = nullptr;
-                    if (XNVCTRLIsNvScreen(display, screen) && XNVCTRLQueryStringAttribute(display, screen, 0, 3, &buffer)) 
-                    {
-                        vendor = "Nvidia";   
-                        driver_vendor = "Nvidia";
-                        //driver_version = std::string (buffer);
-                        XFree(buffer);
-                    }
-                }
-            }
-
-            zeug::dynapi::xnvctrl::kill();
-            zeug::dynapi::x11::kill();
-#endif
-        }
-
-        void detect()
-        {
-            // Clang does not like this
-            #if !defined(COMPILER_CLANG)
-            std::call_once(flag, []()
-            #endif
-            {
-                try{try_adl();} catch(...){};
-                try{try_cuda();} catch(...){};
-                try{try_ogl();} catch(...){};
-                try{try_nvapi();} catch(...){};
-                try{try_xnvctrl();} catch(...){};
-            }
-            #if !defined(COMPILER_CLANG)
-            );
-            #endif
-        }
-    }
-
-    std::string vendor()
-    {
-        detail::detect();
-        return detail::vendor;
-    }
-
-    std::string model()
-    {
-        detail::detect();
-        return detail::model;
-    }
-
-    std::string driver_vendor()
-    {
-        detail::detect();
-        return detail::driver_vendor;
-    }
-
-    zeug::version_t driver_version()
-    {
-        detail::detect();
-        return detail::driver_version;
-    }
-
-    void driver_perf_profile(bool perf)
-    {
-        if(perf)
-        {
-        }
-        else
-        {
-        }
     }
   }
 }

@@ -324,11 +324,3 @@
 #   define COMPILER_COMPILER_USED        __attribute__((used))   
 #   define COMPILER_STDCALL    
 #endif
-
-#if !defined(APP_NAME)
-#define APP_NAME -
-#endif
-
-#define STRINGIFY_EXPAND(str) #str
-#define STRINGIFY(str) STRINGIFY_EXPAND(str)
-#define APP_NAME_STRING STRINGIFY(APP_NAME)

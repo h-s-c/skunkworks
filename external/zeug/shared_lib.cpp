@@ -1,5 +1,6 @@
 // Public Domain
 #include <zeug/shared_lib.hpp>
+#include <zeug/platform.hpp>
 #include <zeug/detail/platform_macros.hpp>
 #include <zeug/detail/util.hpp>
 
@@ -18,8 +19,9 @@
 
 namespace zeug
 {   
-    shared_lib::shared_lib(const std::string& path, const std::string& name)
+    shared_lib::shared_lib(const std::string& constpath, const std::string& name)
     {
+        std::string path= constpath;
 #if defined(PLATFORM_WINDOWS) 
         auto suffix = ".dll";
         this->shared_lib_internal = static_cast<void*>(LoadLibraryA(std::string(path + name + suffix).c_str()));
@@ -39,14 +41,27 @@ namespace zeug
         auto suffix = ".so";
         #endif
 
+        if (path.empty() == false && path.back() != '/')
+        {
+            path = path + "/";
+        }
+
         this->shared_lib_internal = dlopen(std::string(path + name + suffix).c_str(),RTLD_LAZY);
         if (!this->shared_lib_internal) 
         {
             this->shared_lib_internal = dlopen(std::string(path + "lib" + name + suffix).c_str(),RTLD_LAZY);
             if (!this->shared_lib_internal) 
             {
-                std::runtime_error e(dlerror());
-                throw e;
+                this->shared_lib_internal = dlopen(std::string(zeug::this_app::libdir() + "/" + name + suffix).c_str(),RTLD_LAZY);
+                if (!this->shared_lib_internal) 
+                {
+                    this->shared_lib_internal = dlopen(std::string(zeug::this_app::libdir() + "/" + "lib" + name + suffix).c_str(),RTLD_LAZY);
+                    if (!this->shared_lib_internal) 
+                    {
+                        std::runtime_error e(dlerror());
+                        throw e;
+                    }
+                }
             }
         }
 #endif
