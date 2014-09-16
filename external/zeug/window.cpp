@@ -7,9 +7,12 @@
 #include <zeug/detail/util.hpp>
 #include <zeug/shared_lib.hpp>
 
+#include <chrono>
 #include <cstdint>
+#include <iostream>
 #include <mutex>
 #include <stdexcept>
+#include <thread>
 
 #include <EGL/egl.h>
 
@@ -49,11 +52,6 @@ void onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window)
 {
     std::lock_guard<std::mutex> lock(native_window_external_mutex);
     native_window_external = window;
-}
-void onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window)
-{
-    std::lock_guard<std::mutex> lock(native_window_external_mutex);
-    native_window_external = nullptr;
 }
 #elif defined(PLATFORM_RASBERRYPI)
 #elif defined(PLATFORM_BSD) || defined(PLATFORM_LINUX)
@@ -126,6 +124,11 @@ namespace zeug
         {
             std::lock_guard<std::mutex> lock(native_window_external_mutex);
             this->native_window_internal = native_window_external;
+            if (!this->native_window_internal)
+            {
+                std::chrono::milliseconds duration( 100 );
+                std::this_thread::sleep_for( duration);    
+            }
         }
 #elif defined(PLATFORM_RASBERRYPI)
         zeug::dynapi::dispman::init();
@@ -276,13 +279,7 @@ namespace zeug
             }
         } 
 #elif defined(PLATFORM_ANDROID)
-        std::lock_guard<std::mutex> lock(native_window_external_mutex);
-        this->native_window_internal = native_window_external;
-        if(!this->native_window_internal)
-        {
-            return false;
-        }
-        return true;
+        
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
         if(this->native_display_internal)
         {

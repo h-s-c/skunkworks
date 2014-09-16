@@ -1,7 +1,6 @@
 // Public Domain
 #include <zeug/platform.hpp>
 #include <zeug/detail/platform_macros.hpp>
-#include <zeug/detail/dynapi.hpp>
 #include <zeug/detail/stdfix.hpp>
 #include <zeug/shared_lib.hpp>
 
@@ -35,7 +34,16 @@
 #include <windows.h>
 #elif defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)
+#include <jni.h>
 #include <zeug/thirdparty/cpu-features.h>
+#include <android/native_activity.h>
+ANativeActivity* native_activity_external = nullptr;
+std::mutex native_activity_external_mutex;
+void onStart(ANativeActivity* activity)
+{
+    std::lock_guard<std::mutex> lock(native_activity_external_mutex);
+    native_activity_external= activity;
+}
 #elif defined(PLATFORM_EMSCRIPTEN)
 #elif defined(PLATFORM_RASBERRYPI)
 #elif defined(PLATFORM_LINUX)
@@ -104,13 +112,14 @@ namespace zeug
         auto app = std::string("-----Application-----\n") + 
             "Arch: " + this_app::arch() + "\n" + 
             "Name: " + this_app::name() + "\n"+ 
-            "Cache Directory: " + this_app::cachedir() + "\n"+ 
-            "Library Directory: " + this_app::libdir() + "\n"+ 
+            "Cache directory: " + this_app::cachedir() + "\n"+ 
+            "Library directory: " + this_app::libdir() + "\n"+ 
+            "APK path: " + this_app::apkpath() + "\n"+ 
             "Compiler: " + this_app::compiler() + "\n" + 
             "Compiler version: " + std::to_string(this_app::compiler_version().major) + 
             "." + std::to_string(this_app::compiler_version().minor) + 
             "." + std::to_string(this_app::compiler_version().patch) + "\n" + 
-            "Standard Library: " + this_app::stdlib() + "\n";
+            "Standard library: " + this_app::stdlib() + "\n";
 
         auto thread = std::to_string(std::thread::hardware_concurrency());
         if(this_cpu::htt()) thread += " (HT)";
@@ -139,7 +148,7 @@ namespace zeug
             "Vendor: " + this_cpu::vendor() + "\n" + 
             "Model: " + this_cpu::model() + "\n";
 
-        cpu += "L1 Cache: ";
+        cpu += "L1 cache: ";
         if(!this_cpu::l1_size().first) cpu += "Unknown\n";
         else  cpu += std::to_string(this_cpu::l1_size().second) + "KB\n";
                             
@@ -181,19 +190,16 @@ namespace zeug
         return "AArch64";
 #elif defined(PLATFORM_ARCH_ARM)
         return "AArch32";
-#else
-        return "Unknown";
 #endif
+        return "Unknown";
     }
 
     std::string name()
     {
 #if defined(PLATFORM_WINDOWS)
-        return "zeugapp";
 #elif defined(PLATFORM_BLACKBERRY)
-        return "zeugapp";
 #elif defined(PLATFORM_ANDROID)
-        auto procpath = std::string("/proc/") +  std::to_string(getpid) + "/cmdline";
+        auto procpath = std::string("/proc/") +  std::to_string(getpid()) + "/cmdline";
         std::ifstream procfile (procpath);
         if (!procfile.is_open())
         {
@@ -201,16 +207,15 @@ namespace zeug
             std::runtime_error error(error_text);
         }
         std::string firstline = "";
-        getline (procfile,firstline);
+        getline (procfile,firstline, '\0');
         procfile.close();
         return firstline;
 #elif defined(PLATFORM_BSD)
         return getprogname();
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_RASBERRYPI) || defined(PLATFORM_EMSCRIPTEN)
         return ::__progname;
-#else
-        return "Unknown";
 #endif
+        return "Unknown";
     }
 
     std::string cachedir()
@@ -222,12 +227,11 @@ namespace zeug
         mkdir(path.c_str(), 0700);
         return path;
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_RASBERRYPI) || defined(PLATFORM_EMSCRIPTEN) || defined(PLATFORM_BSD)
-        auto path = std::string(getenv("HOME")) + std::string("/.cache/") + this_app::name() ;
+        auto path = std::string(getenv("HOME")) + "/.cache/" + this_app::name() ;
         mkdir(path.c_str(), 0700);
         return path;
-#else
-        return "Unknown";
 #endif
+        return "Unknown";
     }
 
     std::string libdir()
@@ -239,25 +243,46 @@ namespace zeug
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
         char buffer[PATH_MAX + 1];
         return std::string(getcwd(buffer, PATH_MAX + 1));
-#else
-        return "Unknown";
 #endif
+        return "Unknown";
+    }
+
+    std::string apkpath()
+    {
+#if defined(PLATFORM_WINDOWS)
+#elif defined(PLATFORM_BLACKBERRY)
+#elif defined(PLATFORM_ANDROID)
+        std::lock_guard<std::mutex> lock(native_activity_external_mutex);
+
+        JNIEnv* env=0;
+        native_activity_external->vm->AttachCurrentThread(&env, NULL);
+
+        jclass clazz = env->GetObjectClass(native_activity_external->clazz);
+        jmethodID methodID = env->GetMethodID(clazz, "getPackageCodePath", "()Ljava/lang/String;");
+        jobject result = env->CallObjectMethod(native_activity_external->clazz, methodID);
+
+        jboolean isCopy;
+        std::string path = env->GetStringUTFChars((jstring)result, &isCopy);
+
+        native_activity_external->vm->DetachCurrentThread();
+        return path;
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
+#endif
+        return "Unknown";
     }
 
     std::string compiler()
     {
 #if defined(COMPILER_CLANG)
-        auto name = "Clang";
+        return "Clang";
 #elif defined(COMPILER_ICC)
-        auto name = "Intel C++";
+        return "Intel C++";
 #elif defined(COMPILER_MSVC)
-        auto name = "Visual C++";
+        return "Visual C++";
 #elif defined(COMPILER_GCC)
-        auto name = "GCC";
-#else
-        auto name = "Unknown";
+        return "GCC";
 #endif
-        return std::string(name);
+        return "Unknown";
     }
 
     zeug::version_t compiler_version()
@@ -273,9 +298,8 @@ namespace zeug
         return "libstdc++";
 #elif defined(COMPILER_STDLIB_LIBCPP)
         return "libc++";
-#else
-        return "Unknown";
 #endif
+        return "Unknown";
     }
   }
 

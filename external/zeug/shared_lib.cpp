@@ -41,7 +41,7 @@ namespace zeug
         auto suffix = ".so";
         #endif
 
-        if (path.empty() == false && path.back() != '/')
+        if (path.empty() == false && path.back() != '/' && name.front() != '/')
         {
             path = path + "/";
         }

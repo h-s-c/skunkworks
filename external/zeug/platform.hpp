@@ -30,6 +30,7 @@ namespace zeug
     std::string name();
     std::string cachedir();
     std::string libdir();
+    std::string apkpath(); //Android only
     std::string compiler();
     zeug::version_t compiler_version();
     std::string stdlib();

@@ -10,12 +10,13 @@ int main(int argc, char* argv[])
 #ifdef ANDROID
 #include <thread>
 #include <android/native_activity.h>
+// We us these callbacks in our zeug utility code
+extern void onStart(ANativeActivity* activity);
 extern void onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window);
-extern void onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window);
 extern "C" void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize)
 {
+    activity->callbacks->onStart = onStart;
     activity->callbacks->onNativeWindowCreated = onNativeWindowCreated;
-    activity->callbacks->onNativeWindowDestroyed = onNativeWindowDestroyed;
     std::thread thread([&]
     {  
 #pragma GCC diagnostic push
