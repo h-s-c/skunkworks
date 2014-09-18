@@ -2,10 +2,12 @@
 #include <zeug/memory_map.hpp>
 #include <zeug/detail/platform_macros.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #if defined(PLATFORM_WINDOWS)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -22,13 +24,13 @@
 
 namespace zeug
 {   
-    memory_map::memory_map(const std::string& path, const std::string& name)
+    memory_map::memory_map(const std::string& path)
     {
 #if defined(PLATFORM_WINDOWS) 
 #elif defined(PLATFORM_UNIX)
         struct stat buf;
 
-        int fd = open(std::string(path + "/" + name).c_str(),O_RDONLY);
+        int fd = open(std::string(path).c_str(),O_RDONLY);
         if (fd < 0) 
         {
             std::runtime_error error("Could not map file.");
@@ -38,9 +40,8 @@ namespace zeug
         {
             std::runtime_error error("Unable to determine file size.");
         }
-
-        auto length = (std::uint32_t)buf.st_size;
-        this->memory = std::make_pair((std::uint8_t*)mmap(0,length,PROT_READ,MAP_FILE|MAP_PRIVATE,fd,0), length);
+        this->size_internal = (std::size_t)buf.st_size;
+        this->file_internal =static_cast<std::uint8_t*>(mmap(0, this->size_internal ,PROT_READ,MAP_FILE|MAP_PRIVATE,fd,0));
 #endif
     }
     
@@ -48,7 +49,12 @@ namespace zeug
     {
 #if defined(PLATFORM_WINDOWS) 
 #elif defined(PLATFORM_UNIX)
-        munmap(this->memory.first, this->memory.second);
+        munmap(this->file_internal, this->size_internal);
 #endif
+    }
+
+    std::pair<std::uint8_t*, std::size_t> memory_map::file()
+    {
+        return std::make_pair(this->file_internal, this->size_internal);
     }
 }

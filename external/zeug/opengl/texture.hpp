@@ -13,7 +13,7 @@ namespace zeug
       // API
       public:
         // Load texture from file (async)
-        texture(std::string uid, std::string filepath, std::string filename, std::pair<std::uint32_t,std::uint32_t> size_xy);
+        texture(std::string uid, std::pair<std::uint8_t*, std::size_t> image, std::pair<std::uint32_t,std::uint32_t> size_xy);
         // Underlying opengl objects
         std::uint32_t native_handle();
         std::uint32_t native_slot();

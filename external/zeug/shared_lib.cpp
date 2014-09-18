@@ -19,15 +19,15 @@
 
 namespace zeug
 {   
-    shared_lib::shared_lib(const std::string& constpath, const std::string& name)
+    shared_lib::shared_lib(const std::string& path)
     {
-        std::string path= constpath;
 #if defined(PLATFORM_WINDOWS) 
         auto suffix = ".dll";
         this->shared_lib_internal = static_cast<void*>(LoadLibraryA(std::string(path + name + suffix).c_str()));
         if (!this->shared_lib_internal) 
         {
-            this->shared_lib_internal = static_cast<void*>(LoadLibraryA(std::string(path + "lib" + name + suffix).c_str()));
+            auto seperator = path.find_last_of(R"(/)");
+            this->shared_lib_internal = static_cast<void*>(LoadLibraryA(path.substr(0,seperator+1) + "lib" + path.substr(seperator) + suffix).c_str()));
             if (!this->shared_lib_internal) 
             {
                 std::runtime_error e(zeug::util::win_errstr());
@@ -41,25 +41,31 @@ namespace zeug
         auto suffix = ".so";
         #endif
 
-        if (path.empty() == false && path.back() != '/' && name.front() != '/')
-        {
-            path = path + "/";
-        }
-
-        this->shared_lib_internal = dlopen(std::string(path + name + suffix).c_str(),RTLD_LAZY);
+        this->shared_lib_internal = dlopen(std::string(path + suffix).c_str(),RTLD_LAZY);
         if (!this->shared_lib_internal) 
         {
-            this->shared_lib_internal = dlopen(std::string(path + "lib" + name + suffix).c_str(),RTLD_LAZY);
+            this->shared_lib_internal = dlopen(std::string("lib" + path + suffix).c_str(),RTLD_LAZY);
             if (!this->shared_lib_internal) 
             {
-                this->shared_lib_internal = dlopen(std::string(zeug::this_app::libdir() + "/" + name + suffix).c_str(),RTLD_LAZY);
+                auto seperator = path.find_last_of("/");
+                if(seperator != std::string::npos)
+                {
+                    this->shared_lib_internal = dlopen(std::string(path.substr(0,seperator+1) + "lib" + path.substr(seperator) + suffix).c_str(),RTLD_LAZY);
+                }
                 if (!this->shared_lib_internal) 
                 {
-                    this->shared_lib_internal = dlopen(std::string(zeug::this_app::libdir() + "/" + "lib" + name + suffix).c_str(),RTLD_LAZY);
+                    this->shared_lib_internal = dlopen(std::string(zeug::this_app::libdir() + "/" + path + suffix).c_str(),RTLD_LAZY);
                     if (!this->shared_lib_internal) 
                     {
-                        std::runtime_error e(dlerror());
-                        throw e;
+                        this->shared_lib_internal = dlopen(std::string(zeug::this_app::libdir() + "/" + "lib" + path + suffix).c_str(),RTLD_LAZY);
+                        if (!this->shared_lib_internal) 
+                        {
+                             if (!this->shared_lib_internal) 
+                             {
+                                    std::runtime_error e(dlerror());
+                                     throw e;
+                            }
+                        }
                     }
                 }
             }

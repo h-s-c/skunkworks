@@ -268,7 +268,7 @@ namespace zeug
         return path;
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
 #endif
-        return "Unknown";
+        return "";
     }
 
     std::string compiler()

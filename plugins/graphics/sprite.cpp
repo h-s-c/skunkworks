@@ -3,6 +3,7 @@
 
 #include <cfloat>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <string>
 #include <memory>
@@ -11,6 +12,7 @@
 #include <zeug/memory_map.hpp>
 #include <zeug/platform.hpp>
 #include <zeug/window.hpp>
+#include <zeug/zipreader.hpp>
 #include <zeug/opengl/buffer.hpp>
 #include <zeug/opengl/program.hpp>
 #include <zeug/opengl/shader.hpp>
@@ -35,24 +37,15 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
     frame_number(0)
 {
     // parse json descs 
+    zeug::zipreader pakfile(zeug::this_app::name() + ".pak");
     {
-        std::ifstream json_file(sprite_path+"/idle.json");
-        std::stringstream json_buffer;
-        json_buffer << json_file.rdbuf();
-        json_file.close();
-
         jsonxx::Object json_object;
-        json_object.parse(json_buffer);
+        json_object.parse(pakfile.text_file(sprite_path + "/" + "idle.json"));
         this->json_objects.push_back(std::move(json_object));
     }
     {
-        std::ifstream json_file (sprite_path+"/walk.json");
-        std::stringstream json_buffer;
-        json_buffer << json_file.rdbuf();
-        json_file.close();
-
         jsonxx::Object json_object;
-        json_object.parse(json_buffer);
+        json_object.parse(pakfile.text_file(sprite_path + "/" + "walk.json"));
         this->json_objects.push_back(std::move(json_object));
     }
 
@@ -142,8 +135,7 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
 
         auto w = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
         auto h = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
-
-        auto texture = std::make_unique<zeug::opengl::texture>(uid, sprite_path, name, std::make_pair(w, h));
+        auto texture = std::make_unique<zeug::opengl::texture>(uid, pakfile.file(sprite_path + "/" + name), std::make_pair(w, h));
         texture_slots.push_back(texture->native_slot());
         textures.push_back(std::move(texture));
     }

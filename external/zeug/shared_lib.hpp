@@ -13,8 +13,7 @@ namespace zeug
       // API
       public:
         // Loads a shared library
-        shared_lib(const std::string& name) : shared_lib("", name) {} ;
-        shared_lib(const std::string& path, const std::string& name);
+        shared_lib(const std::string& path);
 
         // Returns address of a symbol from the library
         void* symbol(const std::string& name);
@@ -23,7 +22,7 @@ namespace zeug
         template<typename T>
         std::function<T> function(const std::string& name)
         {
-            void* raw_ptr = symbol(name);
+            void* raw_ptr = this->symbol(name);
             T* func_ptr = nullptr;
             std::memcpy(&func_ptr, &raw_ptr, sizeof(raw_ptr));
             return func_ptr;

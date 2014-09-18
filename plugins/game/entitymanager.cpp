@@ -39,7 +39,7 @@ void EntityManager::operator()(bool start_game)
         }
         /* Entity data. */
         {
-            Entity sprite{1, 0, 0, 0.4f, "./../../assets/players/darksaber/sprite", "None"};
+            Entity sprite{1, 0, 0, 0.4f, "assets/players/darksaber/sprite", "None"};
 
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -51,7 +51,7 @@ void EntityManager::operator()(bool start_game)
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         {
-            Entity sprite{2, 100, 100, 0.4f, "./../../assets/players/darksaber/sprite", "None"};
+            Entity sprite{2, 100, 100, 0.4f, "assets/players/darksaber/sprite", "None"};
             
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);
@@ -63,7 +63,7 @@ void EntityManager::operator()(bool start_game)
             zmq_game_publisher->send(zmq_message, ZMQ_SNDMORE);
         }
         {
-            Entity sprite{3, -100, -100, 0.4f, "./../../assets/players/darksaber/sprite", "None"};
+            Entity sprite{3, -100, -100, 0.4f, "assets/players/darksaber/sprite", "None"};
             
             msgpack::sbuffer sbuf;
             msgpack::pack(&sbuf, sprite);

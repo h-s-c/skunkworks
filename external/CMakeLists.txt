@@ -121,6 +121,7 @@ project (Zeug)
             ${CMAKE_SOURCE_DIR}/external/zeug/platform.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/shared_lib.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/window.cpp
+            ${CMAKE_SOURCE_DIR}/external/zeug/zipreader.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/opengl/buffer.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/opengl/program.cpp
             ${CMAKE_SOURCE_DIR}/external/zeug/opengl/shader.cpp

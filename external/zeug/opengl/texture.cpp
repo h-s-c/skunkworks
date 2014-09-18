@@ -108,7 +108,7 @@ namespace zeug
 {
   namespace opengl
   {
-    texture::texture(std::string uid, std::string filepath, std::string filename, std::pair<std::uint32_t,std::uint32_t> size_xy)
+    texture::texture(std::string uid, std::pair<std::uint8_t*, std::size_t> image, std::pair<std::uint32_t,std::uint32_t> size_xy)
         : size_xy_internal(size_xy)
     {
         bool memcached = false;
@@ -136,21 +136,19 @@ namespace zeug
             auto compcache_path = zeug::this_app::cachedir();
 
             this->has_future_internal = true;
-            this->future_internal = std::async(std::launch::async, [compcache_path, filepath, filename, size_xy, uid]()
+            this->future_internal = std::async(std::launch::async, [compcache_path, image, size_xy, uid]()
             {
                 auto compressed_image_internal = new std::uint8_t[size_xy.first * size_xy.second];
                 if (file_exists(compcache_path + "/" + uid))
                 {
-                    zeug::memory_map file(compcache_path, uid);
-                    std::memcpy(compressed_image_internal, file.memory.first, file.memory.second);
+                    zeug::memory_map memory_map(compcache_path + "/" + uid);
+                    std::memcpy(compressed_image_internal, memory_map.file().first, memory_map.file().second);
                 }
                 else
                 {
                     // Load image
-                    zeug::memory_map file(filepath, filename);
-
                     std::int32_t w,h,n;
-                    auto raw_image = stbi_load_from_memory(file.memory.first, file.memory.second, &w, &h, &n, 0);
+                    auto raw_image = stbi_load_from_memory(image.first, image.second, &w, &h, &n, 0);
                     if (!raw_image)
                     {
                         std::string errormsg = "GL - Failed to load image.\n" + std::string(stbi_failure_reason());
