@@ -14,15 +14,6 @@ namespace zeug
 {
   namespace opengl
   {
-    namespace detail
-    {
-        bool glext_supported(std::string extension) 
-        {
-            std::string extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-            std::size_t found = extensions.find(extension);
-            return (found != std::string::npos);
-        }
-    }
 
     program::program()
     {
@@ -54,7 +45,14 @@ namespace zeug
             throw std::runtime_error(errormsg);
         }
 
-        if(detail::glext_supported("GL_OES_get_program_binary"))
+        auto  glext_supported = [] (std::string extension) 
+        {
+            std::string extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+            std::size_t found = extensions.find(extension);
+            return (found != std::string::npos);
+        };
+
+        if(glext_supported("GL_OES_get_program_binary"))
         {
             std::function<void (GLuint, GLsizei, GLsizei*, GLenum*, void*)> glGetProgramBinaryOES;
             glGetProgramBinaryOES = (PFNGLGETPROGRAMBINARYOESPROC)eglGetProcAddress("glGetProgramBinaryOES");
