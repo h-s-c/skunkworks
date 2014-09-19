@@ -1,8 +1,11 @@
 #include <cstdint>
+ #include <cstdlib>
 #include <stdexcept>
 #include <memory>
 
+#include <EGL/egl.h>
 #include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include <zeug/opengl/program.hpp>
 #include <zeug/opengl/shader.hpp>
@@ -11,6 +14,16 @@ namespace zeug
 {
   namespace opengl
   {
+    namespace detail
+    {
+        bool glext_supported(std::string extension) 
+        {
+            std::string extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+            std::size_t found = extensions.find(extension);
+            return (found != std::string::npos);
+        }
+    }
+
     program::program()
     {
         this->native_handle_internal = glCreateProgram();
@@ -26,7 +39,7 @@ namespace zeug
     {
         glLinkProgram(this->native_handle_internal);
 
-        GLint status;
+        GLint status = 0;
         glGetProgramiv(this->native_handle_internal, GL_LINK_STATUS, &status);
         if (status == GL_FALSE) 
         {
@@ -39,6 +52,20 @@ namespace zeug
             std::string logstr(log.begin(),log.end());
             std::string errormsg = "GL - Failed to link shader.\n" + logstr;
             throw std::runtime_error(errormsg);
+        }
+
+        if(detail::glext_supported("GL_OES_get_program_binary"))
+        {
+            std::function<void (GLuint, GLsizei, GLsizei*, GLenum*, void*)> glGetProgramBinaryOES;
+            glGetProgramBinaryOES = (PFNGLGETPROGRAMBINARYOESPROC)eglGetProcAddress("glGetProgramBinaryOES");
+
+            GLsizei size = 0;
+            GLenum format;
+            void* binary = nullptr;
+            glGetProgramiv(this->native_handle_internal, GL_PROGRAM_BINARY_LENGTH_OES, &size);
+            binary = (void*)std::malloc(size);
+            glGetProgramBinaryOES(this->native_handle_internal, size, NULL, &format, binary);
+            std::free(binary);
         }
     }
 
