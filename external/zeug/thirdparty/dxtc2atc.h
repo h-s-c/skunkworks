@@ -16,9 +16,15 @@ void dxt2atc_convert_texture(void *data, int srcfmt, int destfmt, int w, int h);
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-#define DXTC2ATC_DXT1 1
-#define DXTC2ATC_DXT3 3
-#define DXTC2ATC_DXT5 5
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DX5_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
 
 unsigned convertrgbbits(unsigned bits)
 {
@@ -87,7 +93,7 @@ void convertblock(struct colorblock *block)
 
 void dxt2atc_convert_texture(void *data, int srcfmt, int destfmt, int w, int h)
 {
-    if(srcfmt == DXTC2ATC_DXT1 && destfmt == GL_ATC_RGB_AMD)
+    if(srcfmt == GL_COMPRESSED_RGB_S3TC_DXT1_EXT && destfmt == GL_ATC_RGB_AMD)
     {
         int s = fmax(1, w / 4) * fmax(1, h / 4);
         struct colorblock *blocks = (struct colorblock*)data;
@@ -96,7 +102,7 @@ void dxt2atc_convert_texture(void *data, int srcfmt, int destfmt, int w, int h)
             convertblock(blocks+i);
         }
     }
-    else if(srcfmt == DXTC2ATC_DXT3 && destfmt == GL_ATC_RGBA_EXPLICIT_ALPHA_AMD)
+    else if(srcfmt == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT && destfmt == GL_ATC_RGBA_EXPLICIT_ALPHA_AMD)
     {
         int s = fmax(1, w / 4) * fmax(1, h / 4);
         struct DXT3block *blocks = (struct DXT3block*)data;
@@ -105,7 +111,7 @@ void dxt2atc_convert_texture(void *data, int srcfmt, int destfmt, int w, int h)
             convertblock(&(blocks[i].color));
         }
     }
-    else if(srcfmt == DXTC2ATC_DXT5 && destfmt== GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD)
+    else if(srcfmt == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT && destfmt == GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD)
     {
         int s = fmax(1, w / 4) * fmax(1, h / 4);
         struct DXT5block *blocks = (struct DXT5block*)data;

@@ -10,6 +10,10 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
+#ifndef GL_COMPRESSED_RGBA_S3TC_DX5_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
+
 #include <zeug/opengl/texture.hpp>
 #include <zeug/platform.hpp>
 #include <zeug/memory_map.hpp>
@@ -27,87 +31,23 @@
 #define DXTC2ATC_IMPLEMENTATION
 #include "thirdparty/dxtc2atc.h"
 
-// Texture cache (uid, slot , handle)
-static std::vector<std::tuple<std::string, std::uint32_t, std::uint32_t, bool>> texture_memcache;
-
-static std::uint32_t slots = -1; 
-std::uint32_t get_empty_texture_slot()
-{
-    slots++;
-    return slots;
-}
-
-void extract_block(const std::uint8_t*src, std::int32_t x, std::int32_t y, std::int32_t w, std::int32_t h, std::uint8_t*block)
-{
-    if ((w-x >=4) && (h-y >=4))
-    {
-        // Full Square shortcut
-        src += x*4;
-        src += y*w*4;
-        for (auto i=0; i < 4; ++i)
-        {
-            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
-            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
-            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
-            *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; 
-            src += (w*4) - 12;
-        }
-        return;
-    }
-
-    std::int32_t bw = std::min(w - x, 4);
-    std::int32_t bh = std::min(h - y, 4);
-    std::int32_t bx, by;
-   
-    const std::int32_t rem[] =
-    {
-        0, 0, 0, 0,
-        0, 1, 0, 1,
-        0, 1, 2, 0,
-        0, 1, 2, 3
-    };
-     
-    for(auto i = 0; i < 4; ++i)
-    {
-        by = rem[(bh - 1) * 4 + i] + y;
-        for(auto j = 0; j < 4; ++j)
-        {
-            bx = rem[(bw - 1) * 4 + j] + x;
-            block[(i * 4 * 4) + (j * 4) + 0] = src[(by * (w * 4)) + (bx * 4) + 0];
-            block[(i * 4 * 4) + (j * 4) + 1] = src[(by * (w * 4)) + (bx * 4) + 1];
-            block[(i * 4 * 4) + (j * 4) + 2] = src[(by * (w * 4)) + (bx * 4) + 2];
-            block[(i * 4 * 4) + (j * 4) + 3] = src[(by * (w * 4)) + (bx * 4) + 3];
-        }
-    }
-}
-
-void compress_tex(std::uint8_t* dest, std::uint8_t* src, std::int32_t w, std::int32_t h, bool alpha )
-{
-    std::uint8_t block[64];
-    for(auto y = 0; y < h; y += 4)
-    {
-        for(auto x = 0; x < w; x += 4)
-        { 
-            extract_block(src, x, y, w, h, block);
-            stb_compress_dxt_block(dest, block, alpha, STB_DXT_NORMAL);
-            dest += alpha ? 16 : 8;
-        }
-    }
-#if defined(PLATFORM_ANDROID)
-    dxt2atc_convert_texture(dest, DXTC2ATC_DXT5,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, w, h);
-#endif
-}
-
-bool file_exists(std::string file) 
-{
-    struct stat buf;
-    return (stat(file.c_str(), &buf) == 0);
-}
-
 namespace zeug
 {
   namespace opengl
   {
+    namespace detail
+    {
+        static std::vector<std::tuple<std::string, std::uint32_t, std::uint32_t, bool>> texture_memcache;
+        static std::uint32_t texture_slots = -1; 
+
+        bool glext_supported(std::string extension) 
+        {
+            std::string extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+            std::size_t found = extensions.find(extension);
+            return (found != std::string::npos);
+        }
+    }
+
     texture::texture(std::string uid, std::pair<std::uint8_t*, std::size_t> image, std::pair<std::uint32_t,std::uint32_t> size_xy)
         : size_xy_internal(size_xy)
     {
@@ -115,7 +55,7 @@ namespace zeug
 
         this->uid_internal = uid;
 
-        for(auto texture : texture_memcache)
+        for(auto texture : detail::texture_memcache)
         {
             if(std::get<0>(texture) == this->uid_internal)
             {
@@ -130,15 +70,36 @@ namespace zeug
 
         if(!memcached)
         {
-            this->native_slot_internal = get_empty_texture_slot();
-            texture_memcache.push_back(std::make_tuple(uid, this->native_slot_internal, this->native_handle_internal, false));
+            detail::texture_slots++;
+            this->native_slot_internal = detail::texture_slots;
+            detail::texture_memcache.push_back(std::make_tuple(uid, this->native_slot_internal, this->native_handle_internal, false));
             
             auto compcache_path = zeug::this_app::cachedir();
 
+            // No gl context inside std::async
+            bool has_s3tc = false;
+            bool has_atc = false;
+            if (detail::glext_supported("GL_EXT_texture_compression_s3tc") 
+                || detail::glext_supported("GL_ANGLE_texture_compression_dxt5"))
+            {
+                has_s3tc = true;
+            }
+            if (detail::glext_supported("GL_AMD_compressed_ATC_texture"))
+            {
+                has_atc = true;
+            }
+
             this->has_future_internal = true;
-            this->future_internal = std::async(std::launch::async, [compcache_path, image, size_xy, uid]()
+            this->future_internal = std::async(std::launch::async, [has_s3tc, has_atc, compcache_path, image, size_xy, uid]()
             {
                 auto compressed_image_internal = new std::uint8_t[size_xy.first * size_xy.second];
+
+                auto file_exists = [](std::string file) 
+                {
+                    struct stat buf;
+                    return (stat(file.c_str(), &buf) == 0);
+                };
+
                 if (file_exists(compcache_path + "/" + uid))
                 {
                     zeug::memory_map memory_map(compcache_path + "/" + uid);
@@ -181,7 +142,74 @@ namespace zeug
                         throw std::runtime_error( "Only RGBA textures supported.\n");
                     }
 
-                    compress_tex( compressed_image_internal , raw_image, w, h, true);
+                    // Compress image
+
+                    auto extract_block = []  (const std::uint8_t*src, std::int32_t x, std::int32_t y, std::int32_t w, std::int32_t h, std::uint8_t*block)
+                    {
+                        if ((w-x >=4) && (h-y >=4))
+                        {
+                            // Full Square shortcut
+                            src += x*4;
+                            src += y*w*4;
+                            for (auto i=0; i < 4; ++i)
+                            {
+                                *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
+                                *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
+                                *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; src += 4;
+                                *(std::uint32_t*)block = *(std::uint32_t*) src; block += 4; 
+                                src += (w*4) - 12;
+                            }
+                            return;
+                        }
+
+                        std::int32_t bw = std::min(w - x, 4);
+                        std::int32_t bh = std::min(h - y, 4);
+                        std::int32_t bx, by;
+                       
+                        const std::int32_t rem[] =
+                        {
+                            0, 0, 0, 0,
+                            0, 1, 0, 1,
+                            0, 1, 2, 0,
+                            0, 1, 2, 3
+                        };
+                         
+                        for(auto i = 0; i < 4; ++i)
+                        {
+                            by = rem[(bh - 1) * 4 + i] + y;
+                            for(auto j = 0; j < 4; ++j)
+                            {
+                                bx = rem[(bw - 1) * 4 + j] + x;
+                                block[(i * 4 * 4) + (j * 4) + 0] = src[(by * (w * 4)) + (bx * 4) + 0];
+                                block[(i * 4 * 4) + (j * 4) + 1] = src[(by * (w * 4)) + (bx * 4) + 1];
+                                block[(i * 4 * 4) + (j * 4) + 2] = src[(by * (w * 4)) + (bx * 4) + 2];
+                                block[(i * 4 * 4) + (j * 4) + 3] = src[(by * (w * 4)) + (bx * 4) + 3];
+                            }
+                        }
+                    };
+
+                    auto dxt_convert_texture = [&extract_block] (std::uint8_t* dest, std::uint8_t* src, std::int32_t w, std::int32_t h, bool alpha )
+                    {
+                        std::uint8_t block[64];
+                        for(auto y = 0; y < h; y += 4)
+                        {
+                            for(auto x = 0; x < w; x += 4)
+                            { 
+                                extract_block(src, x, y, w, h, block);
+                                stb_compress_dxt_block(dest, block, alpha, STB_DXT_NORMAL);
+                                dest += alpha ? 16 : 8;
+                            }
+                        }
+                    };
+
+                    if (has_s3tc)
+                    {
+                        dxt_convert_texture( compressed_image_internal , raw_image, w, h, true);
+                    }
+                    else if (has_atc)
+                    {
+                        dxt2atc_convert_texture(compressed_image_internal, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, w, h);
+                    }
 
                     std::ofstream compcache_file;
                     compcache_file.open (compcache_path + "/" + uid, std::ios::out | std::ios::binary);
@@ -218,7 +246,7 @@ namespace zeug
         {
             if(!has_future_internal)
             {
-                for(auto texture : texture_memcache)
+                for(auto texture : detail::texture_memcache)
                 {
                     if(std::get<0>(texture) == this->uid_internal)
                     {
@@ -236,11 +264,17 @@ namespace zeug
                 glActiveTexture(GL_TEXTURE0 + this->native_slot_internal);
                 glGenTextures(1,&this->native_handle_internal);
                 glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
-#if defined(PLATFORM_ANDROID)
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
-#else
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
- #endif
+
+                if (detail::glext_supported("GL_EXT_texture_compression_s3tc") 
+                    || detail::glext_supported("GL_ANGLE_texture_compression_dxt5"))
+                {
+                    glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
+                }
+                else if (detail::glext_supported("GL_AMD_compressed_ATC_texture"))
+                {
+                    glCompressedTexImage2D(GL_TEXTURE_2D, 0,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
+                }
+
                 glGenerateMipmap(GL_TEXTURE_2D);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -250,7 +284,7 @@ namespace zeug
                 delete[] compressed_image;   
                 this->ready_internal = true;
 
-                for(auto& texture : texture_memcache)
+                for(auto& texture : detail::texture_memcache)
                 {
                     if(std::get<0>(texture) == this->uid_internal)
                     {

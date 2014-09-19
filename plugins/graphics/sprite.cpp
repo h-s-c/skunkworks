@@ -36,8 +36,21 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
     id(id),
     frame_number(0)
 {
+    // load zip/apk archive
+    auto pakpath = [] () 
+    {
+        if (zeug::this_app::apkpath().empty())
+        {
+            return zeug::this_app::name() + ".pak";
+        }
+        else
+        {
+            return zeug::this_app::apkpath();
+        }
+    };
+
+    zeug::zipreader pakfile(pakpath());
     // parse json descs 
-    zeug::zipreader pakfile(zeug::this_app::name() + ".pak");
     {
         jsonxx::Object json_object;
         json_object.parse(pakfile.text_file(sprite_path + "/" + "idle.json"));
