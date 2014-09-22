@@ -120,15 +120,18 @@ namespace zeug
         this->native_window_internal = static_cast<EGLNativeWindowType>(screen_win);
         this->native_context_internal = static_cast<void*>(screen_ctx);
 #elif defined(PLATFORM_ANDROID)
-        while(!this->native_window_internal)
+        for(;;)
         {
-            std::lock_guard<std::mutex> lock(native_window_external_mutex);
-            this->native_window_internal = native_window_external;
-            if (!this->native_window_internal)
             {
-                std::chrono::milliseconds duration( 100 );
-                std::this_thread::sleep_for( duration);    
+                std::lock_guard<std::mutex> lock(native_window_external_mutex);
+                if (native_window_external)
+                {
+                    this->native_window_internal = native_window_external;
+                    break;
+                }
             }
+            std::chrono::milliseconds duration( 100 );
+            std::this_thread::sleep_for( duration);
         }
 #elif defined(PLATFORM_RASBERRYPI)
         zeug::dynapi::dispman::init();

@@ -37,12 +37,18 @@
 #include <jni.h>
 #include <zeug/thirdparty/cpu-features.h>
 #include <android/native_activity.h>
-ANativeActivity* native_activity_external = nullptr;
-std::mutex native_activity_external_mutex;
+std::mutex apkpath_external_mutex;
+static std::string apkpath_external;
 void onStart(ANativeActivity* activity)
 {
-    std::lock_guard<std::mutex> lock(native_activity_external_mutex);
-    native_activity_external= activity;
+    std::lock_guard<std::mutex> lock(apkpath_external_mutex);
+
+    jclass clazz = activity->env->GetObjectClass(activity->clazz);
+    jmethodID methodID = activity->env->GetMethodID(clazz, "getPackageCodePath", "()Ljava/lang/String;");
+    jobject result = activity->env->CallObjectMethod(activity->clazz, methodID);
+
+    jboolean isCopy;
+    apkpath_external = activity->env->GetStringUTFChars((jstring)result, &isCopy);
 }
 #elif defined(PLATFORM_EMSCRIPTEN)
 #elif defined(PLATFORM_RASBERRYPI)
@@ -252,23 +258,24 @@ namespace zeug
 #if defined(PLATFORM_WINDOWS)
 #elif defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)
-        std::lock_guard<std::mutex> lock(native_activity_external_mutex);
-
-        JNIEnv* env=0;
-        native_activity_external->vm->AttachCurrentThread(&env, NULL);
-
-        jclass clazz = env->GetObjectClass(native_activity_external->clazz);
-        jmethodID methodID = env->GetMethodID(clazz, "getPackageCodePath", "()Ljava/lang/String;");
-        jobject result = env->CallObjectMethod(native_activity_external->clazz, methodID);
-
-        jboolean isCopy;
-        std::string path = env->GetStringUTFChars((jstring)result, &isCopy);
-
-        native_activity_external->vm->DetachCurrentThread();
-        return path;
+        std::string apkpath;
+        for(;;)
+        {
+            {
+                std::lock_guard<std::mutex> lock(apkpath_external_mutex);
+                if (!apkpath_external.empty())
+                {
+                    apkpath = apkpath_external;
+                    break;
+                }
+            }
+            std::chrono::milliseconds duration( 100 );
+            std::this_thread::sleep_for( duration);
+        }
+        return apkpath;
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_BSD)
 #endif
-        return "";
+        return "Unknown";
     }
 
     std::string compiler()

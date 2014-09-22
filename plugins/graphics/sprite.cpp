@@ -39,7 +39,7 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
     // load zip/apk archive
     auto pakpath = [] () 
     {
-        if (zeug::this_app::apkpath().empty())
+        if (zeug::this_app::apkpath() == "Unknown")
         {
             return zeug::this_app::name() + ".pak";
         }

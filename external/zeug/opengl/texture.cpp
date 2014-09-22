@@ -211,8 +211,13 @@ namespace zeug
                     }
                     else if (has_atc)
                     {
+                        dxt_convert_texture( compressed_image_internal , raw_image, w, h, true);
                         dxt2atc_convert_texture(compressed_image_internal, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, w, h);
                     }
+                    else
+                    {
+                        std::memcpy(compressed_image_internal, raw_image, w * h * sizeof(std::uint8_t));
+                    }                    
 
                     std::ofstream compcache_file;
                     compcache_file.open (compcache_path + "/" + uid, std::ios::out | std::ios::binary);
@@ -280,6 +285,10 @@ namespace zeug
                 {
                     glCompressedTexImage2D(GL_TEXTURE_2D, 0,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
                 }
+                else
+                {
+                    glTexImage2D(GL_TEXTURE_2D, 0,  GL_RGBA, size_xy_internal.first, size_xy_internal.second, 0, GL_RGBA, GL_UNSIGNED_BYTE, compressed_image);
+                }                   
 
                 glGenerateMipmap(GL_TEXTURE_2D);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
