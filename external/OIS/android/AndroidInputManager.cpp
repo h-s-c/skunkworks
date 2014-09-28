@@ -35,8 +35,8 @@ namespace OIS
 
 AndroidInputManager::AndroidInputManager()
 	:	InputManager("AndroidInputManager"),
-		mKeyboard(0),
 		mTouch(0),
+		mKeyboard(0),
 		mAccelerometer(0)
 {
 	mFactories.push_back(this);
@@ -179,13 +179,14 @@ void AndroidKeyboard::resetBuffer()
 
 void AndroidKeyboard::copyKeyStates(char keys[256]) const
 {
-	memcpy(keys, mKeyBuffer, sizeof(keys));
+	memcpy(keys, mKeyBuffer, sizeof(*keys));
 }
 
 const std::string& AndroidKeyboard::getAsString(KeyCode kc)
 {
 	char buf[2] = { (char)convertKey(0, kc).key, 0 };
-	return std::string(buf);
+	const std::string& str = std::string(buf);
+	return str;
 }
 
 bool AndroidKeyboard::isKeyDown(KeyCode key) const 
