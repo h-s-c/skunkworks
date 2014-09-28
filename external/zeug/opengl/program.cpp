@@ -81,9 +81,9 @@ namespace zeug
     {
         for(auto& shader : this->shaders)
         {
-            //glDetachShader(this->native_handle_internal, shader.get()->native_handle());  
+            glDetachShader(this->native_handle_internal, shader.get()->native_handle());  
         }
-        //glDeleteProgram(this->native_handle_internal);
+        glDeleteProgram(this->native_handle_internal);
     }
   }
 }

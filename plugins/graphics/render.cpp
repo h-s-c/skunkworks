@@ -21,14 +21,11 @@ Render::Render(const std::shared_ptr<zeug::window> &base_window, const std::shar
         "Extensions: " + reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
 
     std::cout << ogl_info << std::endl;
-
-    glEnable (GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
 }
 
 void Render::operator()(double deltatime)
 {
+    // Get entity updates
     zmq::message_t zmq_message;
     zmq_game_subscriber->recv(&zmq_message, ZMQ_NOBLOCK);
     if(zeug::string_hash("Sprite") == zeug::string_hash(zmq_message.data()))
@@ -85,9 +82,13 @@ void Render::operator()(double deltatime)
         }
     }
     
-    glClear(GL_COLOR_BUFFER_BIT);
+    // Render sprites
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (auto& sprite : this->sprites)
     {
         sprite(deltatime);
     }
+    glBlendFunc (GL_ZERO, GL_ZERO);
+    glDisable (GL_BLEND);
 }

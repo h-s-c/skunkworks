@@ -103,11 +103,7 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
     this->shaderprog.get()->link();
 
     this->position_attrib= glGetAttribLocation(shaderprog->native_handle(), "Position");
-    glEnableVertexAttribArray(this->position_attrib);
-
     this->texcoord_attrib= glGetAttribLocation(shaderprog->native_handle(), "TexCoord");
-    glEnableVertexAttribArray(this->texcoord_attrib);
-
     this->texunit_uniform = glGetUniformLocation(this->shaderprog.get()->native_handle(), "TexUnit");
     this->proj_uniform = glGetUniformLocation(shaderprog->native_handle(), "ProjectionMatrix");
 
@@ -156,19 +152,16 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
 
 void Sprite::SetPosition(std::pair<std::int32_t, std::int32_t> position)
 {
-    /* set position values */
     this->position = position;
 }
 
 void Sprite::SetScale(float scale)
 {
-    /* set scale values */
     this->scale = scale;
 }
 
 void Sprite::SetState(SpriteState sprite_state)
 {
-    // set state values
     if(sprite_state != this->sprite_state)
     {
         this->sprite_state = sprite_state;
@@ -230,7 +223,8 @@ void Sprite::operator()(double deltatime)
             float(-(((frame_width/2)*this->scale)-this->position.first)),   float(-(((frame_height/2)*this->scale)-this->position.second)),
             float(((frame_width/2)*this->scale)+this->position.first),      float(-(((frame_height/2)*this->scale)-this->position.second)),
         };
-        glVertexAttribPointer(this->position_attrib, 2, GL_FLOAT, GL_FALSE, 0, &vertices[0]);
+        glEnableVertexAttribArray(this->position_attrib);
+        glVertexAttribPointer(this->position_attrib, 2, GL_FLOAT, GL_TRUE, 0, &vertices[0]);
 
         // determine texcoords
         std::vector<GLfloat> texcoords;
@@ -252,13 +246,17 @@ void Sprite::operator()(double deltatime)
                 float((1.0f/sprite_sheet_width)*frame_x),                  float(1.0f-((1.0f/sprite_sheet_height)*(frame_y+frame_height))),
             };
         }
-        glVertexAttribPointer(this->texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, &texcoords[0]);
+        glEnableVertexAttribArray(this->texcoord_attrib);
+        glVertexAttribPointer(this->texcoord_attrib, 2, GL_FLOAT, GL_TRUE, 0, &texcoords[0]);
 
         std::vector<GLushort> elements = {
             0, 1, 2,
             2, 3, 0,
         };
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &elements[0]);
+
+        glDisableVertexAttribArray(this->position_attrib);
+        glDisableVertexAttribArray(this->texcoord_attrib);
 
         this->akkumulator += deltatime;
         
