@@ -1,0 +1,31 @@
+project (Zeug)
+    set(ZEUG_SOURCE  
+            ${CMAKE_CURRENT_LIST_DIR}/memory_map.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/platform.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/shared_lib.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/window.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/zipreader.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/opengl/buffer.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/opengl/common.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/opengl/program.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/opengl/shader.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/opengl/texture.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/thirdparty/miniz.c
+        )
+
+    list(APPEND ZEUG_SOURCE ${ZEUG_SOURCE})
+
+    if(UNIX)
+        if(ANDROID)
+            list(APPEND ZEUG_SOURCE ${CMAKE_CURRENT_LIST_DIR}/thirdparty/cpu-features.c)
+        endif()
+    endif()
+
+    list(APPEND ZEUG_SOURCE ${ZEUG_SOURCE})
+
+    list(APPEND ZEUG_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR})
+    list(APPEND ZEUG_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..)
+    
+    include_directories(${ZEUG_INCLUDE_DIRS} )
+    add_library (Zeug STATIC ${ZEUG_SOURCE})
+    set_target_properties(Zeug PROPERTIES POSITION_INDEPENDENT_CODE TRUE)

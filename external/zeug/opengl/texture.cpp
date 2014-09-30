@@ -25,11 +25,11 @@
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "thirdparty/stb_image.h"
+#include <zeug/thirdparty/stb_image.h>
 #define STB_DXT_IMPLEMENTATION
-#include "thirdparty/stb_dxt.h"
+#include <zeug/thirdparty/stb_dxt.h>
 #define DXTC2ATC_IMPLEMENTATION
-#include "thirdparty/dxtc2atc.h"
+#include <zeug/thirdparty/dxtc2atc.h>
 
 namespace zeug
 {
