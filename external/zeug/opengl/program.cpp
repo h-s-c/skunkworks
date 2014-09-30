@@ -7,6 +7,7 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
+#include <zeug/opengl/common.hpp>
 #include <zeug/opengl/program.hpp>
 #include <zeug/opengl/shader.hpp>
 
@@ -45,14 +46,7 @@ namespace zeug
             throw std::runtime_error(errormsg);
         }
 
-        auto  glext_supported = [] (std::string extension) 
-        {
-            std::string extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-            std::size_t found = extensions.find(extension);
-            return (found != std::string::npos);
-        };
-
-        if(glext_supported("GL_OES_get_program_binary"))
+        if(zeug::opengl::extension("GL_OES_get_program_binary"))
         {
             std::function<void (GLuint, GLsizei, GLsizei*, GLenum*, void*)> glGetProgramBinaryOES;
             glGetProgramBinaryOES = (PFNGLGETPROGRAMBINARYOESPROC)eglGetProcAddress("glGetProgramBinaryOES");

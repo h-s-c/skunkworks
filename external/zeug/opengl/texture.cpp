@@ -14,6 +14,7 @@
 #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
 #endif
 
+#include <zeug/opengl/common.hpp>
 #include <zeug/opengl/texture.hpp>
 #include <zeug/platform.hpp>
 #include <zeug/memory_map.hpp>
@@ -39,13 +40,6 @@ namespace zeug
     {
         static std::vector<std::tuple<std::string, std::uint32_t, std::uint32_t, bool>> texture_memcache;
         static std::uint32_t texture_slots = -1; 
-
-        bool glext_supported(std::string extension) 
-        {
-            std::string extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-            std::size_t found = extensions.find(extension);
-            return (found != std::string::npos);
-        }
     }
 
     texture::texture(std::string uid, std::pair<std::uint8_t*, std::size_t> image, std::pair<std::uint32_t,std::uint32_t> size_xy)
@@ -79,15 +73,15 @@ namespace zeug
             // No gl context inside std::async
             bool has_s3tc = false;
             bool has_atc = false;
-            if (detail::glext_supported("GL_EXT_texture_compression_s3tc") 
-                || detail::glext_supported("GL_OES_texture_compression_S3TC")
-                || detail::glext_supported("GL_EXT_texture_compression_dxt5")
-                || detail::glext_supported("GL_ANGLE_texture_compression_dxt5"))
+            if (zeug::opengl::extension("GL_EXT_texture_compression_s3tc") 
+                || zeug::opengl::extension("GL_OES_texture_compression_S3TC")
+                || zeug::opengl::extension("GL_EXT_texture_compression_dxt5")
+                || zeug::opengl::extension("GL_ANGLE_texture_compression_dxt5"))
             {
                 has_s3tc = true;
             }
-            if (detail::glext_supported("GL_AMD_compressed_ATC_texture")
-                || detail::glext_supported("GL_ATI_texture_compression_atitc"))
+            if (zeug::opengl::extension("GL_AMD_compressed_ATC_texture")
+                || zeug::opengl::extension("GL_ATI_texture_compression_atitc"))
             {
                 has_atc = true;
             }
@@ -273,15 +267,15 @@ namespace zeug
                 glGenTextures(1,&this->native_handle_internal);
                 glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
 
-                if (detail::glext_supported("GL_EXT_texture_compression_s3tc") 
-                    || detail::glext_supported("GL_OES_texture_compression_S3TC")
-                    || detail::glext_supported("GL_EXT_texture_compression_dxt5")
-                    || detail::glext_supported("GL_ANGLE_texture_compression_dxt5"))
+                if (zeug::opengl::extension("GL_EXT_texture_compression_s3tc") 
+                    || zeug::opengl::extension("GL_OES_texture_compression_S3TC")
+                    || zeug::opengl::extension("GL_EXT_texture_compression_dxt5")
+                    || zeug::opengl::extension("GL_ANGLE_texture_compression_dxt5"))
                 {
                     glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
                 }
-                else if (detail::glext_supported("GL_AMD_compressed_ATC_texture")
-                    || detail::glext_supported("GL_ATI_texture_compression_atitc"))
+                else if (zeug::opengl::extension("GL_AMD_compressed_ATC_texture")
+                    || zeug::opengl::extension("GL_ATI_texture_compression_atitc"))
                 {
                     glCompressedTexImage2D(GL_TEXTURE_2D, 0,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
                 }
