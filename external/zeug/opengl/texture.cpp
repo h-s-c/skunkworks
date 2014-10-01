@@ -38,6 +38,9 @@ namespace zeug
   {
     namespace detail
     {
+        static bool has_s3tc = false;
+        static bool has_atc = false;
+        static std::once_flag check_texcomp_flag;
         static std::vector<std::tuple<std::string, std::uint32_t, std::uint32_t, bool>> texture_memcache;
         static std::uint32_t texture_slots = -1; 
     }
@@ -71,23 +74,24 @@ namespace zeug
             auto compcache_path = zeug::this_app::cachedir();
 
             // No gl context inside std::async
-            bool has_s3tc = false;
-            bool has_atc = false;
-            if (zeug::opengl::extension("GL_EXT_texture_compression_s3tc") 
-                || zeug::opengl::extension("GL_OES_texture_compression_S3TC")
-                || zeug::opengl::extension("GL_EXT_texture_compression_dxt5")
-                || zeug::opengl::extension("GL_ANGLE_texture_compression_dxt5"))
+            std::call_once(detail::check_texcomp_flag, []() 
             {
-                has_s3tc = true;
-            }
-            if (zeug::opengl::extension("GL_AMD_compressed_ATC_texture")
-                || zeug::opengl::extension("GL_ATI_texture_compression_atitc"))
-            {
-                has_atc = true;
-            }
+                if (zeug::opengl::extension("GL_EXT_texture_compression_s3tc") 
+                    || zeug::opengl::extension("GL_OES_texture_compression_S3TC")
+                    || zeug::opengl::extension("GL_EXT_texture_compression_dxt5")
+                    || zeug::opengl::extension("GL_ANGLE_texture_compression_dxt5"))
+                {
+                    detail::has_s3tc = true;
+                }
+                if (zeug::opengl::extension("GL_AMD_compressed_ATC_texture")
+                    || zeug::opengl::extension("GL_ATI_texture_compression_atitc"))
+                {
+                    detail::has_atc = true;
+                }
+            });
 
             this->has_future_internal = true;
-            this->future_internal = std::async(std::launch::async, [has_s3tc, has_atc, compcache_path, image, size_xy, uid]()
+            this->future_internal = std::async(std::launch::async, [compcache_path, image, size_xy, uid]()
             {
                 auto compressed_image_internal = new std::uint8_t[size_xy.first * size_xy.second];
 
@@ -199,11 +203,11 @@ namespace zeug
                         }
                     };
 
-                    if (has_s3tc)
+                    if (detail::has_s3tc)
                     {
                         dxt_convert_texture( compressed_image_internal , raw_image, w, h, true);
                     }
-                    else if (has_atc)
+                    else if (detail::has_atc)
                     {
                         dxt_convert_texture( compressed_image_internal , raw_image, w, h, true);
                         dxt2atc_convert_texture(compressed_image_internal, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, w, h);
@@ -267,15 +271,11 @@ namespace zeug
                 glGenTextures(1,&this->native_handle_internal);
                 glBindTexture(GL_TEXTURE_2D,this->native_handle_internal);
 
-                if (zeug::opengl::extension("GL_EXT_texture_compression_s3tc") 
-                    || zeug::opengl::extension("GL_OES_texture_compression_S3TC")
-                    || zeug::opengl::extension("GL_EXT_texture_compression_dxt5")
-                    || zeug::opengl::extension("GL_ANGLE_texture_compression_dxt5"))
+                if (detail::has_s3tc)
                 {
                     glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
                 }
-                else if (zeug::opengl::extension("GL_AMD_compressed_ATC_texture")
-                    || zeug::opengl::extension("GL_ATI_texture_compression_atitc"))
+                else if (detail::has_atc)
                 {
                     glCompressedTexImage2D(GL_TEXTURE_2D, 0,  GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD, size_xy_internal.first, size_xy_internal.second, 0, size_xy_internal.first * size_xy_internal.second * sizeof(unsigned char), compressed_image);
                 }

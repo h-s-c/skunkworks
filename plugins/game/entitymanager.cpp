@@ -8,8 +8,8 @@
 #include <mutex>
 
 int test = 0;
-std::once_flag flag;
-std::once_flag flag2;
+static std::once_flag flag;
+static std::once_flag flag2;
 
 EntityManager::EntityManager(const std::shared_ptr<zmq::socket_t> &zmq_game_publisher) : zmq_game_publisher(zmq_game_publisher)
 {

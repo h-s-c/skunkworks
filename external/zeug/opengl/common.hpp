@@ -6,6 +6,6 @@ namespace zeug
 {
   namespace opengl
   {
-    bool extension(std::string name);
+    bool extension(const std::string& name);
   }
 }
