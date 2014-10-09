@@ -20,7 +20,7 @@
 
 #include <GLES2/gl2.h>
 
-#include "external/jsonxx.hpp"
+#include "external/jsonxx/jsonxx.h"
 
 const Statestring_enum::vec_t Statestring_enum::en2str_vec = 
 {

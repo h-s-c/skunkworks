@@ -14,7 +14,7 @@
 #include <zeug/opengl/shader.hpp>
 #include <zeug/opengl/texture.hpp>
 
-#include "external/jsonxx.hpp"
+#include "external/jsonxx/jsonxx.h"
 
 #undef None
 enum class SpriteState
