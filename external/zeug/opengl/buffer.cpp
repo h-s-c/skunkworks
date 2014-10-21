@@ -1,5 +1,6 @@
-
 #include <zeug/opengl/buffer.hpp>
+
+#include <GLES2/gl2.h>
 
 namespace zeug
 {

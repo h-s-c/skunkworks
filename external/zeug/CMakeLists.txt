@@ -21,6 +21,9 @@ project (Zeug)
         endif()
     endif()
 
+    find_package(EGL REQUIRED)
+    list(APPEND SKUNKWORKS_INCLUDE_DIRS ${EGL_INCLUDE_DIR})
+
     list(APPEND ZEUG_SOURCE ${ZEUG_SOURCE})
 
     list(APPEND ZEUG_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR})

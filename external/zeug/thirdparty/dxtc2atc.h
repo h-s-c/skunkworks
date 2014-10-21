@@ -13,9 +13,6 @@ void dxt2atc_convert_texture(void *data, int srcfmt, int destfmt, int w, int h);
 #include <stdlib.h>
 #include <math.h>
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
 #ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 #define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
 #endif
@@ -24,6 +21,15 @@ void dxt2atc_convert_texture(void *data, int srcfmt, int destfmt, int w, int h);
 #endif
 #ifndef GL_COMPRESSED_RGBA_S3TC_DX5_EXT
 #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
+#ifndef GL_ATC_RGB_AMD
+#define GL_ATC_RGB_AMD 0x8C92
+#endif
+#ifndef GL_ATC_RGBA_EXPLICIT_ALPHA_AMD 
+#define GL_ATC_RGBA_EXPLICIT_ALPHA_AMD  0x8C93
+#endif
+#ifndef GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD 
+#define GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD 0x87EE
 #endif
 
 unsigned convertrgbbits(unsigned bits)

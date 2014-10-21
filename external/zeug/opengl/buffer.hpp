@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-#include <GLES2/gl2.h>
-
 namespace zeug
 {
   namespace opengl

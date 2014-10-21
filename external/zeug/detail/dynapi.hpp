@@ -39,62 +39,6 @@ namespace zeug
 {
     namespace dynapi
     {
-        // EGL
-        namespace egl
-        { 
-            namespace api
-            {
-                static std::function<EGLDisplay (EGLNativeDisplayType)> eglGetDisplay;
-                static std::function<EGLBoolean (EGLDisplay, EGLint*, EGLint*)> eglInitialize;
-                static std::function<EGLBoolean (EGLenum)> eglBindAPI;
-                static std::function<EGLBoolean (EGLDisplay, const EGLint*, EGLConfig*, EGLint, EGLint*)> eglChooseConfig;
-                static std::function<EGLBoolean (EGLDisplay, EGLConfig*, EGLint, EGLint*)> eglGetConfigs;
-                static std::function<EGLContext (EGLDisplay, EGLConfig, EGLContext, const EGLint*)> eglCreateContext;
-                static std::function<EGLSurface (EGLDisplay, EGLConfig, const EGLint*)> eglCreatePbufferSurface;
-                static std::function<EGLBoolean (EGLDisplay, EGLSurface, EGLSurface, EGLContext)> eglMakeCurrent;
-                static std::function<EGLBoolean (EGLDisplay, EGLContext)> eglDestroyContex;
-                static std::function<EGLBoolean (EGLDisplay)> eglTerminate;
-                static std::function<void* (const char*)> eglGetProcAddress;
-            }
-            namespace detail
-            {
-                static std::unique_ptr<zeug::shared_lib> lib;
-                static std::uint32_t refcnt{};
-                static std::mutex mutex{};
-            }
-
-            static inline void init()
-            {
-                std::lock_guard<std::mutex> lock(detail::mutex);
-                if(!detail::lib)
-                {
-                    detail::lib = std::make_unique<zeug::shared_lib>("EGL");
-
-                    api::eglGetDisplay = detail::lib->function<EGLDisplay (NativeDisplayType)>("eglGetDisplay");
-                    api::eglInitialize = detail::lib->function<EGLBoolean (EGLDisplay, EGLint*, EGLint*)>("eglInitialize");
-                    api::eglBindAPI = detail::lib->function<EGLBoolean (EGLenum)>("eglBindAPI");
-                    api::eglChooseConfig = detail::lib->function<EGLBoolean (EGLDisplay, const EGLint*, EGLConfig*, EGLint, EGLint*)>("eglChooseConfig");
-                    api::eglGetConfigs = detail::lib->function<EGLBoolean (EGLDisplay, EGLConfig*, EGLint, EGLint*)>("eglGetConfigs");
-                    api::eglCreateContext = detail::lib->function<EGLContext (EGLDisplay, EGLConfig, EGLContext, const EGLint*)>("eglCreateContext");
-                    api::eglCreatePbufferSurface = detail::lib->function<EGLSurface (EGLDisplay, EGLConfig, const EGLint*)>("eglCreatePbufferSurface");
-                    api::eglMakeCurrent = detail::lib->function<EGLBoolean (EGLDisplay, EGLSurface, EGLSurface, EGLContext)>("eglMakeCurrent");
-                    api::eglDestroyContex = detail::lib->function<EGLBoolean (EGLDisplay, EGLContext)>("eglDestroyContext");
-                    api::eglTerminate = detail::lib->function<EGLBoolean (EGLDisplay)>("eglTerminate");
-                    api::eglGetProcAddress = detail::lib->function<void* (const char*)>("eglGetProcAddress");
-                }
-                detail::refcnt++;
-            }
-            static inline void kill()
-            {
-                std::lock_guard<std::mutex> lock(detail::mutex);
-                detail::refcnt--;
-                if(detail::refcnt == 0)
-                {
-                    detail::lib.release();
-                }
-            }
-        }
-
 #if defined(PLATFORM_WINDOWS)
 #elif defined(PLATFORM_BLACKBERRY)
 #elif defined(PLATFORM_ANDROID)

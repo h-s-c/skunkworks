@@ -10,10 +10,6 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-#ifndef GL_COMPRESSED_RGBA_S3TC_DX5_EXT
-#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
-#endif
-
 #include <zeug/opengl/common.hpp>
 #include <zeug/opengl/texture.hpp>
 #include <zeug/platform.hpp>
