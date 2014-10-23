@@ -1,6 +1,3 @@
-[submodule "external/jsonxx"]
-	path = external/jsonxx
-	url = https://github.com/hjiang/jsonxx.git
 [submodule "external/imgui"]
 	path = external/imgui
 	url = https://github.com/ocornut/imgui.git
