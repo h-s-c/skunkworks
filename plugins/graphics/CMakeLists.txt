@@ -10,7 +10,7 @@ project (PluginGraphics)
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
     list(APPEND PLUGIN_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external)
 
-    list(APPEND PLUGIN_LIBRARIES jsonxx)
+    list(APPEND PLUGIN_LIBRARIES json11)
     list(APPEND PLUGIN_LIBRARIES Zeug)
 
     find_package(EGL REQUIRED)

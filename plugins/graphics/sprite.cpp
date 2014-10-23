@@ -20,7 +20,7 @@
 
 #include <GLES2/gl2.h>
 
-#include "external/jsonxx/jsonxx.h"
+#include "external/json11/json11.hpp"
 
 const Statestring_enum::vec_t Statestring_enum::en2str_vec = 
 {
@@ -52,14 +52,22 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
     zeug::zipreader pakfile(pakpath());
     // parse json descs 
     {
-        jsonxx::Object json_object;
-        json_object.parse(pakfile.text_file(sprite_path + "/" + "idle.json"));
-        this->json_objects.push_back(std::move(json_object));
+        std::string error;
+        auto json_object = json11::Json::parse(pakfile.text_file(sprite_path + "/" + "idle.json"), error);
+        if (!error.empty()) 
+        {
+            std::runtime_error(error.c_str());
+        }
+        this->json_objects.push_back(json_object);
     }
     {
-        jsonxx::Object json_object;
-        json_object.parse(pakfile.text_file(sprite_path + "/" + "walk.json"));
-        this->json_objects.push_back(std::move(json_object));
+        std::string error;
+        auto json_object = json11::Json::parse(pakfile.text_file(sprite_path + "/" + "walk.json"), error);
+        if (!error.empty()) 
+        {
+            std::runtime_error(error.c_str());
+        }
+        this->json_objects.push_back(json_object);
     }
 
     auto vertexshader_string = R"(
@@ -136,14 +144,14 @@ Sprite::Sprite(const std::shared_ptr<zeug::window> &base_window, std::string spr
 
     for( std::uint32_t i=0; i < this->json_objects.size(); i++)
     {        
-        auto name = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("image");
+        auto name = json11::Json(this->json_objects.at(i))["meta"]["image"].string_value();
 
         // Texturepacker creates a nice unique id for us
-        auto uid = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::String>("smartupdate"); 
+        auto uid = json11::Json(this->json_objects.at(i))["meta"]["smartupdate"].string_value();
         uid.erase (1,26);
 
-        auto w = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
-        auto h = this->json_objects.at(i).get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
+        auto w =json11::Json(this->json_objects.at(i))["meta"]["size"]["w"].int_value();
+        auto h = json11::Json(this->json_objects.at(i))["meta"]["size"]["h"].int_value();
         auto texture = std::make_unique<zeug::opengl::texture>(uid, pakfile.file(sprite_path + "/" + name), std::make_pair(w, h));
         texture_slots.push_back(texture->native_slot());
         textures.push_back(std::move(texture));
@@ -202,19 +210,19 @@ void Sprite::operator()(double deltatime)
         glUniform1i(this->texunit_uniform, this->current_texture_slot);
         glUniformMatrix4fv(this->proj_uniform, 1, 0, &this->ortho_projection[0]);
 
-        if(this->frame_number >= this->current_json_object.get<jsonxx::Array>("frames").size())
+        if(this->frame_number >= json11::Json(this->current_json_object)["frames"].array_items().size())
         {
             // repeat
             this->frame_number = 0;
         }
 
-        auto sprite_sheet_width = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("w");
-        auto sprite_sheet_height = this->current_json_object.get<jsonxx::Object>("meta").get<jsonxx::Object>("size").get<jsonxx::Number>("h");
-        auto frame = this->current_json_object.get<jsonxx::Array>("frames").get<jsonxx::Object>(this->frame_number).get<jsonxx::Object>("frame");
-        auto frame_width = frame.get<jsonxx::Number>("w");
-        auto frame_height = frame.get<jsonxx::Number>("h");
-        auto frame_x = frame.get<jsonxx::Number>("x");
-        auto frame_y = frame.get<jsonxx::Number>("y");
+        auto sprite_sheet_width = json11::Json(this->current_json_object)["meta"]["size"]["w"].int_value();
+        auto sprite_sheet_height = json11::Json(this->current_json_object)["meta"]["size"]["h"].int_value();
+        auto frame_object = json11::Json(this->current_json_object)["frames"].array_items().at(this->frame_number);
+        auto frame_width = json11::Json(frame_object)["frame"]["w"].int_value();
+        auto frame_height = json11::Json(frame_object)["frame"]["h"].int_value();
+        auto frame_x =  json11::Json(frame_object)["frame"]["x"].int_value();
+        auto frame_y =  json11::Json(frame_object)["frame"]["y"].int_value();
 
         // determine vertex positions
         std::vector<GLfloat> vertices = {

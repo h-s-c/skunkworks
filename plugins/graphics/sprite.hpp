@@ -14,7 +14,7 @@
 #include <zeug/opengl/shader.hpp>
 #include <zeug/opengl/texture.hpp>
 
-#include "external/jsonxx/jsonxx.h"
+#include "external/json11/json11.hpp"
 
 #undef None
 enum class SpriteState
@@ -77,8 +77,8 @@ class Sprite
     float scale;
     
     /* json object */
-    std::vector<jsonxx::Object> json_objects;
-    jsonxx::Object current_json_object;
+    std::vector<json11::Json> json_objects;
+    json11::Json current_json_object;
     
     /* Texture slots */
     std::vector<std::unique_ptr<zeug::opengl::texture>> textures;
