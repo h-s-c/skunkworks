@@ -53,7 +53,7 @@ macro(android_ndk_gdb_enable)
         file(APPEND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gdb.setup "directory ${PROJECT_INCLUDES}\n")
     
         # 3. copy gdbserver executable
-        file(COPY ${PROJECT_SOURCE_DIR}/../tools/toolchain/prebuilt/android-${ANDROID_ARCH_NAME}/gdbserver/gdbserver DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        file(COPY ${PROJECT_SOURCE_DIR}/../toolchains/android-armv7a-gcc-libstdc++/prebuilt/android-${ANDROID_ARCH_NAME}/gdbserver/gdbserver DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     endif()
 endmacro()
 
