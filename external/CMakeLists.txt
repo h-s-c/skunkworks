@@ -10,7 +10,7 @@ project (json11)
 
     list(APPEND JSON11_SOURCE ${JSON11_SOURCE})
 
-    list(APPEND JSONXX_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/json11)
+    list(APPEND JSON11_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/json11)
     
     include_directories(${JSON11_INCLUDE_DIRS} )
     add_library (json11 STATIC ${JSON11_SOURCE})
