@@ -1,0 +1,324 @@
+{"frames": [
+
+{
+	"filename": "darksaber_walk0001",
+	"frame": {"x":2,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0002",
+	"frame": {"x":2,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0003",
+	"frame": {"x":504,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0004",
+	"frame": {"x":1006,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0005",
+	"frame": {"x":1508,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0006",
+	"frame": {"x":1508,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0007",
+	"frame": {"x":2010,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0008",
+	"frame": {"x":2010,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0009",
+	"frame": {"x":2010,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0010",
+	"frame": {"x":2512,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0011",
+	"frame": {"x":2512,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0012",
+	"frame": {"x":3014,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0013",
+	"frame": {"x":3516,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0014",
+	"frame": {"x":3516,"y":2,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0015",
+	"frame": {"x":2,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0016",
+	"frame": {"x":2,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0017",
+	"frame": {"x":2,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0018",
+	"frame": {"x":504,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0019",
+	"frame": {"x":504,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0020",
+	"frame": {"x":1006,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0021",
+	"frame": {"x":1006,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0022",
+	"frame": {"x":1508,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0023",
+	"frame": {"x":2010,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0024",
+	"frame": {"x":2010,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0025",
+	"frame": {"x":2512,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0026",
+	"frame": {"x":2512,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0027",
+	"frame": {"x":3014,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0028",
+	"frame": {"x":3014,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0029",
+	"frame": {"x":3516,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0030",
+	"frame": {"x":3516,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0031",
+	"frame": {"x":3516,"y":501,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0032",
+	"frame": {"x":2,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0033",
+	"frame": {"x":504,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0034",
+	"frame": {"x":1006,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0035",
+	"frame": {"x":1006,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0036",
+	"frame": {"x":1006,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0037",
+	"frame": {"x":1508,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0038",
+	"frame": {"x":1508,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+},
+{
+	"filename": "darksaber_walk0039",
+	"frame": {"x":1508,"y":1000,"w":500,"h":497},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":497},
+	"sourceSize": {"w":500,"h":497}
+}],
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker ",
+	"version": "1.0",
+	"image": "walk.png",
+	"format": "RGBA8888",
+	"size": {"w":4096,"h":2048},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:7d477da0aa554a6a947dee9991bab7d8$"
+}
+}
